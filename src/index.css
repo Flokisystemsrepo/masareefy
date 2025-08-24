@@ -26,8 +26,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 24 95% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -43,7 +43,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 24 95% 53%;
+    --ring: 217 91% 60%;
 
     --radius: 0.5rem;
 
@@ -55,6 +55,18 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Masareefy Brand Colors */
+    --blue-50: 239 100% 97%;
+    --blue-100: 239 100% 94%;
+    --blue-200: 239 84% 87%;
+    --blue-300: 239 84% 78%;
+    --blue-400: 239 84% 67%;
+    --blue-500: 239 84% 56%;
+    --blue-600: 217 91% 60%;
+    --blue-700: 217 91% 50%;
+    --blue-800: 217 91% 40%;
+    --blue-900: 217 91% 30%;
   }
 
   .dark {
@@ -67,8 +79,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 24 95% 53%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -105,12 +117,10 @@
     @apply bg-white text-black font-sans antialiased;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -120,94 +130,101 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #888;
+    background: #3b82f6;
     border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #2563eb;
   }
 }
 
 @layer components {
-  .text-mask-image {
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    background-size: cover;
-    background-position: center;
+  .brand-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
-  .pulse-chip {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pulse-100 text-pulse-600 border border-pulse-200;
-  }
-  
-  .section-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12;
+  .brand-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300;
   }
 
-  .section-title {
-    @apply text-3xl md:text-4xl lg:text-5xl font-display font-bold tracking-tight;
+  .brand-button-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98];
   }
 
-  .section-subtitle {
-    @apply text-lg md:text-xl text-gray-600 mt-4 max-w-3xl;
+  .brand-button-secondary {
+    @apply bg-white border border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 font-medium px-6 py-3 rounded-lg transition-all duration-300;
   }
 
-  .glass-card {
-    @apply bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl shadow-elegant transition-all duration-300 hover:shadow-elegant-hover;
+  .brand-input {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
   }
 
-  .feature-card {
-    @apply p-6 rounded-2xl transition-all duration-500 hover:translate-y-[-5px];
-  }
-  
-  .button-primary {
-    @apply bg-pulse-500 hover:bg-pulse-600 text-white font-medium py-3 px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98];
+  .brand-nav-link {
+    @apply relative text-gray-600 hover:text-blue-600 py-2 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-blue-600 after:transition-all hover:after:w-full;
   }
 
-  .button-secondary {
-    @apply bg-transparent border border-gray-300 hover:border-pulse-500 text-gray-800 hover:text-pulse-500 font-medium py-3 px-6 rounded-full transition-all duration-300;
-  }
-  
-  .nav-link {
-    @apply relative text-gray-800 hover:text-pulse-500 py-2 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-pulse-500 after:transition-all hover:after:w-full;
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
   }
 }
 
-.image-scale-in {
-  animation: scaleIn 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
 }
 
-@keyframes scaleIn {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
 }
 
-.fadeIn {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeIn 0.8s ease forwards;
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
 }
 
 @keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Gradient backgrounds */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.bg-brand-gradient-soft {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+/* Hover effects */
 .hover-lift {
   transition: transform 0.3s ease;
 }
@@ -216,8 +233,32 @@
   transform: translateY(-5px);
 }
 
-/* Parallax effect */
-.parallax {
-  transform: translateY(var(--parallax-y, 0));
-  transition: transform 0.1s ease-out;
+/* Loading animations */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .brand-container {
+    @apply px-4;
+  }
+  
+  .brand-button-primary,
+  .brand-button-secondary {
+    @apply w-full text-center;
+  }
+  
+  .brand-card {
+    @apply mx-2;
+  }
 }
