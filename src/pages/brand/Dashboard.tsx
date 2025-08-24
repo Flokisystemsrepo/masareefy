@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -60,7 +61,7 @@ const Dashboard: React.FC = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, type: "spring", stiffness: 100 }
+      transition: { duration: 0.6 }
     }
   };
 
@@ -339,3 +340,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
