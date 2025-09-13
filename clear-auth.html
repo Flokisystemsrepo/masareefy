@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Clear Authentication</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+
+      button {
+        padding: 10px 20px;
+        margin: 10px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      .status {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .info {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Authentication Test Tool</h1>
+
+    <div id="status"></div>
+
+    <button onclick="clearAuth()">Clear All Authentication Data</button>
+    <button onclick="checkAuth()">Check Current Auth Status</button>
+    <button onclick="testRefreshToken()">Test Refresh Token Endpoint</button>
+
+    <script>
+      function showStatus(message, type = "info") {
+        const status = document.getElementById("status");
+        status.innerHTML = `<div class="${type}">${message}</div>`;
+      }
+
+      function clearAuth() {
+        try {
+          // Clear all authentication-related localStorage items
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("isAuthenticated");
+          localStorage.removeItem("userEmail");
+          localStorage.removeItem("userName");
+          localStorage.removeItem("companyName");
+          localStorage.removeItem("brandId");
+          localStorage.removeItem("userId");
+
+          showStatus(
+            "✅ All authentication data cleared successfully!",
+            "success"
+          );
+
+          // Show what was cleared
+          setTimeout(() => {
+            checkAuth();
+          }, 1000);
+        } catch (error) {
+          showStatus(
+            "❌ Error clearing authentication: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      function checkAuth() {
+        const items = [
+          "token",
+          "refreshToken",
+          "isAuthenticated",
+          "userEmail",
+          "userName",
+          "companyName",
+          "brandId",
+          "userId",
+        ];
+
+        let status = "<h3>Current Authentication Status:</h3>";
+        items.forEach((item) => {
+          const value = localStorage.getItem(item);
+          status += `<div><strong>${item}:</strong> ${
+            value ? "✅ Set" : "❌ Not set"
+          }</div>`;
+        });
+
+        showStatus(status, "info");
+      }
+
+      async function testRefreshToken() {
+        try {
+          const response = await fetch(
+            "http://localhost:3001/api/auth/refresh-token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                refreshToken: "test",
+              }),
+            }
+          );
+
+          const data = await response.json();
+          showStatus(
+            `Refresh Token Test: ${
+              data.success ? "✅ Endpoint working" : "❌ " + data.error
+            }`,
+            data.success ? "success" : "error"
+          );
+        } catch (error) {
+          showStatus(
+            "❌ Error testing refresh token: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      // Check auth status on load
+      checkAuth();
+    </script>
+  </body>
+</html>

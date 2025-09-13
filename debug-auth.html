@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Debug Authentication</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+
+      button {
+        padding: 10px 20px;
+        margin: 10px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      .status {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .info {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .debug {
+        background: #f8f9fa;
+        color: #495057;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Authentication Debug Tool</h1>
+
+    <div id="status"></div>
+
+    <button onclick="debugAuth()">Debug Current Auth State</button>
+    <button onclick="testLogin()">Test Login API</button>
+    <button onclick="testLoginWithCredentials()">
+      Test Login with Your Credentials
+    </button>
+    <button onclick="testProfile()">Test Profile API</button>
+    <button onclick="clearAuth()">Clear All Auth</button>
+
+    <script>
+      function showStatus(message, type = "info") {
+        const status = document.getElementById("status");
+        status.innerHTML = `<div class="${type}">${message}</div>`;
+      }
+
+      function debugAuth() {
+        const items = [
+          "token",
+          "refreshToken",
+          "isAuthenticated",
+          "userEmail",
+          "userName",
+          "companyName",
+          "brandId",
+          "userId",
+        ];
+
+        let debug = "<h3>🔍 Authentication Debug Info:</h3>";
+        debug += '<div class="debug">';
+
+        items.forEach((item) => {
+          const value = localStorage.getItem(item);
+          if (value) {
+            debug += `${item}: ${value.substring(0, 50)}${
+              value.length > 50 ? "..." : ""
+            }\n`;
+          } else {
+            debug += `${item}: ❌ NOT SET\n`;
+          }
+        });
+
+        debug += "\n--- Token Analysis ---\n";
+        const token = localStorage.getItem("token");
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            debug += `JWT Token Expiry: ${new Date(
+              payload.exp * 1000
+            ).toLocaleString()}\n`;
+            debug += `JWT Token Issued: ${new Date(
+              payload.iat * 1000
+            ).toLocaleString()}\n`;
+            debug += `JWT Token User ID: ${payload.userId}\n`;
+          } catch (e) {
+            debug += `JWT Token: Invalid format\n`;
+          }
+        }
+
+        if (refreshToken) {
+          debug += `Refresh Token: ${refreshToken.substring(0, 20)}...\n`;
+        }
+
+        debug += "</div>";
+        showStatus(debug, "info");
+      }
+
+      async function testLogin() {
+        try {
+          showStatus("🔄 Testing login API...", "info");
+
+          const response = await fetch("http://localhost:3001/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: "test@example.com",
+              password: "password123",
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showStatus(
+              `✅ Login API working! Response includes refreshToken: ${!!data
+                .data.refreshToken}`,
+              "success"
+            );
+            console.log("Login response:", data);
+          } else {
+            showStatus(`❌ Login failed: ${data.error}`, "error");
+          }
+        } catch (error) {
+          showStatus(`❌ Login API error: ${error.message}`, "error");
+        }
+      }
+
+      async function testLoginWithCredentials() {
+        const email = prompt("Enter your email:");
+        const password = prompt("Enter your password:");
+
+        if (!email || !password) {
+          showStatus("❌ Email and password required", "error");
+          return;
+        }
+
+        try {
+          showStatus("🔄 Testing login with your credentials...", "info");
+
+          const response = await fetch("http://localhost:3001/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              password,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showStatus(
+              `✅ Login successful! Response includes refreshToken: ${!!data
+                .data.refreshToken}`,
+              "success"
+            );
+            console.log("Login response:", data);
+
+            // Store the tokens to test
+            if (data.data.token) {
+              localStorage.setItem("token", data.data.token);
+            }
+            if (data.data.refreshToken) {
+              localStorage.setItem("refreshToken", data.data.refreshToken);
+            }
+            if (data.data.user) {
+              localStorage.setItem("userEmail", data.data.user.email);
+              localStorage.setItem(
+                "userName",
+                `${data.data.user.firstName} ${data.data.user.lastName}`
+              );
+              localStorage.setItem("userId", data.data.user.id);
+            }
+            if (data.data.brand) {
+              localStorage.setItem("brandId", data.data.brand.id);
+              localStorage.setItem("companyName", data.data.brand.name);
+            }
+
+            // Show updated debug info
+            setTimeout(() => debugAuth(), 1000);
+          } else {
+            showStatus(`❌ Login failed: ${data.error}`, "error");
+          }
+        } catch (error) {
+          showStatus(`❌ Login API error: ${error.message}`, "error");
+        }
+      }
+
+      async function testProfile() {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            showStatus("❌ No token found for profile test", "error");
+            return;
+          }
+
+          showStatus("🔄 Testing profile API...", "info");
+
+          const response = await fetch(
+            "http://localhost:3001/api/auth/profile",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            showStatus("✅ Profile API working!", "success");
+            console.log("Profile response:", data);
+          } else {
+            showStatus(`❌ Profile failed: ${data.error}`, "error");
+          }
+        } catch (error) {
+          showStatus(`❌ Profile API error: ${error.message}`, "error");
+        }
+      }
+
+      function clearAuth() {
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("isAuthenticated");
+          localStorage.removeItem("userEmail");
+          localStorage.removeItem("userName");
+          localStorage.removeItem("companyName");
+          localStorage.removeItem("brandId");
+          localStorage.removeItem("userId");
+
+          showStatus("✅ All authentication data cleared!", "success");
+        } catch (error) {
+          showStatus(
+            "❌ Error clearing authentication: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      // Debug on load
+      debugAuth();
+    </script>
+  </body>
+</html>

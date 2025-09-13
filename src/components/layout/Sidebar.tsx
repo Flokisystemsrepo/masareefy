@@ -1,114 +1,231 @@
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  DollarSign, 
-  Wallet, 
-  ArrowLeftRight, 
-  FileText, 
-  Package, 
-  Target, 
-  Trophy, 
-  Palette, 
-  Settings, 
-  Users, 
-  BarChart3, 
+import React, { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  DollarSign,
+  Wallet,
+  ArrowLeftRight,
+  FileText,
+  Package,
+  Target,
+  Trophy,
+  Palette,
+  Settings,
+  BarChart3,
   ShoppingCart,
   ChevronLeft,
   Bell,
   User,
-  LogOut
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+  LogOut,
+  MessageSquare,
+  MessageCircle,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 interface SidebarProps {
   brandId: string;
   currentPath: string;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
-const navigationGroups = [
+const getNavigationGroups = (t: (key: string) => string) => [
   {
-    label: 'OVERVIEW',
+    label: "Overview",
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/brand/:id', key: 'dashboard' }
-    ]
+      {
+        icon: LayoutDashboard,
+        label: t("sidebar.navigation.dashboard"),
+        path: "/brand/:id",
+        key: "dashboard",
+      },
+    ],
   },
   {
-    label: 'FINANCIAL',
+    label: "Financial",
     items: [
-      { icon: DollarSign, label: 'Revenues', path: '/brand/:id/revenues', key: 'revenues' },
-      { icon: FileText, label: 'Costs', path: '/brand/:id/costs', key: 'costs' },
-      { icon: Wallet, label: 'Wallet', path: '/brand/:id/wallet', key: 'wallet' },
-      { icon: ArrowLeftRight, label: 'Transfers', path: '/brand/:id/transfers', key: 'transfers' },
-      { icon: BarChart3, label: 'Receivables/Payables', path: '/brand/:id/receivables-payables', key: 'receivables' }
-    ]
+      {
+        icon: DollarSign,
+        label: t("sidebar.navigation.revenues"),
+        path: "/brand/:id/revenues",
+        key: "revenues",
+      },
+      {
+        icon: FileText,
+        label: t("sidebar.navigation.costs"),
+        path: "/brand/:id/costs",
+        key: "costs",
+      },
+      {
+        icon: BarChart3,
+        label: t("sidebar.navigation.receivablesPayables"),
+        path: "/brand/:id/receivables-payables",
+        key: "receivables",
+      },
+      {
+        icon: Wallet,
+        label: t("sidebar.navigation.wallet"),
+        path: "/brand/:id/wallet",
+        key: "wallet",
+      },
+      {
+        icon: ArrowLeftRight,
+        label: t("sidebar.navigation.transfers"),
+        path: "/brand/:id/transfers",
+        key: "transfers",
+      },
+    ],
   },
   {
-    label: 'OPERATIONS',
+    label: "Operations",
     items: [
-      { icon: Target, label: 'Project Targets', path: '/brand/:id/project-targets', key: 'targets' },
-      { icon: Package, label: 'Inventory', path: '/brand/:id/inventory', key: 'inventory' },
-      { icon: Trophy, label: 'Best Sellers', path: '/brand/:id/best-sellers', key: 'bestsellers' }
-    ]
+      {
+        icon: Package,
+        label: t("sidebar.navigation.inventory"),
+        path: "/brand/:id/inventory",
+        key: "inventory",
+      },
+      {
+        icon: ShoppingCart,
+        label: t("sidebar.navigation.orders"),
+        path: "/brand/:id/orders",
+        key: "orders",
+      },
+    ],
   },
   {
-    label: 'CREATIVE',
+    label: "Management",
     items: [
-      { icon: Palette, label: 'Creative Drafts', path: '/brand/:id/creative-drafts', key: 'creative' }
-    ]
+      {
+        icon: Target,
+        label: t("sidebar.navigation.tasks"),
+        path: "/brand/:id/tasks",
+        key: "tasks",
+      },
+      {
+        icon: MessageSquare,
+        label: "Support Center",
+        path: null,
+        key: "support-center",
+        isGroup: true,
+        children: [
+          {
+            icon: MessageSquare,
+            label: "Support Requests",
+            path: "/brand/:id/support",
+            key: "support",
+          },
+          {
+            icon: MessageCircle,
+            label: "My Tickets",
+            path: "/brand/:id/my-tickets",
+            key: "my-tickets",
+          },
+        ],
+      },
+    ],
   },
   {
-    label: 'INTEGRATIONS',
+    label: "Analytics",
     items: [
-      { icon: ShoppingCart, label: 'Shopify Integration', path: '/brand/:id/shopify-integration', key: 'shopify' }
-    ]
+      {
+        icon: BarChart3,
+        label: t("sidebar.navigation.reports"),
+        path: "/brand/:id/reports",
+        key: "reports",
+      },
+    ],
   },
   {
-    label: 'MANAGEMENT',
+    label: "Settings",
     items: [
-      { icon: Target, label: 'Tasks', path: '/brand/:id/tasks', key: 'tasks' },
-      { icon: Users, label: 'Team', path: '/brand/:id/team', key: 'team' }
-    ]
+      {
+        icon: Settings,
+        label: t("sidebar.navigation.settings"),
+        path: "/brand/:id/settings",
+        key: "settings",
+      },
+    ],
   },
-  {
-    label: 'ANALYSIS',
-    items: [
-      { icon: BarChart3, label: 'Reports', path: '/brand/:id/reports', key: 'reports' }
-    ]
-  },
-  {
-    label: 'SETTINGS',
-    items: [
-      { icon: Settings, label: 'Settings', path: '/brand/:id/settings', key: 'settings' }
-    ]
-  }
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ brandId, currentPath }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  brandId,
+  currentPath,
+  onCollapseChange,
+}) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set()
+  );
+  const { logout, user } = useAuth();
+  const { t, isRTL } = useLanguage();
+  const navigate = useNavigate();
 
-  const isActive = (itemKey: string) => {
-    return currentPath.includes(itemKey) || (itemKey === 'dashboard' && currentPath === `/brand/${brandId}`);
-  };
+  const isActive = useCallback(
+    (itemKey: string) => {
+      return (
+        currentPath.includes(itemKey) ||
+        (itemKey === "dashboard" && currentPath === `/brand/${brandId}`)
+      );
+    },
+    [currentPath, brandId]
+  );
 
-  const getItemPath = (path: string) => {
-    return path.replace(':id', brandId);
-  };
+  const getItemPath = useCallback(
+    (path: string) => {
+      return path.replace(":id", brandId);
+    },
+    [brandId]
+  );
+
+  const handleNavigation = useCallback(
+    (path: string) => {
+      navigate(getItemPath(path));
+    },
+    [navigate, getItemPath]
+  );
+
+  const toggleSection = useCallback((sectionKey: string) => {
+    setCollapsedSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionKey)) {
+        newSet.delete(sectionKey);
+      } else {
+        newSet.add(sectionKey);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const isSectionCollapsed = useCallback(
+    (sectionKey: string) => {
+      return collapsedSections.has(sectionKey);
+    },
+    [collapsedSections]
+  );
+
+  const navigationGroups = getNavigationGroups(t);
 
   return (
     <motion.div
       className={cn(
-        "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-40 flex flex-col",
-        isCollapsed ? "w-16" : "w-64"
+        "fixed top-0 h-screen bg-[#106df9] border-r border-[#106df9] z-40 flex flex-col",
+        isCollapsed ? "w-16" : "w-64",
+        isRTL ? "right-0" : "left-0"
       )}
       animate={{ width: isCollapsed ? 64 : 256 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-white/20 flex items-center justify-between">
         <AnimatePresence>
           {!isCollapsed && (
             <motion.div
@@ -118,33 +235,38 @@ const Sidebar: React.FC<SidebarProps> = ({ brandId, currentPath }) => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-[#106df9] font-bold text-sm">P</span>
               </div>
-              <span className="font-bold text-gray-900">Masareefy</span>
+              <span className="text-white font-semibold text-lg">
+                {user?.companyName || "Pulse"}
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1 h-8 w-8"
+          onClick={() => {
+            setIsCollapsed(!isCollapsed);
+            onCollapseChange?.(!isCollapsed);
+          }}
+          className="text-white hover:bg-white/10"
         >
-          <motion.div
-            animate={{ rotate: isCollapsed ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </motion.div>
+          <ChevronLeft
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isCollapsed && "rotate-180"
+            )}
+          />
         </Button>
       </div>
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4">
         {navigationGroups.map((group, groupIndex) => (
-          <div key={group.label} className="mb-6">
+          <div key={group.label} className="mb-4">
             <AnimatePresence>
               {!isCollapsed && (
                 <motion.div
@@ -154,72 +276,127 @@ const Sidebar: React.FC<SidebarProps> = ({ brandId, currentPath }) => {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="text-xs font-medium text-white/60 uppercase tracking-wider">
                     {group.label}
                   </span>
                 </motion.div>
               )}
             </AnimatePresence>
-            
+
             <div className="space-y-1 px-2">
               {group.items.map((item, itemIndex) => {
                 const active = isActive(item.key);
-                return (
-                  <motion.a
-                    key={item.key}
-                    href={getItemPath(item.path)}
-                    className={cn(
-                      "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group relative",
-                      active 
-                        ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    )}
-                    onMouseEnter={() => setHoveredItem(item.key)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <item.icon className={cn(
-                      "flex-shrink-0 h-5 w-5",
-                      active ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
-                    )} />
-                    
-                    <AnimatePresence>
-                      {!isCollapsed && (
-                        <motion.span
-                          className="ml-3"
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: "auto" }}
-                          exit={{ opacity: 0, width: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
+                const isGroupItem = item.isGroup;
+                const isCollapsedSection = isSectionCollapsed(item.key);
 
-                    {/* Tooltip for collapsed state */}
-                    {isCollapsed && hoveredItem === item.key && (
+                if (isGroupItem) {
+                  return (
+                    <div key={item.key}>
+                      {/* Group Header */}
                       <motion.div
-                        className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-50"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${"text-white hover:bg-white/10"}`}
+                        onClick={() => toggleSection(item.key)}
+                        whileHover={{ x: 1 }}
+                        whileTap={{ scale: 0.99 }}
                       >
-                        {item.label}
-                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 border-r-4 border-r-gray-900 border-y-4 border-y-transparent" />
+                        <div className="flex items-center space-x-3">
+                          <item.icon className="h-5 w-5" />
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                        <AnimatePresence>
+                          {!isCollapsed && (
+                            <motion.div
+                              animate={{ rotate: isCollapsedSection ? 0 : 90 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.div>
-                    )}
 
-                    {/* Active indicator */}
+                      {/* Group Children */}
+                      <AnimatePresence>
+                        {!isCollapsedSection &&
+                          !isCollapsed &&
+                          item.children && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="ml-6 space-y-1 mt-1">
+                                {item.children.map((child) => {
+                                  const childActive = isActive(child.key);
+                                  return (
+                                    <motion.div
+                                      key={child.key}
+                                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
+                                        childActive
+                                          ? "bg-white text-[#106df9] shadow-md"
+                                          : "text-white hover:bg-white/10"
+                                      }`}
+                                      onClick={() =>
+                                        handleNavigation(child.path)
+                                      }
+                                      whileHover={{ x: 1 }}
+                                      whileTap={{ scale: 0.99 }}
+                                    >
+                                      <child.icon className="h-4 w-4" />
+                                      <span className="font-medium text-sm">
+                                        {child.label}
+                                      </span>
+                                      {childActive && (
+                                        <motion.div
+                                          className="absolute right-2 w-2 h-2 bg-[#106df9] rounded-full"
+                                          layoutId="activeIndicator"
+                                          transition={{
+                                            type: "spring",
+                                            stiffness: 400,
+                                            damping: 25,
+                                          }}
+                                        />
+                                      )}
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+
+                // Regular navigation item
+                return (
+                  <motion.div
+                    key={item.key}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
+                      active
+                        ? "bg-white text-[#106df9] shadow-md"
+                        : "text-white hover:bg-white/10"
+                    }`}
+                    onClick={() => handleNavigation(item.path)}
+                    whileHover={{ x: 1 }}
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span className="font-medium">{item.label}</span>
                     {active && (
                       <motion.div
-                        className="absolute right-0 top-0 bottom-0 w-1 bg-blue-600 rounded-l"
+                        className="absolute right-2 w-2 h-2 bg-[#106df9] rounded-full"
                         layoutId="activeIndicator"
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 25,
+                        }}
                       />
                     )}
-                  </motion.a>
+                  </motion.div>
                 );
               })}
             </div>
@@ -227,8 +404,24 @@ const Sidebar: React.FC<SidebarProps> = ({ brandId, currentPath }) => {
         ))}
       </div>
 
+      {/* Language Switcher */}
+      <div className="px-4 py-2 border-t border-white/20">
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <LanguageSwitcher variant="sidebar" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* User Profile */}
-      <div className="border-t border-gray-200 p-4">
+      <div className="border-t border-white/20 p-4">
         <AnimatePresence>
           {!isCollapsed ? (
             <motion.div
@@ -238,24 +431,29 @@ const Sidebar: React.FC<SidebarProps> = ({ brandId, currentPath }) => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-blue-600" />
+              <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/10 cursor-pointer">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
-                  <p className="text-xs text-gray-500 truncate">john@example.com</p>
+                  <p className="text-sm font-medium text-white truncate">
+                    {user?.name || "User"}
+                  </p>
+                  <p className="text-xs text-white/60 truncate">
+                    {user?.email}
+                  </p>
                 </div>
-                <Bell className="h-4 w-4 text-gray-400" />
+                <Bell className="h-4 w-4 text-white/60" />
               </div>
-              
+
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="w-full justify-start text-white hover:text-white hover:bg-white/10"
+                onClick={logout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                {t("sidebar.user.signOut")}
               </Button>
             </motion.div>
           ) : (
@@ -266,10 +464,19 @@ const Sidebar: React.FC<SidebarProps> = ({ brandId, currentPath }) => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Button variant="ghost" size="sm" className="p-2 h-8 w-8">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-2 h-8 w-8 text-white hover:bg-white/10"
+              >
                 <Bell className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-2 h-8 w-8 text-red-600">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-2 h-8 w-8 text-white hover:bg-white/10"
+                onClick={logout}
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </motion.div>

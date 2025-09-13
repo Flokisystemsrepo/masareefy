@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile API Test</title>
+</head>
+
+<body>
+    <h1>Profile API Test</h1>
+    <div id="result"></div>
+
+    <script>
+        async function testProfileAPI() {
+            const resultDiv = document.getElementById("result");
+
+            try {
+                // Get token from localStorage
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    resultDiv.innerHTML =
+                        '<p style="color: red;">No token found in localStorage</p>';
+                    return;
+                }
+
+                resultDiv.innerHTML = "<p>Testing profile API...</p>";
+
+                const response = await fetch(
+                    "http://localhost:3001/api/auth/profile", {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <h3>Response Data:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Run test when page loads
+        testProfileAPI();
+    </script>
+</body>
+
+</html>
