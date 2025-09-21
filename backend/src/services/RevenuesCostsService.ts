@@ -172,23 +172,47 @@ export class RevenuesCostsService {
         throw new Error("Revenue not found");
       }
 
-      const updatedRevenue = await prisma.revenue.update({
-        where: { id },
-        data,
-        include: {
-          brand: true,
-          creator: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
+      // Check if revenue is from a converted receivable
+      if (revenue.sourceReceivableId) {
+        // Use sync method to update both revenue and receivable
+        const { ReceivablesPayablesService } = await import(
+          "./ReceivablesPayablesService"
+        );
+        await ReceivablesPayablesService.syncRevenueWithReceivable(id, data);
+        return await prisma.revenue.findFirst({
+          where: { id, brandId },
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        // Regular update for non-converted revenues
+        const updatedRevenue = await prisma.revenue.update({
+          where: { id },
+          data,
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        });
 
-      return updatedRevenue;
+        return updatedRevenue;
+      }
     } catch (error) {
       throw error;
     }
@@ -381,23 +405,47 @@ export class RevenuesCostsService {
         throw new Error("Cost not found");
       }
 
-      const updatedCost = await prisma.cost.update({
-        where: { id },
-        data,
-        include: {
-          brand: true,
-          creator: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
+      // Check if cost is from a converted payable
+      if (cost.sourcePayableId) {
+        // Use sync method to update both cost and payable
+        const { ReceivablesPayablesService } = await import(
+          "./ReceivablesPayablesService"
+        );
+        await ReceivablesPayablesService.syncCostWithPayable(id, data);
+        return await prisma.cost.findFirst({
+          where: { id, brandId },
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        // Regular update for non-converted costs
+        const updatedCost = await prisma.cost.update({
+          where: { id },
+          data,
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        });
 
-      return updatedCost;
+        return updatedCost;
+      }
     } catch (error) {
       throw error;
     }

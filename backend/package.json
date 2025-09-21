@@ -15,6 +15,7 @@
         "db:studio": "prisma studio",
         "db:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
         "check:subscriptions": "node scripts/check-subscriptions.js",
+        "process:due-items": "node scripts/process-due-items.js",
         "seed:plans": "node seed-plans.js"
     },
     "keywords": [
@@ -30,8 +31,10 @@
         "@sendgrid/mail": "^8.0.1",
         "@types/bcrypt": "^6.0.0",
         "@types/mongoose": "^5.11.96",
+        "@types/node-cron": "^3.0.11",
         "@types/uuid": "^10.0.0",
         "aws-sdk": "^2.1490.0",
+        "axios": "^1.12.2",
         "bcrypt": "^6.0.0",
         "bcryptjs": "^2.4.3",
         "compression": "^1.7.4",
@@ -47,6 +50,7 @@
         "mongoose": "^8.18.0",
         "morgan": "^1.10.0",
         "multer": "^1.4.5-lts.1",
+        "node-cron": "^4.2.1",
         "redis": "^4.6.10",
         "socket.io": "^4.7.4",
         "stripe": "^14.7.0",

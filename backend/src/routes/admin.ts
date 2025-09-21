@@ -124,4 +124,50 @@ router.get(
   adminController.getSecurityOverview.bind(adminController)
 );
 
+// Enhanced User Management Routes
+router.get(
+  "/admin/users/:id",
+  adminAuth,
+  requirePermission("users.read"),
+  adminController.getUserById.bind(adminController)
+);
+
+// Enhanced Brand Management Routes
+router.get(
+  "/admin/brands/:id",
+  adminAuth,
+  requirePermission("brands.read"),
+  adminController.getBrandById.bind(adminController)
+);
+
+router.put(
+  "/admin/brands/:id/subscription",
+  adminAuth,
+  requirePermission("brands.write"),
+  adminController.updateBrandSubscription.bind(adminController)
+);
+
+router.get(
+  "/admin/brands/:id/financial",
+  adminAuth,
+  requirePermission("brands.read"),
+  adminController.getBrandFinancialOverview.bind(adminController)
+);
+
+// System Statistics Routes
+router.get(
+  "/admin/system/statistics",
+  adminAuth,
+  requirePermission("system.read"),
+  adminController.getSystemStatistics.bind(adminController)
+);
+
+// Subscription Plans Routes
+router.get(
+  "/admin/plans",
+  adminAuth,
+  requirePermission("subscriptions.read"),
+  adminController.getSubscriptionPlans.bind(adminController)
+);
+
 export default router;

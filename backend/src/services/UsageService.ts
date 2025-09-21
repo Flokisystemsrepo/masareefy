@@ -1,4 +1,4 @@
-import { prisma } from '../config/database';
+import { prisma } from "../config/database";
 
 interface UsageData {
   current: number;
@@ -22,27 +22,29 @@ interface ResourceLimitCheck {
 
 export class UsageService {
   // Get subscription plan limits
-  private static getResourceLimits(planName: string): { [key: string]: number } {
+  private static getResourceLimits(planName: string): {
+    [key: string]: number;
+  } {
     const limits: { [planName: string]: { [resource: string]: number } } = {
-      'free': {
+      free: {
         inventory: 10,
         team_members: 1,
         wallets: 2,
         transactions: -1, // unlimited
       },
-      'starter': {
+      starter: {
         inventory: 100,
         team_members: 3,
         wallets: 5,
         transactions: -1, // unlimited
       },
-      'professional': {
+      professional: {
         inventory: -1, // unlimited
         team_members: -1, // unlimited
         wallets: -1, // unlimited
         transactions: -1, // unlimited
       },
-      'enterprise': {
+      enterprise: {
         inventory: -1, // unlimited
         team_members: -1, // unlimited
         wallets: -1, // unlimited
@@ -50,30 +52,25 @@ export class UsageService {
       },
     };
 
-    return limits[planName.toLowerCase()] || limits['starter'];
+    return limits[planName.toLowerCase()] || limits["starter"];
   }
 
   // Get actual counts from database
-  private static async getActualCounts(brandId: string): Promise<{ [key: string]: number }> {
+  private static async getActualCounts(
+    brandId: string
+  ): Promise<{ [key: string]: number }> {
     try {
-      const [
-        inventoryCount,
-        teamMemberCount,
-        walletCount,
-        transactionCount
-      ] = await Promise.all([
-        prisma.inventory.count({ where: { brandId } }),
-        prisma.teamMembers.count({ where: { brandId } }),
-        prisma.wallets.count({ where: { brandId } }),
-        prisma.walletTransactions.count({
-          where: {
-            OR: [
-              { fromWallet: { brandId } },
-              { toWallet: { brandId } }
-            ]
-          }
-        })
-      ]);
+      const [inventoryCount, teamMemberCount, walletCount, transactionCount] =
+        await Promise.all([
+          prisma.inventory.count({ where: { brandId } }),
+          prisma.teamMember.count({ where: { brandId } }),
+          prisma.wallet.count({ where: { brandId } }),
+          prisma.walletTransaction.count({
+            where: {
+              OR: [{ fromWallet: { brandId } }, { toWallet: { brandId } }],
+            },
+          }),
+        ]);
 
       return {
         inventory: inventoryCount,
@@ -82,7 +79,7 @@ export class UsageService {
         transactions: transactionCount,
       };
     } catch (error) {
-      console.error('Error getting actual counts:', error);
+      console.error("Error getting actual counts:", error);
       return {
         inventory: 0,
         team_members: 0,
@@ -95,31 +92,38 @@ export class UsageService {
   // Get user's subscription plan
   private static async getUserPlan(brandId: string): Promise<string> {
     try {
-      const brand = await prisma.brands.findUnique({
+      const brand = await prisma.brand.findUnique({
         where: { id: brandId },
         include: {
-          subscriptions: {
-            where: { status: 'active' },
-            include: { plan: true },
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-          }
-        }
+          user: {
+            include: {
+              subscriptions: {
+                where: { status: "active" },
+                include: { plan: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
+            },
+          },
+        },
       });
 
-      if (brand?.subscriptions?.[0]?.plan?.name) {
-        return brand.subscriptions[0].plan.name;
+      if (brand?.user?.subscriptions?.[0]?.plan?.name) {
+        return brand.user.subscriptions[0].plan.name;
       }
 
-      return 'starter'; // default plan
+      return "starter"; // default plan
     } catch (error) {
-      console.error('Error getting user plan:', error);
-      return 'starter';
+      console.error("Error getting user plan:", error);
+      return "starter";
     }
   }
 
   // Get usage for specific resource
-  static async getUsage(resourceType: string, brandId: string): Promise<UsageData> {
+  static async getUsage(
+    resourceType: string,
+    brandId: string
+  ): Promise<UsageData> {
     const planName = await this.getUserPlan(brandId);
     const limits = this.getResourceLimits(planName);
     const actualCounts = await this.getActualCounts(brandId);
@@ -152,18 +156,23 @@ export class UsageService {
     };
 
     return {
-      inventory: createUsageData('inventory'),
-      team_members: createUsageData('team_members'),
-      wallets: createUsageData('wallets'),
-      transactions: createUsageData('transactions'),
+      inventory: createUsageData("inventory"),
+      team_members: createUsageData("team_members"),
+      wallets: createUsageData("wallets"),
+      transactions: createUsageData("transactions"),
     };
   }
 
   // Check if user can add resource
-  static async checkResourceLimit(resourceType: string, brandId: string): Promise<ResourceLimitCheck> {
+  static async checkResourceLimit(
+    resourceType: string,
+    brandId: string
+  ): Promise<ResourceLimitCheck> {
     const usage = await this.getUsage(resourceType, brandId);
     const canAdd = usage.isUnlimited || usage.current < usage.limit;
-    const remaining = usage.isUnlimited ? 999999 : Math.max(0, usage.limit - usage.current);
+    const remaining = usage.isUnlimited
+      ? 999999
+      : Math.max(0, usage.limit - usage.current);
 
     return {
       canAdd,
@@ -178,7 +187,7 @@ export class UsageService {
     // For now, this is handled by direct database queries
     // In a real implementation, you might update cached usage counts here
     console.log(`Syncing ${resourceType} usage for brand ${brandId}`);
-    
+
     // Force recalculation by getting fresh data
     await this.getUsage(resourceType, brandId);
   }

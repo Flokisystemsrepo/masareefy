@@ -7,6 +7,7 @@ import {
   MultiStepRegistrationDto,
 } from "@/types";
 import { hashPassword, generateInvoiceNumber } from "@/utils/helpers";
+import SMSService from "./SMSService";
 
 export class RegistrationService {
   // Step 1: Validate plan selection
@@ -115,7 +116,172 @@ export class RegistrationService {
     }
   }
 
-  // Step 4: Complete registration with payment
+  // Step 4: Send OTP for phone verification
+  static async sendPhoneVerificationOTP(phone: string) {
+    try {
+      // Validate phone number format
+      if (!/^(010|011|012|015)\d{8}$/.test(phone)) {
+        throw new Error("Invalid Egyptian mobile number format");
+      }
+
+      // Check if phone is already verified
+      const existingVerification = await prisma.phoneVerification.findFirst({
+        where: {
+          phone,
+          verified: true,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      });
+
+      if (existingVerification) {
+        return {
+          success: true,
+          message: "Phone number already verified",
+          data: { phone, alreadyVerified: true },
+        };
+      }
+
+      // Generate OTP code
+      const otpCode = SMSService.generateOTPCode();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+
+      // Delete any existing unverified OTPs for this phone
+      await prisma.phoneVerification.deleteMany({
+        where: {
+          phone,
+          verified: false,
+        },
+      });
+
+      // Create new OTP record
+      const phoneVerification = await prisma.phoneVerification.create({
+        data: {
+          phone,
+          otpCode,
+          expiresAt,
+        },
+      });
+
+      console.log("💾 Created OTP record:", {
+        id: phoneVerification.id,
+        phone: phoneVerification.phone,
+        otpCode: phoneVerification.otpCode,
+        expiresAt: phoneVerification.expiresAt,
+      });
+
+      // Send SMS
+      const smsResult = await SMSService.sendOTP({
+        phone,
+        otpCode,
+        appName: "Pulse Robot",
+      });
+
+      console.log("📤 SMS Result:", smsResult);
+
+      if (!smsResult.status) {
+        // Even if SMS API reports failure, keep the OTP record since SMS might still be sent
+        // This handles cases where Floki SMS API returns errors but SMS is actually delivered
+        console.log(
+          "⚠️ SMS API reported failure but keeping OTP record for verification:",
+          {
+            phone,
+            otpCode,
+            smsError: smsResult.message,
+          }
+        );
+
+        // Don't delete the OTP record - let user try to verify
+        // If SMS was actually sent, verification will work
+        // If SMS wasn't sent, verification will fail and user can request resend
+      }
+
+      return {
+        success: true,
+        message: smsResult.status
+          ? "OTP sent successfully"
+          : "OTP created - please check your phone for the verification code",
+        data: {
+          phone,
+          expiresAt,
+          smsStatus: smsResult.status,
+          smsMessage: smsResult.message,
+        },
+      };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "Failed to send OTP"
+      );
+    }
+  }
+
+  // Step 5: Verify phone number with OTP
+  static async verifyPhoneNumber(phone: string, otpCode: string) {
+    try {
+      console.log("🔍 Verifying OTP:", { phone, otpCode });
+
+      // Find the OTP record
+      const phoneVerification = await prisma.phoneVerification.findFirst({
+        where: {
+          phone,
+          otpCode,
+          verified: false,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      console.log("📱 Found OTP record:", phoneVerification);
+
+      if (!phoneVerification) {
+        // Let's also check what OTP records exist for this phone
+        const allRecords = await prisma.phoneVerification.findMany({
+          where: { phone },
+          orderBy: { createdAt: "desc" },
+        });
+        console.log("📋 All OTP records for phone:", allRecords);
+        throw new Error("Invalid OTP code or phone number");
+      }
+
+      // Check if OTP is expired
+      if (new Date() > phoneVerification.expiresAt) {
+        throw new Error("OTP code has expired. Please request a new one.");
+      }
+
+      // Check attempt limit
+      if (phoneVerification.attempts >= 3) {
+        throw new Error(
+          "Maximum verification attempts exceeded. Please request a new OTP."
+        );
+      }
+
+      // Mark as verified
+      await prisma.phoneVerification.update({
+        where: { id: phoneVerification.id },
+        data: {
+          verified: true,
+          attempts: phoneVerification.attempts + 1,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Phone number verified successfully",
+        data: {
+          phone,
+          verified: true,
+        },
+      };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "Failed to verify phone number"
+      );
+    }
+  }
+
+  // Step 6: Complete registration with payment (now requires phone verification)
   static async completeRegistration(data: Step4PaymentDto) {
     try {
       // Validate all data
@@ -145,16 +311,36 @@ export class RegistrationService {
         throw new Error("Brand name already exists");
       }
 
+      // Check if phone number is verified
+      const phoneVerification = await prisma.phoneVerification.findFirst({
+        where: {
+          phone: data.phoneNumber,
+          verified: true,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      });
+
+      if (!phoneVerification) {
+        throw new Error(
+          "Phone number must be verified before completing registration"
+        );
+      }
+
       // Start transaction
       const result = await prisma.$transaction(async (tx) => {
         // 1. Create user
-        const hashedPassword = await hashPassword(data.password);
+        const hashedPassword = data.isGoogleUser
+          ? null
+          : await hashPassword(data.password);
         const user = await tx.user.create({
           data: {
             email: data.email,
             passwordHash: hashedPassword,
             firstName: data.firstName,
             lastName: data.lastName,
+            phoneNumber: data.phoneNumber,
             emailVerified: false,
           },
         });
@@ -179,19 +365,24 @@ export class RegistrationService {
           },
         });
 
-        // 4. Create subscription
-        const trialEnd = new Date();
-        trialEnd.setDate(trialEnd.getDate() + plan.trialDays);
+        // 4. Create subscription with proper trial logic
+        const now = new Date();
+        const isPaidPlan = plan.priceMonthly > 0; // Growth and Scale plans
+        const trialDays = isPaidPlan ? plan.trialDays : 0;
+        const trialEnd =
+          trialDays > 0
+            ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+            : null;
 
         const subscription = await tx.subscription.create({
           data: {
             userId: user.id,
             planId: data.planId,
-            status: "trialing",
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: trialEnd,
-            trialStart: new Date(),
-            trialEnd,
+            status: isPaidPlan ? "trialing" : "active", // Free plan is immediately active
+            currentPeriodStart: now,
+            currentPeriodEnd: isPaidPlan ? trialEnd : null,
+            trialStart: isPaidPlan ? now : null,
+            trialEnd: trialEnd,
             cancelAtPeriodEnd: false,
             paymentMethod: data.paymentMethod || "mock",
           },
@@ -200,19 +391,22 @@ export class RegistrationService {
           },
         });
 
-        // 5. Create initial invoice
-        const invoice = await tx.invoice.create({
-          data: {
-            subscriptionId: subscription.id,
-            userId: user.id,
-            amount: plan.priceMonthly,
-            currency: "EGP",
-            status: "pending",
-            invoiceNumber: generateInvoiceNumber(),
-            dueDate: trialEnd,
-            description: `Initial subscription to ${plan.name} plan`,
-          },
-        });
+        // 5. Create initial invoice (only for paid plans)
+        let invoice = null;
+        if (isPaidPlan) {
+          invoice = await tx.invoice.create({
+            data: {
+              subscriptionId: subscription.id,
+              userId: user.id,
+              amount: plan.priceMonthly,
+              currency: "EGP",
+              status: "pending",
+              invoiceNumber: generateInvoiceNumber(),
+              dueDate: trialEnd,
+              description: `Initial subscription to ${plan.name} plan`,
+            },
+          });
+        }
 
         return {
           user: {

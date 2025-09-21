@@ -22,17 +22,20 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import {
   revenuesAPI,
   costsAPI,
@@ -105,12 +108,29 @@ const FinancialReport: React.FC<FinancialReportProps> = ({
   });
   const [showDetails, setShowDetails] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
 
   const { toast } = useToast();
 
   useEffect(() => {
     loadFinancialData();
   }, [dateRange]);
+
+  useEffect(() => {
+    setCustomDateRange({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+  }, [dateRange]);
+
+  const handleDateRangeChange = () => {
+    setShowDateFilter(false);
+    loadFinancialData();
+  };
 
   const loadFinancialData = async () => {
     try {
@@ -120,29 +140,36 @@ const FinancialReport: React.FC<FinancialReportProps> = ({
       const [revenues, costs, receivables, payables, wallets] =
         await Promise.all([
           revenuesAPI.getAll({
-            dateFrom: dateRange.startDate,
-            dateTo: dateRange.endDate,
+            startDate: customDateRange.startDate,
+            endDate: customDateRange.endDate,
           }),
           costsAPI.getAll({
-            dateFrom: dateRange.startDate,
-            dateTo: dateRange.endDate,
+            startDate: customDateRange.startDate,
+            endDate: customDateRange.endDate,
           }),
           receivablesAPI.getAll({
-            dateFrom: dateRange.startDate,
-            dateTo: dateRange.endDate,
+            startDate: customDateRange.startDate,
+            endDate: customDateRange.endDate,
           }),
           payablesAPI.getAll({
-            dateFrom: dateRange.startDate,
-            dateTo: dateRange.endDate,
+            startDate: customDateRange.startDate,
+            endDate: customDateRange.endDate,
           }),
           walletAPI.getAll(),
         ]);
 
-      // Extract data arrays
+      // Debug: Log the data structure
+      console.log("Financial Report - Revenues data:", revenues);
+      console.log("Financial Report - Costs data:", costs);
+      console.log("Financial Report - Receivables data:", receivables);
+      console.log("Financial Report - Payables data:", payables);
+      console.log("Financial Report - Wallets data:", wallets);
+
+      // Extract data arrays - handle paginated response structure
       const revenuesData = revenues?.revenues || revenues || [];
       const costsData = costs?.costs || costs || [];
-      const receivablesData = Array.isArray(receivables) ? receivables : [];
-      const payablesData = Array.isArray(payables) ? payables : [];
+      const receivablesData = receivables?.receivables || receivables || [];
+      const payablesData = payables?.payables || payables || [];
       const walletsData = Array.isArray(wallets) ? wallets : [];
 
       // Calculate metrics
@@ -328,11 +355,15 @@ const FinancialReport: React.FC<FinancialReportProps> = ({
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Financial Report</h1>
           <p className="text-gray-600">
-            {new Date(dateRange.startDate).toLocaleDateString()} -{" "}
-            {new Date(dateRange.endDate).toLocaleDateString()}
+            {new Date(customDateRange.startDate).toLocaleDateString()} -{" "}
+            {new Date(customDateRange.endDate).toLocaleDateString()}
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowDateFilter(true)}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Custom Date Range
+          </Button>
           <Button onClick={() => onGenerateReport("financial", "pdf")}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
@@ -687,6 +718,66 @@ const FinancialReport: React.FC<FinancialReportProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Date Range Filter Modal */}
+      <Dialog open={showDateFilter} onOpenChange={setShowDateFilter}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Custom Date Range
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={customDateRange.startDate}
+                onChange={(e) =>
+                  setCustomDateRange({
+                    ...customDateRange,
+                    startDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={customDateRange.endDate}
+                onChange={(e) =>
+                  setCustomDateRange({
+                    ...customDateRange,
+                    endDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDateFilter(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDateRangeChange}
+                className="flex-1"
+                disabled={
+                  !customDateRange.startDate || !customDateRange.endDate
+                }
+              >
+                Apply Filter
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

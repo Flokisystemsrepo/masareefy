@@ -112,29 +112,54 @@ export const UpgradePromptModal: React.FC<UpgradePromptModalProps> = ({
           {/* Upgrade Benefits */}
           <div className="space-y-3">
             <h4 className="font-medium text-sm">
-              Upgrade to Professional to get:
+              {currentPlan.toLowerCase() === "free"
+                ? "Upgrade to Growth Plan to get:"
+                : "Upgrade to Scale Plan to get:"}
             </h4>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
                 {resourceInfo.feature}
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                Shopify integration
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                Bosta integration
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                Business insights & analytics
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                Priority support
-              </div>
+              {currentPlan.toLowerCase() === "free" ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Shopify integration
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Bosta integration
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Shipblu integration
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Transfers & Receivables
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Unlimited wallets
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Unlimited inventory
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Smart Insights
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Priority support
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -142,10 +167,14 @@ export const UpgradePromptModal: React.FC<UpgradePromptModalProps> = ({
           <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
             <CardContent className="p-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">$499</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {currentPlan.toLowerCase() === "free" ? "299 EGP" : "399 EGP"}
+                </div>
                 <div className="text-sm text-gray-600">per month</div>
                 <div className="text-xs text-green-600 mt-1">
-                  Save 20% with annual billing
+                  {currentPlan.toLowerCase() === "free"
+                    ? "Growth Plan - All integrations included"
+                    : "Scale Plan - Unlimited everything"}
                 </div>
               </div>
             </CardContent>

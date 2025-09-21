@@ -324,18 +324,8 @@ const BostaImportModal: React.FC<BostaImportModalProps> = ({
   const handleImport = async () => {
     if (!importData || selectedRows.size === 0) return;
 
-    // Debug logging
-    console.log("Bosta Import Debug Info:", {
-      inventoryCount,
-      inventoryLimit,
-      selectedRowsSize: selectedRows.size,
-      remainingSlots,
-      wouldExceed: inventoryCount + selectedRows.size > inventoryLimit,
-    });
-
     // Check if already at or over limit
     if (inventoryLimit !== -1 && inventoryCount >= inventoryLimit) {
-      console.log("BLOCKING: Already at or over limit");
       toast({
         title: "Limit Reached",
         description: `You have reached your limit of ${inventoryLimit} products. Please upgrade your plan to add more products.`,
@@ -349,12 +339,9 @@ const BostaImportModal: React.FC<BostaImportModalProps> = ({
       inventoryLimit !== -1 &&
       inventoryCount + selectedRows.size > inventoryLimit
     ) {
-      console.log("BLOCKING: Import would exceed limit");
       setShowLimitExceededModal(true);
       return;
     }
-
-    console.log("PROCEEDING: Import allowed");
 
     setIsImporting(true);
     try {

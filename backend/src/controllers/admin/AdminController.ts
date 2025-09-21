@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/database";
+import { AdminService } from "../../services/AdminService";
 
 export class AdminController {
   async getOverview(req: Request, res: Response): Promise<void> {
@@ -106,7 +107,15 @@ export class AdminController {
   async updateUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { firstName, lastName, email } = req.body;
+      const { firstName, lastName, email, emailVerified } = req.body;
+
+      console.log("Updating user:", {
+        id,
+        firstName,
+        lastName,
+        email,
+        emailVerified,
+      });
 
       // Validate required fields
       if (!firstName || !lastName || !email) {
@@ -133,23 +142,15 @@ export class AdminController {
         return;
       }
 
-      // Update user
-      const updatedUser = await prisma.user.update({
-        where: { id },
-        data: {
-          firstName,
-          lastName,
-          email,
-        },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          emailVerified: true,
-          createdAt: true,
-        },
+      // Update user using AdminService
+      const updatedUser = await AdminService.updateUser(id, {
+        firstName,
+        lastName,
+        email,
+        emailVerified,
       });
+
+      console.log("User updated successfully:", updatedUser);
 
       res.json({
         success: true,
@@ -254,6 +255,7 @@ export class AdminController {
               select: {
                 id: true,
                 name: true,
+                settings: true,
               },
             },
           },
@@ -1349,5 +1351,181 @@ export class AdminController {
       "Berlin, DE",
     ];
     return locations[Math.floor(Math.random() * locations.length)];
+  }
+
+  // ===== ENHANCED USER MANAGEMENT =====
+
+  async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = await AdminService.getUserById(id);
+
+      res.json({
+        success: true,
+        data: user,
+      });
+    } catch (error: any) {
+      console.error("Get user by ID error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Internal server error.",
+      });
+    }
+  }
+
+  // ===== ENHANCED BRAND MANAGEMENT =====
+
+  async getBrandById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const brand = await AdminService.getBrandById(id);
+
+      res.json({
+        success: true,
+        data: brand,
+      });
+    } catch (error: any) {
+      console.error("Get brand by ID error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Internal server error.",
+      });
+    }
+  }
+
+  async updateBrandSubscription(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const {
+        subscription_bundle,
+        subscription_status,
+        billing_start,
+        billing_end,
+      } = req.body;
+
+      // Validate required fields
+      if (!subscription_bundle || !subscription_status) {
+        res.status(400).json({
+          success: false,
+          error: "Subscription bundle and status are required.",
+        });
+        return;
+      }
+
+      // Validate subscription bundle
+      const validBundles = ["Free", "Growth", "Scale"];
+      if (!validBundles.includes(subscription_bundle)) {
+        res.status(400).json({
+          success: false,
+          error: "Invalid subscription bundle.",
+        });
+        return;
+      }
+
+      // Validate subscription status
+      const validStatuses = ["active", "inactive", "suspended", "cancelled"];
+      if (!validStatuses.includes(subscription_status)) {
+        res.status(400).json({
+          success: false,
+          error: "Invalid subscription status.",
+        });
+        return;
+      }
+
+      const updatedBrand = await AdminService.updateBrandSubscription(id, {
+        subscription_bundle,
+        subscription_status,
+        billing_start,
+        billing_end,
+      });
+
+      // Also update/create the actual subscription record
+      await AdminService.updateUserSubscription(id, {
+        subscription_bundle,
+        subscription_status,
+        billing_start,
+        billing_end,
+      });
+
+      res.json({
+        success: true,
+        data: updatedBrand,
+      });
+    } catch (error: any) {
+      console.error("Update brand subscription error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Internal server error.",
+      });
+    }
+  }
+
+  async getBrandFinancialOverview(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const financialOverview = await AdminService.getBrandFinancialOverview(
+        id
+      );
+
+      res.json({
+        success: true,
+        data: financialOverview,
+      });
+    } catch (error: any) {
+      console.error("Get brand financial overview error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Internal server error.",
+      });
+    }
+  }
+
+  // ===== SYSTEM STATISTICS =====
+
+  async getSystemStatistics(req: Request, res: Response): Promise<void> {
+    try {
+      const statistics = await AdminService.getSystemStatistics();
+
+      res.json({
+        success: true,
+        data: statistics,
+      });
+    } catch (error: any) {
+      console.error("Get system statistics error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Internal server error.",
+      });
+    }
+  }
+
+  // Get available subscription plans
+  async getSubscriptionPlans(req: Request, res: Response): Promise<void> {
+    try {
+      const plans = await prisma.plan.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          priceMonthly: true,
+          priceYearly: true,
+          maxBrands: true,
+          maxUsers: true,
+          trialDays: true,
+        },
+        orderBy: { priceMonthly: "asc" },
+      });
+
+      res.json({
+        success: true,
+        data: plans,
+      });
+    } catch (error: any) {
+      console.error("Get subscription plans error:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Internal server error.",
+      });
+    }
   }
 }

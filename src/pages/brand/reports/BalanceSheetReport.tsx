@@ -6,9 +6,18 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   walletAPI,
@@ -36,6 +45,11 @@ const BalanceSheetReport: React.FC<BalanceSheetReportProps> = ({
   const [receivables, setReceivables] = useState<any[]>([]);
   const [payables, setPayables] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
   const { toast } = useToast();
 
   const formatCurrency = (amount: number) => {
@@ -51,21 +65,51 @@ const BalanceSheetReport: React.FC<BalanceSheetReportProps> = ({
     loadBalanceSheetData();
   }, [dateRange]);
 
+  useEffect(() => {
+    setCustomDateRange({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+  }, [dateRange]);
+
+  const handleDateRangeChange = () => {
+    setShowDateFilter(false);
+    loadBalanceSheetData();
+  };
+
   const loadBalanceSheetData = async () => {
     try {
       setLoading(true);
       const [walletsData, receivablesData, payablesData, inventoryData] =
         await Promise.all([
           walletAPI.getAll(),
-          receivablesAPI.getAll(),
-          payablesAPI.getAll(),
+          receivablesAPI.getAll({
+            startDate: customDateRange.startDate,
+            endDate: customDateRange.endDate,
+          }),
+          payablesAPI.getAll({
+            startDate: customDateRange.startDate,
+            endDate: customDateRange.endDate,
+          }),
           inventoryAPI.getAll(),
         ]);
 
-      setWallets(Array.isArray(walletsData) ? walletsData : []);
-      setReceivables(Array.isArray(receivablesData) ? receivablesData : []);
-      setPayables(Array.isArray(payablesData) ? payablesData : []);
-      setInventory(Array.isArray(inventoryData) ? inventoryData : []);
+      // Debug: Log the data structure
+      console.log("Balance Sheet - Wallets data:", walletsData);
+      console.log("Balance Sheet - Receivables data:", receivablesData);
+      console.log("Balance Sheet - Payables data:", payablesData);
+      console.log("Balance Sheet - Inventory data:", inventoryData);
+
+      // Handle different possible response structures
+      const wallets = walletsData || [];
+      const receivables = receivablesData?.receivables || receivablesData || [];
+      const payables = payablesData?.payables || payablesData || [];
+      const inventory = inventoryData?.inventory || inventoryData || [];
+
+      setWallets(Array.isArray(wallets) ? wallets : []);
+      setReceivables(Array.isArray(receivables) ? receivables : []);
+      setPayables(Array.isArray(payables) ? payables : []);
+      setInventory(Array.isArray(inventory) ? inventory : []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -91,17 +135,42 @@ const BalanceSheetReport: React.FC<BalanceSheetReportProps> = ({
   );
   const totalEquity = totalAssets - totalLiabilities;
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading balance sheet data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Balance Sheet</h1>
           <p className="text-gray-600">
-            {new Date(dateRange.startDate).toLocaleDateString()} -{" "}
-            {new Date(dateRange.endDate).toLocaleDateString()}
+            {new Date(customDateRange.startDate).toLocaleDateString()} -{" "}
+            {new Date(customDateRange.endDate).toLocaleDateString()}
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowDateFilter(true)}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Custom Date Range
+          </Button>
+          <Button
+            variant="outline"
+            onClick={loadBalanceSheetData}
+            disabled={loading}
+          >
+            <Shield className="h-4 w-4 mr-2" />
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
           <Button onClick={() => onGenerateReport("balancesheet", "pdf")}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
@@ -115,6 +184,25 @@ const BalanceSheetReport: React.FC<BalanceSheetReportProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Debug Info - Remove in production */}
+      {process.env.NODE_ENV === "development" && (
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardHeader>
+            <CardTitle className="text-sm text-yellow-800">
+              Debug Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs text-yellow-700">
+              <div>Wallets loaded: {wallets.length}</div>
+              <div>Receivables loaded: {receivables.length}</div>
+              <div>Payables loaded: {payables.length}</div>
+              <div>Inventory loaded: {inventory.length}</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Balance Sheet Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -255,6 +343,66 @@ const BalanceSheetReport: React.FC<BalanceSheetReportProps> = ({
           </CardContent>
         </Card>
       </div>
+
+      {/* Date Range Filter Modal */}
+      <Dialog open={showDateFilter} onOpenChange={setShowDateFilter}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Custom Date Range
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={customDateRange.startDate}
+                onChange={(e) =>
+                  setCustomDateRange({
+                    ...customDateRange,
+                    startDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={customDateRange.endDate}
+                onChange={(e) =>
+                  setCustomDateRange({
+                    ...customDateRange,
+                    endDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDateFilter(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDateRangeChange}
+                className="flex-1"
+                disabled={
+                  !customDateRange.startDate || !customDateRange.endDate
+                }
+              >
+                Apply Filter
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

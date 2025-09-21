@@ -70,7 +70,9 @@ export interface Step4PaymentDto {
   lastName: string;
   brandName: string;
   password: string;
+  phoneNumber: string;
   paymentMethod?: "mock" | "stripe";
+  isGoogleUser?: boolean;
 }
 
 export interface LoginUserDto {
@@ -259,6 +261,8 @@ export interface UpdateProjectTargetDto {
 export interface CreateTeamMemberDto {
   brandId: string;
   userId?: string; // Optional, will use createdBy if not provided
+  name?: string; // For creating new users
+  email?: string; // For creating new users
   role: string;
   permissions: string[];
 }
@@ -298,6 +302,11 @@ export interface FinancialMetrics {
   netIncome: number;
   overdueReceivables: number;
   overduePayables: number;
+  breakEvenPoint: number;
+  profitMargin: number;
+  costPercentage: number;
+  revenueGrowth: number;
+  costGrowth: number;
 }
 
 export interface InventoryMetrics {

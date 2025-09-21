@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Translations</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .debug-section h3 { margin-top: 0; color: #333; }
+        .debug-item { margin: 10px 0; }
+        .debug-item strong { color: #0066cc; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>Translation Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Current Language State</h3>
+        <div class="debug-item">
+            <strong>Current Language:</strong> <span id="currentLang">Loading...</span>
+        </div>
+        <div class="debug-item">
+            <strong>Document Direction:</strong> <span id="docDir">Loading...</span>
+        </div>
+        <div class="debug-item">
+            <strong>Document Language:</strong> <span id="docLang">Loading...</span>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>LocalStorage Contents</h3>
+        <div class="debug-item">
+            <strong>All localStorage keys:</strong>
+            <div id="localStorageKeys" class="result"></div>
+        </div>
+        <div class="debug-item">
+            <strong>Language-related keys:</strong>
+            <div id="languageKeys" class="result"></div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Translation Test</h3>
+        <div class="debug-item">
+            <strong>Pricing Title (EN):</strong> <span id="pricingTitleEn">Loading...</span>
+        </div>
+        <div class="debug-item">
+            <strong>Pricing Title (AR):</strong> <span id="pricingTitleAr">Loading...</span>
+        </div>
+        <div class="debug-item">
+            <strong>Free Plan Name (EN):</strong> <span id="freePlanEn">Loading...</span>
+        </div>
+        <div class="debug-item">
+            <strong>Free Plan Name (AR):</strong> <span id="freePlanAr">Loading...</span>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Actions</h3>
+        <button onclick="clearAllCache()">Clear All Cache</button>
+        <button onclick="setLanguage('en')">Set English</button>
+        <button onclick="setLanguage('ar')">Set Arabic</button>
+        <button onclick="refreshDebug()">Refresh Debug Info</button>
+    </div>
+
+    <div id="actionResult" class="result" style="display: none;"></div>
+
+    <script>
+        // Load translation files
+        let enTranslations = null;
+        let arTranslations = null;
+
+        async function loadTranslations() {
+            try {
+                const enResponse = await fetch('/src/i18n/locales/en.json');
+                enTranslations = await enResponse.json();
+                
+                const arResponse = await fetch('/src/i18n/locales/ar.json');
+                arTranslations = await arResponse.json();
+                
+                console.log('Translations loaded:', { enTranslations, arTranslations });
+            } catch (error) {
+                console.error('Error loading translations:', error);
+            }
+        }
+
+        function refreshDebug() {
+            // Current language state
+            document.getElementById('currentLang').textContent = document.documentElement.lang || 'Not set';
+            document.getElementById('docDir').textContent = document.documentElement.dir || 'Not set';
+            document.getElementById('docLang').textContent = document.documentElement.lang || 'Not set';
+
+            // LocalStorage contents
+            const allKeys = [];
+            const languageKeys = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                allKeys.push(`${key}: ${value}`);
+                
+                if (key && (key.includes('i18next') || key.includes('language') || key.includes('translation'))) {
+                    languageKeys.push(`${key}: ${value}`);
+                }
+            }
+            
+            document.getElementById('localStorageKeys').innerHTML = allKeys.length > 0 ? allKeys.join('<br>') : 'No localStorage items';
+            document.getElementById('languageKeys').innerHTML = languageKeys.length > 0 ? languageKeys.join('<br>') : 'No language-related keys';
+
+            // Translation test
+            if (enTranslations && arTranslations) {
+                document.getElementById('pricingTitleEn').textContent = enTranslations.landing?.pricing?.title || 'Not found';
+                document.getElementById('pricingTitleAr').textContent = arTranslations.landing?.pricing?.title || 'Not found';
+                document.getElementById('freePlanEn').textContent = enTranslations.landing?.pricing?.free?.name || 'Not found';
+                document.getElementById('freePlanAr').textContent = arTranslations.landing?.pricing?.free?.name || 'Not found';
+            } else {
+                document.getElementById('pricingTitleEn').textContent = 'Translations not loaded';
+                document.getElementById('pricingTitleAr').textContent = 'Translations not loaded';
+                document.getElementById('freePlanEn').textContent = 'Translations not loaded';
+                document.getElementById('freePlanAr').textContent = 'Translations not loaded';
+            }
+        }
+
+        function clearAllCache() {
+            try {
+                localStorage.clear();
+                showResult('All cache cleared successfully!', 'success');
+                refreshDebug();
+            } catch (error) {
+                showResult(`Error clearing cache: ${error.message}`, 'error');
+            }
+        }
+
+        function setLanguage(lang) {
+            try {
+                localStorage.setItem('language', lang);
+                document.documentElement.lang = lang;
+                document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+                showResult(`Language set to ${lang}`, 'success');
+                refreshDebug();
+            } catch (error) {
+                showResult(`Error setting language: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize
+        loadTranslations().then(() => {
+            refreshDebug();
+        });
+    </script>
+</body>
+</html>

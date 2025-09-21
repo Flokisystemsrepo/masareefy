@@ -11,6 +11,9 @@ class TicketController {
   // Create a new support ticket
   async createTicket(req: Request, res: Response): Promise<void> {
     try {
+      console.log("Ticket creation request body:", req.body);
+      console.log("Ticket creation request files:", req.files);
+
       const { fullName, email, category, subject, description, userId } =
         req.body;
 
@@ -120,9 +123,14 @@ class TicketController {
       });
     } catch (error) {
       console.error("Error creating ticket:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       res.status(500).json({
         success: false,
         message: "Failed to create ticket",
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -507,6 +515,122 @@ class TicketController {
       });
     } catch (error) {
       console.error("Error adding response:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to add response",
+      });
+    }
+  }
+
+  // Add user response to ticket
+  async addUserResponse(req: Request, res: Response): Promise<void> {
+    try {
+      const { ticketId } = req.params;
+      const { message } = req.body;
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+        return;
+      }
+
+      if (!message || message.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          message: "Message is required",
+        });
+        return;
+      }
+
+      const ticket = await prisma.ticket.findUnique({
+        where: { id: ticketId },
+      });
+      if (!ticket) {
+        res.status(404).json({
+          success: false,
+          message: "Ticket not found",
+        });
+        return;
+      }
+
+      // Verify that the user owns this ticket
+      if (ticket.userId !== userId) {
+        res.status(403).json({
+          success: false,
+          message: "You can only respond to your own tickets",
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+        return;
+      }
+
+      // Handle file uploads for response
+      const attachments = [];
+      if (req.files && Array.isArray(req.files)) {
+        for (const file of req.files as Express.Multer.File[]) {
+          if (file.size > 5 * 1024 * 1024) {
+            res.status(400).json({
+              success: false,
+              message: `File ${file.originalname} exceeds 5MB limit`,
+            });
+            return;
+          }
+
+          const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "application/pdf",
+          ];
+          if (!allowedTypes.includes(file.mimetype)) {
+            res.status(400).json({
+              success: false,
+              message: `File type ${file.mimetype} is not allowed`,
+            });
+            return;
+          }
+
+          attachments.push({
+            filename: file.filename,
+            originalName: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            url: `/uploads/tickets/${file.filename}`,
+          });
+        }
+      }
+
+      const response = await prisma.ticketResponse.create({
+        data: {
+          ticketId,
+          message: message.trim(),
+          isInternal: false,
+          isFromAdmin: false,
+          authorName: `${user.firstName} ${user.lastName}`,
+          authorEmail: user.email,
+          attachments: attachments as any,
+        },
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Response added successfully",
+        data: response,
+      });
+    } catch (error) {
+      console.error("Error adding user response:", error);
       res.status(500).json({
         success: false,
         message: "Failed to add response",

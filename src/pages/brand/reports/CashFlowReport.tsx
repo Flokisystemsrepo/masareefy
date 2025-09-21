@@ -7,6 +7,7 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,11 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
     description: "",
     dueDate: "",
   });
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
   const { toast } = useToast();
 
   const formatCurrency = (amount: number) => {
@@ -66,18 +72,46 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
     loadCashFlowData();
   }, [dateRange]);
 
+  useEffect(() => {
+    setCustomDateRange({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+  }, [dateRange]);
+
+  const handleDateRangeChange = () => {
+    setShowDateFilter(false);
+    loadCashFlowData();
+  };
+
   const loadCashFlowData = async () => {
     try {
       setLoading(true);
       const [receivablesData, payablesData, walletsData] = await Promise.all([
-        receivablesAPI.getAll(),
-        payablesAPI.getAll(),
+        receivablesAPI.getAll({
+          startDate: customDateRange.startDate,
+          endDate: customDateRange.endDate,
+        }),
+        payablesAPI.getAll({
+          startDate: customDateRange.startDate,
+          endDate: customDateRange.endDate,
+        }),
         walletAPI.getAll(),
       ]);
 
-      setReceivables(Array.isArray(receivablesData) ? receivablesData : []);
-      setPayables(Array.isArray(payablesData) ? payablesData : []);
-      setWallets(Array.isArray(walletsData) ? walletsData : []);
+      // Debug: Log the data structure
+      console.log("Receivables data:", receivablesData);
+      console.log("Payables data:", payablesData);
+      console.log("Wallets data:", walletsData);
+
+      // Handle different possible response structures
+      const receivables = receivablesData?.receivables || receivablesData || [];
+      const payables = payablesData?.payables || payablesData || [];
+      const wallets = walletsData || [];
+
+      setReceivables(Array.isArray(receivables) ? receivables : []);
+      setPayables(Array.isArray(payables) ? payables : []);
+      setWallets(Array.isArray(wallets) ? wallets : []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -106,9 +140,10 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
   const handleAddReceivable = async () => {
     try {
       await receivablesAPI.create({
+        entityName: newReceivable.description || "New Receivable",
         amount: parseFloat(newReceivable.amount),
         description: newReceivable.description,
-        dueDate: newReceivable.dueDate,
+        dueDate: new Date(newReceivable.dueDate).toISOString(),
       });
       setShowAddReceivable(false);
       setNewReceivable({ amount: "", description: "", dueDate: "" });
@@ -129,9 +164,10 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
   const handleAddPayable = async () => {
     try {
       await payablesAPI.create({
+        entityName: newPayable.description || "New Payable",
         amount: parseFloat(newPayable.amount),
         description: newPayable.description,
-        dueDate: newPayable.dueDate,
+        dueDate: new Date(newPayable.dueDate).toISOString(),
       });
       setShowAddPayable(false);
       setNewPayable({ amount: "", description: "", dueDate: "" });
@@ -149,17 +185,42 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading cash flow data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Cash Flow Report</h1>
           <p className="text-gray-600">
-            {new Date(dateRange.startDate).toLocaleDateString()} -{" "}
-            {new Date(dateRange.endDate).toLocaleDateString()}
+            {new Date(customDateRange.startDate).toLocaleDateString()} -{" "}
+            {new Date(customDateRange.endDate).toLocaleDateString()}
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowDateFilter(true)}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Custom Date Range
+          </Button>
+          <Button
+            variant="outline"
+            onClick={loadCashFlowData}
+            disabled={loading}
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
           <Button onClick={() => onGenerateReport("cashflow", "pdf")}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
@@ -173,6 +234,24 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Debug Info - Remove in production */}
+      {process.env.NODE_ENV === "development" && (
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardHeader>
+            <CardTitle className="text-sm text-yellow-800">
+              Debug Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs text-yellow-700">
+              <div>Receivables loaded: {receivables.length}</div>
+              <div>Payables loaded: {payables.length}</div>
+              <div>Wallets loaded: {wallets.length}</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Cash Flow Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -233,6 +312,56 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
         </Card>
       </div>
 
+      {/* Cash Flow Analysis */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-blue-500" />
+            Cash Flow Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {receivables.length}
+              </div>
+              <div className="text-sm text-gray-600">Active Receivables</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">
+                {payables.length}
+              </div>
+              <div className="text-sm text-gray-600">Active Payables</div>
+            </div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(totalWallets)}
+              </div>
+              <div className="text-sm text-gray-600">Available Cash</div>
+            </div>
+          </div>
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-600 mb-2">Cash Flow Summary</div>
+            <div className="text-lg">
+              <span className="font-medium">Net Cash Flow:</span>{" "}
+              <span
+                className={`font-bold ${
+                  netCashFlow >= 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {formatCurrency(netCashFlow)}
+              </span>
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              {netCashFlow >= 0
+                ? "Positive cash flow - more money coming in than going out"
+                : "Negative cash flow - more money going out than coming in"}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Receivables and Payables Management */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Receivables */}
@@ -251,24 +380,46 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {receivables.slice(0, 5).map((receivable, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-2 bg-green-50 rounded"
-                >
-                  <div>
-                    <div className="font-medium">{receivable.description}</div>
-                    <div className="text-sm text-gray-500">
-                      Due: {new Date(receivable.dueDate).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-green-600">
-                      {formatCurrency(receivable.amount || 0)}
-                    </div>
-                  </div>
+              {receivables.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">
+                  No receivables found for this period
                 </div>
-              ))}
+              ) : (
+                receivables.slice(0, 5).map((receivable, index) => (
+                  <div
+                    key={receivable.id || index}
+                    className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200"
+                  >
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {receivable.entityName ||
+                          receivable.description ||
+                          "Unnamed Receivable"}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Due: {new Date(receivable.dueDate).toLocaleDateString()}
+                      </div>
+                      {receivable.status && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          Status: {receivable.status}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-green-600">
+                        {formatCurrency(receivable.amount || 0)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              {receivables.length > 5 && (
+                <div className="text-center pt-2">
+                  <Button variant="outline" size="sm">
+                    View All ({receivables.length})
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -289,24 +440,46 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {payables.slice(0, 5).map((payable, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-2 bg-red-50 rounded"
-                >
-                  <div>
-                    <div className="font-medium">{payable.description}</div>
-                    <div className="text-sm text-gray-500">
-                      Due: {new Date(payable.dueDate).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-red-600">
-                      {formatCurrency(payable.amount || 0)}
-                    </div>
-                  </div>
+              {payables.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">
+                  No payables found for this period
                 </div>
-              ))}
+              ) : (
+                payables.slice(0, 5).map((payable, index) => (
+                  <div
+                    key={payable.id || index}
+                    className="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200"
+                  >
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {payable.entityName ||
+                          payable.description ||
+                          "Unnamed Payable"}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Due: {new Date(payable.dueDate).toLocaleDateString()}
+                      </div>
+                      {payable.status && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          Status: {payable.status}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-red-600">
+                        {formatCurrency(payable.amount || 0)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              {payables.length > 5 && (
+                <div className="text-center pt-2">
+                  <Button variant="outline" size="sm">
+                    View All ({payables.length})
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -410,6 +583,66 @@ const CashFlowReport: React.FC<CashFlowReportProps> = ({
             <Button onClick={handleAddPayable} className="w-full">
               Add Payable
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Date Range Filter Modal */}
+      <Dialog open={showDateFilter} onOpenChange={setShowDateFilter}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Custom Date Range
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={customDateRange.startDate}
+                onChange={(e) =>
+                  setCustomDateRange({
+                    ...customDateRange,
+                    startDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={customDateRange.endDate}
+                onChange={(e) =>
+                  setCustomDateRange({
+                    ...customDateRange,
+                    endDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDateFilter(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDateRangeChange}
+                className="flex-1"
+                disabled={
+                  !customDateRange.startDate || !customDateRange.endDate
+                }
+              >
+                Apply Filter
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -41,6 +41,7 @@ import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 import { Package, Users } from "lucide-react";
 import { UpgradePromptModal } from "@/components/UpgradePromptModal";
 import { useNavigate } from "react-router-dom";
@@ -71,17 +72,10 @@ interface WalletTransaction {
 
 const WalletPage: React.FC = () => {
   const { user } = useAuth();
-  const { subscription } = useSubscription();
+  const { subscription, getPlanLimit } = useSubscription();
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const {
-    allUsage,
-    getUsage,
-    canAddResource,
-    isLoading: usageLoading,
-    error: usageError,
-  } = useUsageTracking(user?.brandId || "");
 
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
@@ -218,6 +212,21 @@ const WalletPage: React.FC = () => {
   };
 
   const openAddModal = () => {
+    // Check wallet limit before opening add modal
+    const walletLimit = getPlanLimit("wallets");
+    const isAtLimit = walletLimit !== -1 && wallets.length >= walletLimit;
+
+    if (isAtLimit) {
+      toast({
+        title: "Limit Reached",
+        description: `You have reached your limit of ${walletLimit} wallets. Please upgrade your plan to add more wallets.`,
+        variant: "destructive",
+      });
+      setUpgradeResourceType("wallets");
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setFormData({
       name: "",
       balance: "",
@@ -471,6 +480,24 @@ const WalletPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check wallet limit before creating new wallet
+    if (!showEditWalletModal) {
+      const walletLimit = getPlanLimit("wallets");
+      const isAtLimit = walletLimit !== -1 && wallets.length >= walletLimit;
+
+      if (isAtLimit) {
+        toast({
+          title: "Limit Reached",
+          description: `You have reached your limit of ${walletLimit} wallets. Please upgrade your plan to add more wallets.`,
+          variant: "destructive",
+        });
+        setUpgradeResourceType("wallets");
+        setShowUpgradeModal(true);
+        setShowAddWalletModal(false);
+        return;
+      }
+    }
+
     // Validate form data
     if (!formData.name.trim()) {
       toast({
@@ -647,18 +674,15 @@ const WalletPage: React.FC = () => {
               {t("wallet.export")}
             </Button>
             <Button
-              onClick={async () => {
-                try {
-                  const limitCheck = await canAddResource("wallets");
-                  if (limitCheck.canAdd) {
-                    openAddModal();
-                  } else {
-                    setUpgradeResourceType("wallets");
-                    setShowUpgradeModal(true);
-                  }
-                } catch (error) {
-                  console.error("Error checking wallet limit:", error);
-                  openAddModal(); // Fallback to allow adding
+              onClick={() => {
+                const walletLimit = getPlanLimit("wallets");
+                const currentWallets = wallets.length;
+
+                if (walletLimit === -1 || currentWallets < walletLimit) {
+                  openAddModal();
+                } else {
+                  setUpgradeResourceType("wallets");
+                  setShowUpgradeModal(true);
                 }
               }}
               className="bg-blue-600 hover:bg-blue-700 gap-2"
@@ -687,27 +711,27 @@ const WalletPage: React.FC = () => {
             },
             {
               title: t("wallet.metrics.totalWallets"),
-              value:
-                subscription?.plan?.priceMonthly === 299
-                  ? `${totalWallets}/${subscription.plan.features.limits.wallets}`
-                  : totalWallets.toString(),
-              change:
-                subscription?.plan?.priceMonthly === 299
-                  ? `${
-                      subscription.plan.features.limits.wallets - totalWallets
-                    } ${t("wallet.metrics.remaining")}`
-                  : "+2",
+              value: (() => {
+                const walletLimit = getPlanLimit("wallets");
+                return walletLimit === -1
+                  ? totalWallets.toString()
+                  : `${totalWallets}/${walletLimit}`;
+              })(),
+              change: (() => {
+                const walletLimit = getPlanLimit("wallets");
+                if (walletLimit === -1) return "+2";
+                const remaining = walletLimit - totalWallets;
+                return `${remaining} ${t("wallet.metrics.remaining")}`;
+              })(),
               trend: "up",
               icon: Wallet,
-              color:
-                subscription?.plan?.priceMonthly === 299 &&
-                totalWallets >= subscription.plan.features.limits.wallets
-                  ? "red"
-                  : subscription?.plan?.priceMonthly === 299 &&
-                    totalWallets >=
-                      subscription.plan.features.limits.wallets * 0.8
-                  ? "yellow"
-                  : "blue",
+              color: (() => {
+                const walletLimit = getPlanLimit("wallets");
+                if (walletLimit === -1) return "blue";
+                if (totalWallets >= walletLimit) return "red";
+                if (totalWallets >= walletLimit * 0.8) return "yellow";
+                return "blue";
+              })(),
             },
             {
               title: t("wallet.metrics.activeWallets"),
@@ -2377,9 +2401,13 @@ const WalletPage: React.FC = () => {
             }
           }}
           resourceType={upgradeResourceType}
-          currentPlan="Starter"
-          limit={getUsage(upgradeResourceType)?.limit || 0}
-          current={getUsage(upgradeResourceType)?.current || 0}
+          currentPlan={
+            subscription?.isFreePlan
+              ? "Free"
+              : subscription?.plan?.name || "Free"
+          }
+          limit={getPlanLimit(upgradeResourceType)}
+          current={wallets.length}
         />
       </div>
     </FeatureLock>

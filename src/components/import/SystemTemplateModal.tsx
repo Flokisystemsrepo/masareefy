@@ -30,6 +30,8 @@ interface SystemTemplateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImportSuccess?: () => void;
+  currentInventoryCount?: number;
+  inventoryLimit?: number;
 }
 
 interface SystemTemplateRow {
@@ -62,6 +64,8 @@ const SystemTemplateModal: React.FC<SystemTemplateModalProps> = ({
   open,
   onOpenChange,
   onImportSuccess,
+  currentInventoryCount = 0,
+  inventoryLimit = 100,
 }) => {
   const { toast } = useToast();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -70,6 +74,7 @@ const SystemTemplateModal: React.FC<SystemTemplateModalProps> = ({
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showLimitExceededModal, setShowLimitExceededModal] = useState(false);
 
   const downloadTemplate = useCallback(() => {
     // Create template data with headers and sample rows
@@ -285,6 +290,25 @@ const SystemTemplateModal: React.FC<SystemTemplateModalProps> = ({
   const processSystemTemplateImport = useCallback(async () => {
     if (!importData) return;
 
+    // Check if already at or over limit
+    if (inventoryLimit !== -1 && currentInventoryCount >= inventoryLimit) {
+      toast({
+        title: "Limit Reached",
+        description: `You have reached your limit of ${inventoryLimit} products. Please upgrade your plan to add more products.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if import would exceed limit
+    if (
+      inventoryLimit !== -1 &&
+      currentInventoryCount + importData.stats.validRows > inventoryLimit
+    ) {
+      setShowLimitExceededModal(true);
+      return;
+    }
+
     try {
       setIsProcessing(true);
 
@@ -337,7 +361,13 @@ const SystemTemplateModal: React.FC<SystemTemplateModalProps> = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [importData, toast, onImportSuccess]);
+  }, [
+    importData,
+    toast,
+    onImportSuccess,
+    currentInventoryCount,
+    inventoryLimit,
+  ]);
 
   const handleClose = () => {
     setImportData(null);
@@ -569,6 +599,83 @@ const SystemTemplateModal: React.FC<SystemTemplateModalProps> = ({
           )}
         </div>
       </DialogContent>
+
+      {/* Limit Exceeded Modal */}
+      <Dialog
+        open={showLimitExceededModal}
+        onOpenChange={setShowLimitExceededModal}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Import Limit Exceeded
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              You have {importData?.stats.validRows || 0} items to import, but your plan only
+              allows {inventoryLimit} products total. You currently have{" "}
+              {currentInventoryCount} products and can only import{" "}
+              {Math.max(0, inventoryLimit - currentInventoryCount)} more.
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-amber-800">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-medium">
+                  Your import would exceed your plan limit
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  // Auto-select only the remaining slots
+                  const maxCanImport = inventoryLimit - currentInventoryCount;
+                  const validRows = importData?.rows || [];
+                  
+                  // Create a new import data with only the items that fit within the limit
+                  const limitedRows = validRows.slice(0, maxCanImport);
+                  const limitedStats = {
+                    ...importData?.stats,
+                    validRows: Math.min(maxCanImport, importData?.stats.validRows || 0),
+                    totalRows: limitedRows.length,
+                  };
+
+                  setImportData({
+                    rows: limitedRows,
+                    stats: limitedStats,
+                  });
+                  setShowLimitExceededModal(false);
+
+                  toast({
+                    title: "Auto-Selected Items",
+                    description: `Automatically selected ${maxCanImport} items that fit within your limit`,
+                  });
+                }}
+                className="w-full"
+              >
+                Select Only {Math.max(0, inventoryLimit - currentInventoryCount)}{" "}
+                Remaining
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImportData(null);
+                  setShowLimitExceededModal(false);
+                }}
+                className="w-full"
+              >
+                Cancel Import
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

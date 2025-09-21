@@ -19,7 +19,12 @@
         "submit": "Submit",
         "confirm": "Confirm",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "deleting": "Deleting...",
+        "deleteConfirmation": {
+            "title": "Delete Item",
+            "description": "Are you sure you want to delete this item? This action cannot be undone."
+        }
     },
     "navigation": {
         "home": "Home",
@@ -43,38 +48,45 @@
     },
     "landing": {
         "hero": {
-            "title": "Revolutionary AI-Powered Business Management",
-            "subtitle": "Transform your business operations with our cutting-edge AI technology. Streamline inventory, manage finances, and boost productivity like never before.",
+            "title": " Smarter Finances, Stronger Business",
+            "subtitle": "Track expenses, manage revenues, and unlock insights to grow your business ,all in one clean, easy-to-use platform. ",
             "cta": "Get Started Free",
             "learnMore": "Learn More"
         },
         "features": {
-            "title": "Powerful Features for Modern Business",
-            "subtitle": "Everything you need to manage and grow your business efficiently",
+            "title": "Complete Business Management, All in One Platform",
+            "subtitle": "Everything you need to manage your business finances, inventory, and operations efficiently",
             "inventory": {
-                "title": "Smart Inventory Management",
-                "description": "AI-powered inventory tracking with predictive analytics and automated reordering"
+                "title": "Inventory Management",
+                "description": "Complete inventory tracking with stock levels, transfers, categories, and automated reorder alerts"
             },
             "financial": {
-                "title": "Complete Financial Control",
-                "description": "Comprehensive financial management with real-time insights and reporting"
+                "title": "Financial Management",
+                "description": "Track revenues, costs, receivables, and payables with comprehensive financial reporting and analytics"
             },
             "analytics": {
                 "title": "Advanced Analytics",
-                "description": "Deep insights into your business performance with AI-driven recommendations"
+                "description": "Generate detailed reports including P&L, cash flow, balance sheet, and custom financial insights"
             },
             "automation": {
-                "title": "Workflow Automation",
-                "description": "Automate repetitive tasks and focus on what matters most"
+                "title": "Task Management",
+                "description": "Organize and track tasks with priorities, due dates, assignments, and progress monitoring"
             },
             "wallet": {
-                "title": "Multi-Wallet Support",
-                "description": "Manage multiple currencies and payment methods in one place"
+                "title": "Multi-Wallet System",
+                "description": "Manage multiple wallets with different currencies, track transactions, and monitor balances in real-time"
             },
             "creative": {
-                "title": "Creative Management",
-                "description": "Organize and manage your creative assets with version control"
+                "title": "Team Collaboration",
+                "description": "Invite team members, manage roles and permissions, and collaborate on projects and tasks"
             }
+        },
+        "dashboard": {
+            "totalRevenue": "Total Revenue",
+            "activeProjects": "Active Projects",
+            "netProfit": "Net Profit",
+            "thisMonth": "this month",
+            "completedToday": "completed today"
         },
         "pricing": {
             "title": "Simple, Transparent Pricing",
@@ -93,43 +105,51 @@
                     "Revenue & Cost tracking",
                     "Basic financial reports",
                     "Settings access",
-                    "Email support"
+                    "Email support",
+                    "1 Wallet",
+                    "20 Inventory items"
                 ],
                 "cta": "Start Free"
             },
-            "starter": {
-                "name": "Starter",
+            "growth": {
+                "name": "Growth",
                 "price": "299",
                 "currency": "EGP",
                 "period": "/month",
-                "description": "Perfect for small businesses getting started",
+                "description": "Perfect for growing businesses",
                 "features": [
-                    "Revenue & Cost tracking",
-                    "Inventory management (100 items)",
-                    "Team management (2 members)",
-                    "Wallet management (2 wallets)",
-                    "Basic reports & branding",
-                    "Email support"
-                ],
-                "cta": "Start Free Trial"
-            },
-            "professional": {
-                "name": "Professional",
-                "price": "499",
-                "currency": "EGP",
-                "period": "/month",
-                "description": "Ideal for growing businesses",
-                "features": [
-                    "Everything in Starter",
-                    "Unlimited inventory items",
-                    "Unlimited wallets",
+                    "Everything in Free",
+                    "Receivables & Payables",
+                    "Transfers",
+                    "Reports & analytics",
+                    "Tasks & support tickets",
+                    "5 Wallets",
+                    "300 Inventory items",
                     "Shopify integration",
                     "Bosta integration",
-                    "Business insights & analytics",
-                    "Priority support"
+                    "Shipblu integration",
+                    "Standard support"
                 ],
                 "cta": "Start Free Trial",
                 "popular": "Most Popular"
+            },
+            "scale": {
+                "name": "Scale",
+                "price": "399",
+                "currency": "EGP",
+                "period": "/month",
+                "description": "For established businesses",
+                "features": [
+                    "Everything in Growth",
+                    "Unlimited wallets",
+                    "Unlimited inventory items",
+                    "Smart Insights (AI-powered)",
+                    "Advanced analytics",
+                    "Priority support",
+                    "Onboarding assistance",
+                    "All integrations unlocked"
+                ],
+                "cta": "Start Free Trial"
             }
         },
         "testimonials": {
@@ -173,9 +193,21 @@
             "rememberMe": "Remember me",
             "forgotPassword": "Forgot password?",
             "signIn": "Sign In",
+            "or": "or",
             "noAccount": "Don't have an account?",
             "signUp": "Sign up",
             "errorMessage": "Please check your credentials and try again",
+            "errorTitle": "Login Failed",
+            "invalidCredentials": "Invalid Credentials",
+            "invalidCredentialsMessage": "The email or password you entered is incorrect. Please check your credentials and try again.",
+            "googleAccount": "Google Account Detected",
+            "googleAccountMessage": "This account was created with Google. Please use the 'Continue with Google' option to sign in.",
+            "noBrand": "Account Setup Issue",
+            "noBrandMessage": "Your account is not properly set up. Please contact support for assistance.",
+            "noInternet": "No Internet Connection",
+            "noInternetMessage": "Please check your internet connection and try again.",
+            "connectionError": "Connection Error",
+            "connectionErrorMessage": "Unable to connect to the server. Please check your internet connection and try again.",
             "backToHome": "← Back to Home",
             "showcase": {
                 "slide1": {
@@ -189,6 +221,10 @@
                 "slide3": {
                     "title": "Smart financial tracking",
                     "description": "Monitor revenues, costs, receivables, and payables with automated reports and intelligent cash flow analysis."
+                },
+                "slide4": {
+                    "title": "Smarter Than Spreadsheets, Cheaper Than Accountants",
+                    "description": "We are not afraid to say it, this is the future of business management."
                 }
             }
         },
@@ -447,7 +483,25 @@
             "totalCosts": "Total Costs",
             "netProfit": "Net Profit",
             "walletBalance": "Wallet Balance",
-            "vsLastMonth": "vs last month"
+            "breakEvenPoint": "Break-Even Point",
+            "profitMargin": "Profit Margin",
+            "vsLastMonth": "vs last month",
+            "revenueNeeded": "Revenue needed",
+            "breakEvenAchieved": "Break-even achieved",
+            "profitGenerated": "Profit generated",
+            "costsPercentage": "costs",
+            "exceededBy": "Exceeded by",
+            "stillNotReached": "Still not reached",
+            "left": "left",
+            "youBrokeEven": "You broke even"
+        },
+        "tooltips": {
+            "totalRevenue": "Total income from all revenue sources in the selected period",
+            "totalCosts": "Total expenses and costs incurred in the selected period",
+            "netProfit": "Total revenue minus total costs. Positive means profit, negative means loss",
+            "walletBalance": "Current available balance in your wallet for transactions",
+            "breakEvenPoint": "The point where revenue equals costs. Shows if you're profitable or need more revenue",
+            "profitMargin": "Percentage of revenue that becomes profit after covering all costs"
         },
         "charts": {
             "costsByCategory": "Costs by Category",
@@ -482,6 +536,8 @@
             "orders": "Orders",
             "tasks": "Tasks",
             "support": "Support",
+            "supportCenter": "Support Center",
+            "supportRequests": "Support Requests",
             "myTickets": "My Tickets",
             "reports": "Reports",
             "settings": "Settings"
@@ -1021,7 +1077,9 @@
             "failedToUpdatePayable": "Failed to update payable",
             "failedToDeletePayable": "Failed to delete payable",
             "failedToSave": "Failed to save item",
-            "deleteConfirm": "Are you sure you want to delete this item?"
+            "deleteConfirm": "Are you sure you want to delete this item?",
+            "autoConversionNote": "Please refresh the page after 1 minute to see the automatic conversion to revenue/cost.",
+            "cannotDeleteConverted": "Cannot delete converted items. They have already been processed into revenue/cost entries."
         }
     },
     "inventory": {
@@ -1036,9 +1094,27 @@
         "metrics": {
             "totalItems": "Total Items",
             "totalValue": "Total Value",
+            "currentInventoryValue": "Current Inventory Value",
             "lowStock": "Low Stock",
             "outOfStock": "Out of Stock",
-            "inventoryCost": "Inventory Cost"
+            "inventoryCost": "Inventory Cost",
+            "remaining": "remaining",
+            "items": "items",
+            "value": "value",
+            "stock": "stock",
+            "available": "available",
+            "unavailable": "unavailable",
+            "inStock": "In Stock",
+            "lowStockItems": "Low Stock Items",
+            "outOfStockItems": "Out of Stock Items",
+            "totalStockValue": "Total Stock Value",
+            "averageItemValue": "Average Item Value",
+            "stockTurnover": "Stock Turnover",
+            "reorderLevel": "Reorder Level",
+            "safetyStock": "Safety Stock",
+            "totalCostBasis": "Total cost basis",
+            "itemsNeedReorder": "Items need reorder",
+            "itemsUnavailable": "Items unavailable"
         },
         "filters": {
             "searchPlaceholder": "Search inventory...",
@@ -1113,12 +1189,25 @@
         },
         "import": {
             "importType": "Import Type",
+            "bulkImportOptions": "Bulk Import Options",
+            "chooseImportMethod": "Choose your import method to bulk import inventory data",
             "normalImport": "Normal Import",
             "normalImportDescription": "Import inventory items from Excel/CSV file",
             "bostaImport": "Bosta Import",
-            "bostaImportDescription": "Import from Bosta delivery data",
+            "bostaImportDescription": "Import inventory data from Bosta with SKU validation and product tracking",
             "shopifyImport": "Shopify Import",
-            "shopifyImportDescription": "Import from Shopify store (Coming Soon)",
+            "shopifyImportDescription": "Import products from Shopify with automatic variant mapping and inventory sync",
+            "systemTemplate": "System Template",
+            "systemTemplateDescription": "Download our template and import your data with custom mapping",
+            "variantMapping": "Variant Mapping",
+            "productImport": "Product Import",
+            "inventorySync": "Inventory Sync",
+            "productTracking": "Product Tracking",
+            "skuValidation": "SKU Validation",
+            "flexibleMapping": "Flexible Mapping",
+            "customTemplate": "Custom Template",
+            "dataValidation": "Data Validation",
+            "getStarted": "Get Started",
             "selectFile": "Select File",
             "dragDropFile": "Drag and drop your file here, or click to select",
             "supportedFormats": "Supported formats: Excel (.xlsx, .xls) and CSV (.csv)",
@@ -1395,7 +1484,12 @@
             "technicalIssue": "Technical Issue",
             "featureRequest": "Feature Request",
             "account": "Account",
-            "other": "Other"
+            "other": "Other",
+            "Billing": "Billing",
+            "Technical Issue": "Technical Issue",
+            "Feature Request": "Feature Request",
+            "Account": "Account",
+            "Other": "Other"
         },
         "validation": {
             "fullNameRequired": "Full name is required",
@@ -1470,6 +1564,161 @@
             "kb": "KB",
             "mb": "MB",
             "gb": "GB"
+        }
+    },
+    "tickets": {
+        "title": "Support Tickets",
+        "subtitle": "Manage your support requests and tickets",
+        "createTicket": "Create Ticket",
+        "myTickets": "My Tickets",
+        "allTickets": "All Tickets",
+        "openTickets": "Open Tickets",
+        "closedTickets": "Closed Tickets",
+        "mySupportChats": "My Support Chats",
+        "conversations": "conversation",
+        "conversationsPlural": "conversations",
+        "noConversationsYet": "No conversations yet",
+        "noConversationsDescription": "You haven't started any support conversations yet. Start a new chat to get help with your questions.",
+        "startNewChat": "Start New Chat",
+        "typeMessage": "Type a message...",
+        "message": "message",
+        "messages": "messages",
+        "priority": "Priority",
+        "status": "Status",
+        "category": "Category",
+        "assignedTo": "Assigned To",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "noTickets": "No tickets found",
+        "noTicketsDescription": "You don't have any support tickets yet.",
+        "form": {
+            "createTitle": "Create Support Ticket",
+            "editTitle": "Edit Ticket",
+            "subject": "Subject",
+            "subjectPlaceholder": "Enter ticket subject",
+            "description": "Description",
+            "descriptionPlaceholder": "Describe your issue or request",
+            "category": "Category",
+            "priority": "Priority",
+            "attachments": "Attachments",
+            "addAttachment": "Add Attachment"
+        },
+        "categories": {
+            "technical": "Technical Issue",
+            "billing": "Billing Question",
+            "feature": "Feature Request",
+            "bug": "Bug Report",
+            "general": "General Inquiry"
+        },
+        "priorities": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "urgent": "Urgent"
+        },
+        "statuses": {
+            "open": "Open",
+            "inProgress": "In Progress",
+            "pending": "Pending",
+            "resolved": "Resolved",
+            "closed": "Closed"
+        },
+        "messages": {
+            "ticketCreated": "Ticket created successfully",
+            "ticketUpdated": "Ticket updated successfully",
+            "ticketDeleted": "Ticket deleted successfully",
+            "failedToCreate": "Failed to create ticket",
+            "failedToUpdate": "Failed to update ticket",
+            "failedToDelete": "Failed to delete ticket"
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "subtitle": "Manage your account, preferences, and security settings",
+        "tabs": {
+            "profile": "Profile",
+            "notifications": "Notifications",
+            "security": "Security",
+            "brand": "Brand",
+            "subscription": "Subscription"
+        },
+        "account": "Account Settings",
+        "profile": "Profile",
+        "security": "Security",
+        "notifications": "Notifications",
+        "preferences": "Preferences",
+        "billing": "Billing",
+        "integrations": "Integrations",
+        "privacy": "Privacy",
+        "about": "About",
+        "profileSettings": {
+            "title": "Profile Settings",
+            "personalInfo": "Personal Information",
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "email": "Email Address",
+            "phone": "Phone Number",
+            "company": "Company Name",
+            "position": "Position",
+            "bio": "Bio",
+            "avatar": "Profile Picture",
+            "updateProfile": "Update Profile"
+        },
+        "securitySettings": {
+            "title": "Security Settings",
+            "changePassword": "Change Password",
+            "currentPassword": "Current Password",
+            "newPassword": "New Password",
+            "confirmPassword": "Confirm Password",
+            "twoFactorAuth": "Two-Factor Authentication",
+            "enable2FA": "Enable 2FA",
+            "disable2FA": "Disable 2FA",
+            "loginHistory": "Login History",
+            "activeSessions": "Active Sessions",
+            "revokeAllSessions": "Revoke All Sessions"
+        },
+        "notificationSettings": {
+            "title": "Notification Settings",
+            "emailNotifications": "Email Notifications",
+            "pushNotifications": "Push Notifications",
+            "smsNotifications": "SMS Notifications",
+            "marketingEmails": "Marketing Emails",
+            "systemUpdates": "System Updates",
+            "securityAlerts": "Security Alerts",
+            "billingAlerts": "Billing Alerts"
+        },
+        "brandSettings": {
+            "title": "Brand Settings",
+            "subtitle": "Customize your brand appearance and report settings",
+            "brandName": "Brand Name",
+            "logo": "Brand Logo",
+            "reportHeader": "Report Header Text",
+            "reportFooter": "Report Footer Text",
+            "uploadLogo": "Upload Logo",
+            "changeLogo": "Change Logo",
+            "saveSettings": "Save Brand Settings",
+            "success": "Brand settings updated successfully",
+            "error": "Failed to update brand settings"
+        },
+        "preferenceSettings": {
+            "title": "Preferences",
+            "language": "Language",
+            "timezone": "Timezone",
+            "dateFormat": "Date Format",
+            "timeFormat": "Time Format",
+            "currency": "Currency",
+            "theme": "Theme",
+            "darkMode": "Dark Mode",
+            "lightMode": "Light Mode",
+            "autoMode": "Auto Mode"
+        },
+        "messages": {
+            "profileUpdated": "Profile updated successfully",
+            "passwordChanged": "Password changed successfully",
+            "settingsSaved": "Settings saved successfully",
+            "failedToUpdate": "Failed to update settings",
+            "invalidCurrentPassword": "Current password is incorrect",
+            "passwordsDoNotMatch": "Passwords do not match"
         }
     },
     "reports": {

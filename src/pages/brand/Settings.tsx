@@ -3,13 +3,13 @@ import { motion } from "framer-motion";
 import {
   Settings as SettingsIcon,
   User,
-  Bell,
   Shield,
   Globe,
   Crown,
   CreditCard,
   Calendar,
   Check,
+  CheckCircle,
   Download,
   RefreshCw,
   Save,
@@ -17,6 +17,10 @@ import {
   Phone,
   MapPin,
   Building,
+  Eye,
+  EyeOff,
+  Key,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { brandSettingsAPI, subscriptionAPI } from "@/services/api";
+import { brandSettingsAPI, subscriptionAPI, authAPI } from "@/services/api";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -47,18 +51,10 @@ interface BrandSettings {
   logoUrl?: string;
 }
 
-interface NotificationSettings {
-  email: boolean;
-  push: boolean;
-  reports: boolean;
-  updates: boolean;
-  marketing: boolean;
-}
-
 const Settings: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const { user } = useAuth();
-  const { subscription, refreshSubscription } = useSubscription();
+  const { subscription, refreshSubscription, forceRefresh } = useSubscription();
   const navigate = useNavigate();
   const { brandId } = useParams();
 
@@ -66,14 +62,34 @@ const Settings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [availablePlans, setAvailablePlans] = useState<any[]>([]);
   const [plansLoading, setPlansLoading] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  // Notifications state
+  const [notifications, setNotifications] = useState({
+    emailNotifications: true,
+    pushNotifications: false,
+    smsNotifications: false,
+    weeklyReports: true,
+    monthlyReports: true,
+  });
   const { toast } = useToast();
 
   // Profile state
   const [profile, setProfile] = useState<UserProfile>({
-    firstName: "Zoz",
-    lastName: "Emad",
+    firstName: user?.firstName || "Zoz",
+    lastName: user?.lastName || "Emad",
     email: user?.email || "ziz@gmail.com",
-    phone: "",
+    phone: user?.phoneNumber || "",
     profilePictureUrl: "",
     company: "",
     address: "",
@@ -87,26 +103,71 @@ const Settings: React.FC = () => {
     logoUrl: "",
   });
 
-  // Notification settings state
-  const [notifications, setNotifications] = useState<NotificationSettings>({
-    email: true,
-    push: true,
-    reports: true,
-    updates: false,
-    marketing: false,
-  });
-
   const settingsTabs = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "brand", label: "Brand", icon: Building },
-    { id: "subscription", label: "Subscription", icon: Crown },
+    { id: "profile", label: t("settings.tabs.profile"), icon: User },
+    { id: "security", label: t("settings.tabs.security"), icon: Shield },
+    { id: "subscription", label: t("settings.tabs.subscription"), icon: Crown },
   ];
 
   useEffect(() => {
     loadPlans();
   }, []);
+
+  const handlePasswordChange = async () => {
+    try {
+      // Validate passwords
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast({
+          title: "Error",
+          description: "New passwords do not match",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (passwordData.newPassword.length < 8) {
+        toast({
+          title: "Error",
+          description: "New password must be at least 8 characters long",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setLoading(true);
+
+      // Call the change password API using the existing authAPI method
+      const data = await authAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to change password");
+      }
+
+      toast({
+        title: "Success",
+        description: "Password changed successfully",
+      });
+
+      // Reset form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setShowPasswordForm(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to change password",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadPlans = async () => {
     try {
@@ -120,6 +181,24 @@ const Settings: React.FC = () => {
     } finally {
       setPlansLoading(false);
     }
+  };
+
+  const getButtonLabel = (targetPlan: any) => {
+    if (!subscription) return "Get Started";
+
+    const currentPlanName = subscription.plan.name.toLowerCase();
+    const targetPlanName = targetPlan.name.toLowerCase();
+
+    // Define plan hierarchy (higher index = higher tier)
+    const planHierarchy = ["free", "growth", "scale"];
+    const currentIndex = planHierarchy.indexOf(currentPlanName);
+    const targetIndex = planHierarchy.indexOf(targetPlanName);
+
+    if (currentIndex === targetIndex) return "Active Plan";
+    if (targetIndex > currentIndex) return "Upgrade";
+    if (targetIndex < currentIndex) return "Downgrade";
+
+    return "Change Plan";
   };
 
   const handlePlanChange = async (planId: string) => {
@@ -141,7 +220,7 @@ const Settings: React.FC = () => {
             title: "Success",
             description: "Plan updated successfully!",
           });
-          await refreshSubscription();
+          await forceRefresh();
         } else {
           throw new Error(response.error || "Failed to update plan");
         }
@@ -156,7 +235,7 @@ const Settings: React.FC = () => {
             title: "Success",
             description: "Plan activated successfully!",
           });
-          await refreshSubscription();
+          await forceRefresh();
         } else {
           throw new Error(response.error || "Failed to activate plan");
         }
@@ -284,11 +363,13 @@ const Settings: React.FC = () => {
               <Input
                 id="phone"
                 value={profile.phone}
-                onChange={(e) =>
-                  setProfile((prev) => ({ ...prev, phone: e.target.value }))
-                }
-                placeholder="Enter your phone number"
+                disabled
+                className="bg-gray-50"
+                placeholder="Phone number from registration"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Phone number cannot be changed
+              </p>
             </div>
           </div>
           <div>
@@ -419,17 +500,164 @@ const Settings: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="p-4 border rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">
-                Change Password
-              </h4>
-              <p className="text-sm text-gray-500 mb-4">
-                Update your password to keep your account secure
-              </p>
-              <Button variant="outline" className="w-full">
-                <Shield className="h-4 w-4 mr-2" />
-                Change Password
-              </Button>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">
+                    Change Password
+                  </h4>
+                  <p className="text-sm text-gray-500">
+                    Update your password to keep your account secure
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPasswordForm(!showPasswordForm)}
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  {showPasswordForm ? "Cancel" : "Change Password"}
+                </Button>
+              </div>
+
+              {showPasswordForm && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="currentPassword"
+                        type={showPasswords.current ? "text" : "password"}
+                        value={passwordData.currentPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            currentPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter your current password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            current: !prev.current,
+                          }))
+                        }
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPasswords.current ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showPasswords.new ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter your new password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            new: !prev.new,
+                          }))
+                        }
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPasswords.new ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="confirmPassword">
+                      Confirm New Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showPasswords.confirm ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Confirm your new password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            confirm: !prev.confirm,
+                          }))
+                        }
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPasswords.confirm ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handlePasswordChange}
+                      disabled={loading}
+                      className="flex-1"
+                    >
+                      {loading ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      Change Password
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowPasswordForm(false);
+                        setPasswordData({
+                          currentPassword: "",
+                          newPassword: "",
+                          confirmPassword: "",
+                        });
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div className="p-4 border rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">
                 Two-Factor Authentication
@@ -437,109 +665,23 @@ const Settings: React.FC = () => {
               <p className="text-sm text-gray-500 mb-4">
                 Add an extra layer of security to your account
               </p>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" disabled>
                 <Shield className="h-4 w-4 mr-2" />
-                Enable 2FA
+                Enable 2FA (Coming Soon)
               </Button>
             </div>
+
             <div className="p-4 border rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">Login Sessions</h4>
               <p className="text-sm text-gray-500 mb-4">
                 Manage your active login sessions across devices
               </p>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" disabled>
                 <Shield className="h-4 w-4 mr-2" />
-                View Sessions
+                View Sessions (Coming Soon)
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderBrandTab = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            Brand Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="brandName">Brand Name</Label>
-              <Input
-                id="brandName"
-                value={brandSettings.brandName}
-                onChange={(e) =>
-                  setBrandSettings((prev) => ({
-                    ...prev,
-                    brandName: e.target.value,
-                  }))
-                }
-                placeholder="Enter your brand name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="logoUrl">Logo URL</Label>
-              <Input
-                id="logoUrl"
-                value={brandSettings.logoUrl}
-                onChange={(e) =>
-                  setBrandSettings((prev) => ({
-                    ...prev,
-                    logoUrl: e.target.value,
-                  }))
-                }
-                placeholder="https://example.com/logo.png"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="reportHeader">Report Header Text</Label>
-              <Input
-                id="reportHeader"
-                value={brandSettings.reportHeader}
-                onChange={(e) =>
-                  setBrandSettings((prev) => ({
-                    ...prev,
-                    reportHeader: e.target.value,
-                  }))
-                }
-                placeholder="Financial Report"
-              />
-            </div>
-            <div>
-              <Label htmlFor="reportFooter">Report Footer Text</Label>
-              <Input
-                id="reportFooter"
-                value={brandSettings.reportFooter}
-                onChange={(e) =>
-                  setBrandSettings((prev) => ({
-                    ...prev,
-                    reportFooter: e.target.value,
-                  }))
-                }
-                placeholder="Generated by Your Brand"
-              />
-            </div>
-          </div>
-          <Button
-            onClick={saveBrandSettings}
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? (
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Brand Settings
-          </Button>
         </CardContent>
       </Card>
     </div>
@@ -720,54 +862,75 @@ const Settings: React.FC = () => {
               <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {availablePlans.map((plan) => (
                 <div
                   key={plan.id}
-                  className={`p-4 border rounded-lg ${
+                  className={`relative p-6 border-2 rounded-xl transition-all duration-300 ${
                     subscription?.plan.id === plan.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg"
+                      : "border-gray-200 hover:border-gray-300 hover:shadow-md bg-white"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-lg">{plan.name}</h3>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">${plan.priceMonthly}</p>
-                      <p className="text-sm text-gray-500">/month</p>
+                  {/* Current Plan Badge */}
+                  {subscription?.plan.id === plan.id && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                        Current Plan
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plan Header */}
+                  <div className="text-center mb-6">
+                    <h3 className="font-bold text-xl mb-2">{plan.name}</h3>
+                    <div className="mb-4">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {plan.priceMonthly === 0
+                          ? "Free"
+                          : `${plan.priceMonthly} EGP`}
+                      </span>
+                      {plan.priceMonthly > 0 && (
+                        <span className="text-gray-500 ml-1">/month</span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-2 mb-4">
-                    {(plan.features?.features || plan.features || [])
-                      .slice(0, 4)
-                      .map((feature: string, index: number) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-green-500" />
-                          <span className="text-sm text-gray-700">
+                  {/* Features */}
+                  <div className="space-y-3 mb-6 max-h-80 overflow-y-auto">
+                    {(plan.features?.features || plan.features || []).map(
+                      (feature: string, index: number) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 leading-relaxed">
                             {feature}
                           </span>
                         </div>
-                      ))}
+                      )
+                    )}
                   </div>
 
+                  {/* Action Button */}
                   <Button
                     onClick={() => handlePlanChange(plan.id)}
                     disabled={loading || subscription?.plan.id === plan.id}
-                    className="w-full"
+                    className="w-full h-12 text-base font-medium"
                     variant={
                       subscription?.plan.id === plan.id ? "outline" : "default"
                     }
                   >
                     {loading ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
                     ) : subscription?.plan.id === plan.id ? (
-                      "Current Plan"
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5" />
+                        Active Plan
+                      </div>
                     ) : (
-                      <>
-                        {subscription ? "Change Plan" : "Get Started"}
-                        <Crown className="h-4 w-4 ml-2" />
-                      </>
+                      <div className="flex items-center gap-2">
+                        <Crown className="h-5 w-5" />
+                        {getButtonLabel(plan)}
+                      </div>
                     )}
                   </Button>
                 </div>
@@ -889,10 +1052,10 @@ const Settings: React.FC = () => {
     <div className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">
-            Manage your account, preferences, and security settings.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {t("settings.title")}
+          </h1>
+          <p className="text-gray-600">{t("settings.subtitle")}</p>
         </div>
 
         {/* Tab Navigation */}
@@ -924,9 +1087,7 @@ const Settings: React.FC = () => {
           transition={{ duration: 0.2 }}
         >
           {activeTab === "profile" && renderProfileTab()}
-          {activeTab === "notifications" && renderNotificationsTab()}
           {activeTab === "security" && renderSecurityTab()}
-          {activeTab === "brand" && renderBrandTab()}
           {activeTab === "subscription" && renderSubscriptionTab()}
         </motion.div>
       </div>

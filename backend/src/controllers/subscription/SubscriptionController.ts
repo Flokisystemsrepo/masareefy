@@ -5,6 +5,7 @@ import {
   CreateSubscriptionDto,
   UpdateSubscriptionDto,
 } from "@/types";
+import { SubscriptionRequest } from "@/middleware/subscription";
 import Joi from "joi";
 
 // Validation schemas
@@ -111,7 +112,7 @@ export class SubscriptionController {
 
   // Get user's current subscription
   static async getUserSubscription(
-    req: AuthenticatedRequest,
+    req: SubscriptionRequest,
     res: Response
   ): Promise<void> {
     try {
@@ -123,9 +124,8 @@ export class SubscriptionController {
         return;
       }
 
-      const subscription = await SubscriptionService.getUserSubscription(
-        req.user.id
-      );
+      // Use subscription data from middleware (includes isFreePlan, isExpired, etc.)
+      const subscription = req.subscription;
 
       res.status(200).json({
         success: true,

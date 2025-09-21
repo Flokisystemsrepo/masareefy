@@ -355,7 +355,7 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
             {[
               {
-                name: "Free",
+                name: t("landing.pricing.free.name"),
                 price: t("landing.pricing.free.price"),
                 currency: t("landing.pricing.free.currency"),
                 period: t("landing.pricing.free.period"),
@@ -367,28 +367,28 @@ const Landing = () => {
                 free: true,
               },
               {
-                name: "Starter",
-                price: t("landing.pricing.starter.price"),
-                currency: t("landing.pricing.starter.currency"),
-                period: t("landing.pricing.starter.period"),
-                description: t("landing.pricing.starter.description"),
-                features: t("landing.pricing.starter.features", {
+                name: t("landing.pricing.growth.name"),
+                price: t("landing.pricing.growth.price"),
+                currency: t("landing.pricing.growth.currency"),
+                period: t("landing.pricing.growth.period"),
+                description: t("landing.pricing.growth.description"),
+                features: t("landing.pricing.growth.features", {
                   returnObjects: true,
                 }) as unknown as string[],
-                cta: t("landing.pricing.starter.cta"),
+                cta: t("landing.pricing.growth.cta"),
+                popular: true,
+                popularText: t("landing.pricing.growth.popular"),
               },
               {
-                name: "Professional",
-                price: t("landing.pricing.professional.price"),
-                currency: t("landing.pricing.professional.currency"),
-                period: t("landing.pricing.professional.period"),
-                description: t("landing.pricing.professional.description"),
-                features: t("landing.pricing.professional.features", {
+                name: t("landing.pricing.scale.name"),
+                price: t("landing.pricing.scale.price"),
+                currency: t("landing.pricing.scale.currency"),
+                period: t("landing.pricing.scale.period"),
+                description: t("landing.pricing.scale.description"),
+                features: t("landing.pricing.scale.features", {
                   returnObjects: true,
                 }) as unknown as string[],
-                cta: t("landing.pricing.professional.cta"),
-                popular: true,
-                popularText: t("landing.pricing.professional.popular"),
+                cta: t("landing.pricing.scale.cta"),
               },
             ].map((plan, index) => (
               <motion.div
@@ -472,17 +472,19 @@ const Landing = () => {
                 </ul>
 
                 <div className="mt-auto">
-                  <Button
-                    className={`w-full h-12 text-base font-semibold ${
-                      plan.free
-                        ? "bg-green-600 hover:bg-green-700 text-white"
-                        : plan.popular
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                    }`}
-                  >
-                    {plan.free ? "Start Free" : plan.cta || "Get Started"}
-                  </Button>
+                  <Link to="/onboarding">
+                    <Button
+                      className={`w-full h-12 text-base font-semibold ${
+                        plan.free
+                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          : plan.popular
+                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                      }`}
+                    >
+                      {plan.free ? "Start Free" : plan.cta || "Get Started"}
+                    </Button>
+                  </Link>
                 </div>
               </motion.div>
             ))}

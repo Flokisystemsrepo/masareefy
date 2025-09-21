@@ -32,6 +32,7 @@ import {
   CheckCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
 interface Ticket {
@@ -73,6 +74,7 @@ interface Ticket {
 
 const UserTickets: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -107,12 +109,16 @@ const UserTickets: React.FC = () => {
       ticketId: string;
       message: string;
     }) => {
+      const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:3001/api/tickets/admin/${ticketId}/response`,
+        `http://localhost:3001/api/tickets/user/${ticketId}/response`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, isInternal: false }),
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({ message }),
         }
       );
 
@@ -222,9 +228,14 @@ const UserTickets: React.FC = () => {
             <MessageSquare className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">My Support Chats</h1>
+            <h1 className="text-lg font-semibold">
+              {t("tickets.mySupportChats")}
+            </h1>
             <p className="text-sm text-green-100">
-              {tickets.length} conversation{tickets.length !== 1 ? "s" : ""}
+              {tickets.length}{" "}
+              {tickets.length !== 1
+                ? t("tickets.conversationsPlural")
+                : t("tickets.conversations")}
             </p>
           </div>
         </div>

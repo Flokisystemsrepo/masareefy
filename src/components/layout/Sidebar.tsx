@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -24,10 +25,17 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronRight,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { TrialNotifications } from "@/components/TrialNotifications";
+import { brandSettingsAPI } from "@/services/api";
 
 interface SidebarProps {
   brandId: string;
@@ -35,7 +43,10 @@ interface SidebarProps {
   onCollapseChange?: (collapsed: boolean) => void;
 }
 
-const getNavigationGroups = (t: (key: string) => string) => [
+const getNavigationGroups = (
+  t: (key: string) => string,
+  hasSectionAccess: (key: string) => boolean
+) => [
   {
     label: "Overview",
     items: [
@@ -44,6 +55,7 @@ const getNavigationGroups = (t: (key: string) => string) => [
         label: t("sidebar.navigation.dashboard"),
         path: "/brand/:id",
         key: "dashboard",
+        hasAccess: hasSectionAccess("dashboard"),
       },
     ],
   },
@@ -55,30 +67,35 @@ const getNavigationGroups = (t: (key: string) => string) => [
         label: t("sidebar.navigation.revenues"),
         path: "/brand/:id/revenues",
         key: "revenues",
+        hasAccess: hasSectionAccess("revenues"),
       },
       {
         icon: FileText,
         label: t("sidebar.navigation.costs"),
         path: "/brand/:id/costs",
         key: "costs",
+        hasAccess: hasSectionAccess("costs"),
       },
       {
         icon: BarChart3,
         label: t("sidebar.navigation.receivablesPayables"),
         path: "/brand/:id/receivables-payables",
         key: "receivables",
+        hasAccess: hasSectionAccess("receivables"),
       },
       {
         icon: Wallet,
         label: t("sidebar.navigation.wallet"),
         path: "/brand/:id/wallet",
         key: "wallet",
+        hasAccess: hasSectionAccess("wallet"),
       },
       {
         icon: ArrowLeftRight,
         label: t("sidebar.navigation.transfers"),
         path: "/brand/:id/transfers",
         key: "transfers",
+        hasAccess: hasSectionAccess("transfers"),
       },
     ],
   },
@@ -90,12 +107,14 @@ const getNavigationGroups = (t: (key: string) => string) => [
         label: t("sidebar.navigation.inventory"),
         path: "/brand/:id/inventory",
         key: "inventory",
+        hasAccess: hasSectionAccess("inventory"),
       },
       {
         icon: ShoppingCart,
         label: t("sidebar.navigation.orders"),
         path: "/brand/:id/orders",
         key: "orders",
+        hasAccess: hasSectionAccess("orders"),
       },
     ],
   },
@@ -107,25 +126,30 @@ const getNavigationGroups = (t: (key: string) => string) => [
         label: t("sidebar.navigation.tasks"),
         path: "/brand/:id/tasks",
         key: "tasks",
+        hasAccess: hasSectionAccess("tasks"),
       },
       {
         icon: MessageSquare,
-        label: "Support Center",
+        label: t("sidebar.navigation.supportCenter"),
         path: null,
         key: "support-center",
         isGroup: true,
+        hasAccess:
+          hasSectionAccess("support") || hasSectionAccess("my-tickets"),
         children: [
           {
             icon: MessageSquare,
-            label: "Support Requests",
+            label: t("sidebar.navigation.supportRequests"),
             path: "/brand/:id/support",
             key: "support",
+            hasAccess: hasSectionAccess("support"),
           },
           {
             icon: MessageCircle,
-            label: "My Tickets",
+            label: t("sidebar.navigation.myTickets"),
             path: "/brand/:id/my-tickets",
             key: "my-tickets",
+            hasAccess: hasSectionAccess("my-tickets"),
           },
         ],
       },
@@ -139,6 +163,7 @@ const getNavigationGroups = (t: (key: string) => string) => [
         label: t("sidebar.navigation.reports"),
         path: "/brand/:id/reports",
         key: "reports",
+        hasAccess: hasSectionAccess("reports"),
       },
     ],
   },
@@ -150,6 +175,7 @@ const getNavigationGroups = (t: (key: string) => string) => [
         label: t("sidebar.navigation.settings"),
         path: "/brand/:id/settings",
         key: "settings",
+        hasAccess: hasSectionAccess("settings"),
       },
     ],
   },
@@ -165,9 +191,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
     new Set()
   );
+  const [isEditingBrandName, setIsEditingBrandName] = useState(false);
+  const [editingBrandName, setEditingBrandName] = useState("");
+  const [isHoveringBrandName, setIsHoveringBrandName] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { logout, user } = useAuth();
   const { t, isRTL } = useLanguage();
+  const { hasSectionAccess, getSectionLockMessage, subscription } =
+    useSubscription();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const isActive = useCallback(
     (itemKey: string) => {
@@ -212,7 +245,64 @@ const Sidebar: React.FC<SidebarProps> = ({
     [collapsedSections]
   );
 
-  const navigationGroups = getNavigationGroups(t);
+  const navigationGroups = getNavigationGroups(t, hasSectionAccess);
+
+  const handleStartEditing = () => {
+    setEditingBrandName(user?.companyName || "Pulse");
+    setIsEditingBrandName(true);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditingBrandName(false);
+    setEditingBrandName("");
+  };
+
+  const handleSaveBrandName = async () => {
+    if (!editingBrandName.trim()) {
+      toast({
+        title: "Error",
+        description: "Brand name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await brandSettingsAPI.update(brandId, {
+        brandName: editingBrandName.trim(),
+      });
+
+      // Update the user context with the new brand name
+      // This will trigger a re-render with the new name
+      toast({
+        title: "Success",
+        description: "Brand name updated successfully!",
+      });
+
+      setIsEditingBrandName(false);
+      setEditingBrandName("");
+
+      // Force a page refresh to update the user context
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update brand name",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSaveBrandName();
+    } else if (e.key === "Escape") {
+      handleCancelEditing();
+    }
+  };
 
   return (
     <motion.div
@@ -238,9 +328,71 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-[#106df9] font-bold text-sm">P</span>
               </div>
-              <span className="text-white font-semibold text-lg">
-                {user?.companyName || "Pulse"}
-              </span>
+              <div
+                className="flex items-center space-x-2 group"
+                onMouseEnter={() => setIsHoveringBrandName(true)}
+                onMouseLeave={() => setIsHoveringBrandName(false)}
+              >
+                {isEditingBrandName ? (
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={editingBrandName}
+                      onChange={(e) => setEditingBrandName(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      className="h-8 text-white bg-white/20 border-white/30 text-sm font-semibold placeholder-white/70"
+                      placeholder="Brand name"
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleSaveBrandName}
+                      disabled={isSaving}
+                      className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                    >
+                      {isSaving ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancelEditing}
+                      disabled={isSaving}
+                      className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white font-semibold text-lg">
+                      {user?.companyName || "Pulse"}
+                    </span>
+                    <AnimatePresence>
+                      {isHoveringBrandName && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleStartEditing}
+                            className="h-6 w-6 p-0 text-white/70 hover:text-white hover:bg-white/20"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -265,143 +417,206 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4">
-        {navigationGroups.map((group, groupIndex) => (
-          <div key={group.label} className="mb-4">
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.div
-                  className="px-4 mb-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <span className="text-xs font-medium text-white/60 uppercase tracking-wider">
-                    {group.label}
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {navigationGroups.map((group, groupIndex) => {
+          // Show all groups - locked items will be displayed as clickable
 
-            <div className="space-y-1 px-2">
-              {group.items.map((item, itemIndex) => {
-                const active = isActive(item.key);
-                const isGroupItem = item.isGroup;
-                const isCollapsedSection = isSectionCollapsed(item.key);
+          return (
+            <div key={group.label} className="mb-4">
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <motion.div
+                    className="px-4 mb-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                      {group.label}
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                if (isGroupItem) {
-                  return (
-                    <div key={item.key}>
-                      {/* Group Header */}
-                      <motion.div
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${"text-white hover:bg-white/10"}`}
-                        onClick={() => toggleSection(item.key)}
-                        whileHover={{ x: 1 }}
-                        whileTap={{ scale: 0.99 }}
+              <div className="space-y-1 px-2">
+                {group.items.map((item, itemIndex) => {
+                  const active = isActive(item.key);
+                  const isGroupItem = item.isGroup;
+                  const isCollapsedSection = isSectionCollapsed(item.key);
+
+                  if (isGroupItem) {
+                    return (
+                      <div key={item.key}>
+                        {/* Group Header */}
+                        <motion.div
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${"text-white hover:bg-white/10"}`}
+                          onClick={() => toggleSection(item.key)}
+                          whileHover={{ x: 1 }}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.label}</span>
+                          </div>
+                          <AnimatePresence>
+                            {!isCollapsed && (
+                              <motion.div
+                                animate={{
+                                  rotate: isCollapsedSection ? 0 : 90,
+                                }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+
+                        {/* Group Children */}
+                        <AnimatePresence>
+                          {!isCollapsedSection &&
+                            !isCollapsed &&
+                            item.children && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="ml-6 space-y-1 mt-1">
+                                  {item.children.map((child) => {
+                                    const childActive = isActive(child.key);
+                                    const hasAccess = child.hasAccess !== false;
+
+                                    if (!hasAccess) {
+                                      return (
+                                        <Link
+                                          key={child.key}
+                                          to={
+                                            child.path?.replace(
+                                              ":id",
+                                              brandId
+                                            ) || "#"
+                                          }
+                                          className="block"
+                                        >
+                                          <motion.div
+                                            className="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer opacity-80 hover:opacity-100 hover:bg-white/10 transition-all duration-150 text-white"
+                                            title={getSectionLockMessage(
+                                              child.key
+                                            )}
+                                            whileHover={{ x: 1 }}
+                                          >
+                                            <child.icon className="h-4 w-4" />
+                                            <span className="font-medium text-sm">
+                                              {child.label}
+                                            </span>
+                                            <span className="text-xs text-yellow-300 ml-auto">
+                                              🔒
+                                            </span>
+                                          </motion.div>
+                                        </Link>
+                                      );
+                                    }
+
+                                    return (
+                                      <motion.div
+                                        key={child.key}
+                                        className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
+                                          childActive
+                                            ? "bg-white text-[#106df9] shadow-md"
+                                            : "text-white hover:bg-white/10"
+                                        }`}
+                                        onClick={() =>
+                                          handleNavigation(child.path)
+                                        }
+                                        whileHover={{ x: 1 }}
+                                        whileTap={{ scale: 0.99 }}
+                                      >
+                                        <child.icon className="h-4 w-4" />
+                                        <span className="font-medium text-sm">
+                                          {child.label}
+                                        </span>
+                                        {childActive && (
+                                          <motion.div
+                                            className="absolute right-2 w-2 h-2 bg-[#106df9] rounded-full"
+                                            layoutId="activeIndicator"
+                                            transition={{
+                                              type: "spring",
+                                              stiffness: 400,
+                                              damping: 25,
+                                            }}
+                                          />
+                                        )}
+                                      </motion.div>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+
+                  // Regular navigation item
+                  const hasAccess = item.hasAccess !== false;
+
+                  if (!hasAccess) {
+                    return (
+                      <Link
+                        key={item.key}
+                        to={item.path?.replace(":id", brandId) || "#"}
+                        className="block"
                       >
-                        <div className="flex items-center space-x-3">
+                        <motion.div
+                          className="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer opacity-80 hover:opacity-100 hover:bg-white/10 transition-all duration-150 text-white"
+                          title={getSectionLockMessage(item.key)}
+                          whileHover={{ x: 1 }}
+                        >
                           <item.icon className="h-5 w-5" />
                           <span className="font-medium">{item.label}</span>
-                        </div>
-                        <AnimatePresence>
-                          {!isCollapsed && (
-                            <motion.div
-                              animate={{ rotate: isCollapsedSection ? 0 : 90 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
+                          <span className="text-xs text-yellow-300 ml-auto">
+                            🔒
+                          </span>
+                        </motion.div>
+                      </Link>
+                    );
+                  }
 
-                      {/* Group Children */}
-                      <AnimatePresence>
-                        {!isCollapsedSection &&
-                          !isCollapsed &&
-                          item.children && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="ml-6 space-y-1 mt-1">
-                                {item.children.map((child) => {
-                                  const childActive = isActive(child.key);
-                                  return (
-                                    <motion.div
-                                      key={child.key}
-                                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
-                                        childActive
-                                          ? "bg-white text-[#106df9] shadow-md"
-                                          : "text-white hover:bg-white/10"
-                                      }`}
-                                      onClick={() =>
-                                        handleNavigation(child.path)
-                                      }
-                                      whileHover={{ x: 1 }}
-                                      whileTap={{ scale: 0.99 }}
-                                    >
-                                      <child.icon className="h-4 w-4" />
-                                      <span className="font-medium text-sm">
-                                        {child.label}
-                                      </span>
-                                      {childActive && (
-                                        <motion.div
-                                          className="absolute right-2 w-2 h-2 bg-[#106df9] rounded-full"
-                                          layoutId="activeIndicator"
-                                          transition={{
-                                            type: "spring",
-                                            stiffness: 400,
-                                            damping: 25,
-                                          }}
-                                        />
-                                      )}
-                                    </motion.div>
-                                  );
-                                })}
-                              </div>
-                            </motion.div>
-                          )}
-                      </AnimatePresence>
-                    </div>
+                  return (
+                    <motion.div
+                      key={item.key}
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
+                        active
+                          ? "bg-white text-[#106df9] shadow-md"
+                          : "text-white hover:bg-white/10"
+                      }`}
+                      onClick={() => handleNavigation(item.path)}
+                      whileHover={{ x: 1 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.label}</span>
+                      {active && (
+                        <motion.div
+                          className="absolute right-2 w-2 h-2 bg-[#106df9] rounded-full"
+                          layoutId="activeIndicator"
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 25,
+                          }}
+                        />
+                      )}
+                    </motion.div>
                   );
-                }
-
-                // Regular navigation item
-                return (
-                  <motion.div
-                    key={item.key}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
-                      active
-                        ? "bg-white text-[#106df9] shadow-md"
-                        : "text-white hover:bg-white/10"
-                    }`}
-                    onClick={() => handleNavigation(item.path)}
-                    whileHover={{ x: 1 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
-                    {active && (
-                      <motion.div
-                        className="absolute right-2 w-2 h-2 bg-[#106df9] rounded-full"
-                        layoutId="activeIndicator"
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 25,
-                        }}
-                      />
-                    )}
-                  </motion.div>
-                );
-              })}
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Language Switcher */}
@@ -443,7 +658,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {user?.email}
                   </p>
                 </div>
-                <Bell className="h-4 w-4 text-white/60" />
+                <TrialNotifications />
               </div>
 
               <Button
@@ -464,13 +679,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-2 h-8 w-8 text-white hover:bg-white/10"
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
+              <TrialNotifications />
               <Button
                 variant="ghost"
                 size="sm"

@@ -79,11 +79,11 @@ const Support: React.FC = () => {
   const [errors, setErrors] = useState<Partial<TicketFormData>>({});
 
   const categories = [
-    "billing",
-    "technicalIssue",
-    "featureRequest",
-    "account",
-    "other",
+    "Billing",
+    "Technical Issue",
+    "Feature Request",
+    "Account",
+    "Other",
   ];
 
   const handleInputChange = (field: keyof TicketFormData, value: string) => {

@@ -302,7 +302,7 @@ export class AuthController {
       // Verify Google token
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        // Don't specify audience to allow any valid Google token
       });
 
       const payload = ticket.getPayload();

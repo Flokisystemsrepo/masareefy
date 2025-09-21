@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { revenuesAPI, metricsAPI, categoriesAPI } from "@/services/api";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 
 interface Revenue {
   id: string;
@@ -78,6 +79,8 @@ const RevenuesPage: React.FC = () => {
   const [showEditRevenueModal, setShowEditRevenueModal] = useState(false);
   const [showManageCategoriesModal, setShowManageCategoriesModal] =
     useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [revenueToDelete, setRevenueToDelete] = useState<Revenue | null>(null);
   const [selectedRevenue, setSelectedRevenue] = useState<Revenue | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -437,15 +440,23 @@ const RevenuesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("revenue.messages.revenueDeleteConfirm"))) return;
+  const handleDelete = (revenue: Revenue) => {
+    setRevenueToDelete(revenue);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!revenueToDelete) return;
 
     try {
-      await revenuesAPI.delete(id);
+      await revenuesAPI.delete(revenueToDelete.id);
       toast.success(t("revenue.messages.revenueDeleted"));
       loadData(); // Reload data
     } catch (error: any) {
       toast.error(error.message || t("revenue.messages.failedToDeleteRevenue"));
+    } finally {
+      setShowDeleteConfirmation(false);
+      setRevenueToDelete(null);
     }
   };
 
@@ -758,7 +769,7 @@ const RevenuesPage: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDelete(revenue.id)}
+                              onClick={() => handleDelete(revenue)}
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1305,6 +1316,19 @@ const RevenuesPage: React.FC = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        onClose={() => {
+          setShowDeleteConfirmation(false);
+          setRevenueToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title={t("revenue.messages.revenueDeleteConfirm")}
+        description={t("common.deleteConfirmation.description")}
+        itemName={revenueToDelete?.name}
+      />
     </div>
   );
 };

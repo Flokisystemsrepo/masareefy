@@ -1,4 +1,5 @@
 import { prisma } from "@/config/database";
+import { config } from "@/config/environment";
 import {
   hashPassword,
   verifyPassword,
@@ -7,6 +8,7 @@ import {
 } from "@/utils/helpers";
 import { RegisterUserDto, LoginUserDto, JWTPayload } from "@/types";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 export class AuthService {
   // Register new user
@@ -487,13 +489,13 @@ export class AuthService {
       // Generate tokens
       const accessToken = jwt.sign(
         { userId: user.id, email: user.email },
-        process.env.JWT_SECRET!,
+        config.jwtSecret,
         { expiresIn: "15m" }
       );
 
       const refreshToken = jwt.sign(
         { userId: user.id, email: user.email },
-        process.env.JWT_REFRESH_SECRET!,
+        config.jwtSecret, // Use same secret for refresh token
         { expiresIn: "7d" }
       );
 

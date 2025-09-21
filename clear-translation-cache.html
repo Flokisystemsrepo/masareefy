@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clear Translation Cache</title>
+</head>
+
+<body>
+    <h1>Clear Translation Cache</h1>
+    <p>This page will clear the translation cache from localStorage.</p>
+    <button onclick="clearCache()">Clear Cache</button>
+    <div id="result"></div>
+
+    <script>
+        function clearCache() {
+            try {
+                // Clear all localStorage items related to translations
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (
+                        key &&
+                        (key.includes("i18next") ||
+                            key.includes("language") ||
+                            key.includes("translation"))
+                    ) {
+                        keysToRemove.push(key);
+                    }
+                }
+
+                keysToRemove.forEach((key) => {
+                    localStorage.removeItem(key);
+                    console.log("Removed:", key);
+                });
+
+                document.getElementById("result").innerHTML = `
+                    <p style="color: green;">Cache cleared successfully!</p>
+                    <p>Removed ${keysToRemove.length} items:</p>
+                    <ul>
+                        ${keysToRemove.map((key) => `<li>${key}</li>`).join("")}
+                    </ul>
+                    <p>Now refresh your main application page.</p>
+                `;
+        } catch (error) {
+          document.getElementById("result").innerHTML = `
+                    <p style="color: red;">Error clearing cache: ${error.message}</p>
+                `;
+        }
+      }
+    </script>
+</body>
+
+</html>

@@ -51,9 +51,14 @@ interface SubscriptionContextType {
   isFeatureLocked: (featureName: string) => boolean;
   getLockedFeatureMessage: (featureName: string) => string;
   hasIntegrationAccess: (integrationName: string) => boolean;
+  hasSectionAccess: (sectionKey: string) => boolean;
+  getSectionLockMessage: (sectionKey: string) => string;
   getPlanLimit: (limitName: string) => number;
   useFallback: boolean;
   isInitialized: boolean;
+  testUpgradeToGrowth: () => Promise<void>;
+  testUpgradeToScale: () => Promise<void>;
+  testResetToFree: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
@@ -106,6 +111,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [useFallback, setUseFallback] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [lastAuthToken, setLastAuthToken] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const lastSubscriptionCheck = useRef<number>(0);
 
@@ -226,6 +232,47 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
     (window as any).forceRefreshSubscription = forceRefresh;
   }
 
+  // Function to trigger subscription refresh from external contexts (like AuthContext)
+  const triggerSubscriptionRefresh = useCallback(() => {
+    console.log("External trigger for subscription refresh");
+    setHasInitialized(false);
+    setUseFallback(false);
+    setError(null);
+    lastSubscriptionCheck.current = 0; // Reset rate limiting
+  }, []);
+
+  // Make triggerSubscriptionRefresh available globally for AuthContext
+  if (typeof window !== "undefined") {
+    (window as any).triggerSubscriptionRefresh = triggerSubscriptionRefresh;
+  }
+
+  // Monitor authentication token changes and refresh subscription accordingly
+  useEffect(() => {
+    const checkTokenChange = () => {
+      const currentToken = localStorage.getItem("token");
+
+      // If token changed (login/logout), reset initialization and fetch subscription
+      if (currentToken !== lastAuthToken) {
+        console.log("Auth token changed, refreshing subscription context");
+        setLastAuthToken(currentToken);
+        setHasInitialized(false);
+        setUseFallback(false);
+        setError(null);
+
+        // Reset rate limiting to allow immediate fetch
+        lastSubscriptionCheck.current = 0;
+      }
+    };
+
+    // Check immediately
+    checkTokenChange();
+
+    // Set up polling to detect token changes
+    const tokenCheckInterval = setInterval(checkTokenChange, 1000); // Check every second
+
+    return () => clearInterval(tokenCheckInterval);
+  }, [lastAuthToken]);
+
   // Initialize by fetching real subscription first, only fallback if that fails
   useEffect(() => {
     if (!hasInitialized) {
@@ -256,9 +303,16 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
   const hasFeatureAccess = (featureName: string): boolean => {
     if (!subscription) return false;
 
-    // Free plan has limited access - only dashboard, revenue, cost, and settings
+    // Free plan has limited access - dashboard, revenue, cost, settings, 1 wallet, 20 inventory
     if (subscription.isFreePlan) {
-      const allowedFeatures = ["dashboard", "revenue", "cost", "settings"];
+      const allowedFeatures = [
+        "dashboard",
+        "revenue",
+        "cost",
+        "settings",
+        "wallet", // Limited to 1
+        "inventory", // Limited to 20
+      ];
 
       // Check if the feature name matches any allowed feature
       const featureLower = featureName.toLowerCase();
@@ -270,17 +324,15 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
       );
     }
 
-    // Starter plan limitations
-    if (subscription.plan.name.toLowerCase() === "starter") {
+    // Growth plan limitations (299 EGP/month)
+    if (subscription.plan.name.toLowerCase() === "growth") {
       const lockedFeatures = [
-        "shopify",
-        "bosta",
-        "business insights",
         "smart insights",
         "advanced analytics",
+        "priority support",
       ];
 
-      // Check if feature is locked for starter plan
+      // Check if feature is locked for growth plan
       const featureLower = featureName.toLowerCase();
       const isLocked = lockedFeatures.some((locked) =>
         featureLower.includes(locked)
@@ -289,7 +341,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
       return !isLocked;
     }
 
-    // Professional plan has access to all features
+    // Scale plan has access to all features (399 EGP/month)
     return true;
   };
 
@@ -298,41 +350,59 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
   };
 
   const getLockedFeatureMessage = (featureName: string): string => {
-    if (!subscription) return "Subscribe to pro to see this feature";
+    if (!subscription) return "Subscribe to Growth plan to see this feature";
 
     if (subscription.isFreePlan) {
-      return `Subscribe to pro to see ${featureName}`;
-    }
-
-    if (subscription.plan.name.toLowerCase() === "starter") {
       if (
         featureName.toLowerCase().includes("shopify") ||
-        featureName.toLowerCase().includes("bosta")
+        featureName.toLowerCase().includes("bosta") ||
+        featureName.toLowerCase().includes("shipblu")
       ) {
-        return "Upgrade to Professional to access integrations";
+        return "Upgrade to Growth plan (299 EGP/month) to access integrations";
       }
+      if (
+        featureName.toLowerCase().includes("transfers") ||
+        featureName.toLowerCase().includes("receivables") ||
+        featureName.toLowerCase().includes("payables")
+      ) {
+        return "Upgrade to Growth plan (299 EGP/month) to access this feature";
+      }
+      return "Upgrade to Growth plan (299 EGP/month) to access this feature";
+    }
+
+    if (subscription.plan.name.toLowerCase() === "growth") {
       if (
         featureName.toLowerCase().includes("insights") ||
         featureName.toLowerCase().includes("analytics")
       ) {
-        return "Upgrade to Professional to access business insights";
+        return "Upgrade to Scale plan (399 EGP/month) to access Smart Insights";
       }
-      return "Upgrade to Professional to access this feature";
+      if (featureName.toLowerCase().includes("priority support")) {
+        return "Upgrade to Scale plan (399 EGP/month) for priority support";
+      }
+      return "Upgrade to Scale plan (399 EGP/month) to access this feature";
     }
 
     if (subscription.isExpired) {
       return "Renew your subscription to access this feature";
     }
 
-    return "Subscribe to pro to see this feature";
+    return "Subscribe to Growth plan to see this feature";
   };
 
   const hasIntegrationAccess = (integrationName: string): boolean => {
     if (!subscription) return false;
 
+    // Free plan has no integration access
     if (subscription.isFreePlan) return false;
-    if (subscription.plan.name.toLowerCase() === "starter") return false;
 
+    // Growth plan (299 EGP/month) has access to all integrations
+    if (subscription.plan.name.toLowerCase() === "growth") return true;
+
+    // Scale plan (399 EGP/month) has access to all integrations
+    if (subscription.plan.name.toLowerCase() === "scale") return true;
+
+    // Legacy plans - check features array
     return (
       subscription.plan.features.integrations?.includes(integrationName) ||
       false
@@ -342,29 +412,203 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
   const getPlanLimit = (limitName: string): number => {
     if (!subscription) return 0;
 
-    if (subscription.isFreePlan) {
-      return 0; // Free plan has no access to most features
+    // First, try to get limit from the plan's features.limits structure
+    if (
+      subscription.plan.features?.limits?.[
+        limitName as keyof typeof subscription.plan.features.limits
+      ] !== undefined
+    ) {
+      return subscription.plan.features.limits[
+        limitName as keyof typeof subscription.plan.features.limits
+      ];
     }
 
-    if (subscription.plan.name.toLowerCase() === "starter") {
-      const starterLimits: { [key: string]: number } = {
-        inventoryItems: 100,
-        teamMembers: 2,
-        wallets: 2,
+    // Fallback to hardcoded logic for backward compatibility
+    // Free plan limits (0 EGP/forever)
+    if (subscription.isFreePlan) {
+      const freeLimits: { [key: string]: number } = {
+        inventoryItems: 20,
+        wallets: 1,
         brands: 1,
-        users: 2,
+        users: 1,
         transactions: -1, // unlimited
       };
-      return starterLimits[limitName] || -1;
+      return freeLimits[limitName] || 0;
     }
 
-    // Professional plan has unlimited access
-    return (
-      subscription.plan.features.limits[
-        limitName as keyof typeof subscription.plan.features.limits
-      ] || -1
-    );
+    // Growth plan limits (299 EGP/month)
+    if (subscription.plan.name.toLowerCase() === "growth") {
+      const growthLimits: { [key: string]: number } = {
+        inventoryItems: 300,
+        wallets: 5,
+        brands: 1,
+        users: -1, // unlimited
+        transactions: -1, // unlimited
+      };
+      return growthLimits[limitName] || -1;
+    }
+
+    // Scale plan has unlimited access (399 EGP/month)
+    if (subscription.plan.name.toLowerCase() === "scale") {
+      return -1; // unlimited
+    }
+
+    // Default fallback
+    return -1;
   };
+
+  const hasSectionAccess = (sectionKey: string): boolean => {
+    if (!subscription) {
+      return false;
+    }
+
+    // Free plan has limited section access
+    if (subscription.isFreePlan) {
+      const allowedSections = [
+        "dashboard",
+        "revenues",
+        "costs",
+        "wallet", // Limited to 1
+        "inventory", // Limited to 20 items
+        "settings",
+        "support", // Support Center should be accessible
+        "my-tickets", // My Tickets should be accessible
+      ];
+      return allowedSections.includes(sectionKey);
+    }
+
+    // Growth plan has access to most sections
+    if (subscription.plan.name.toLowerCase() === "growth") {
+      const lockedSections = [
+        "smart-insights", // Smart Insights (AI-powered) locked
+      ];
+      return !lockedSections.includes(sectionKey);
+    }
+
+    // Scale plan has access to all sections
+    if (subscription.plan.name.toLowerCase() === "scale") {
+      return true;
+    }
+
+    // Legacy plans - check based on features
+    return true;
+  };
+
+  const getSectionLockMessage = (sectionKey: string): string => {
+    if (!subscription) return "Subscribe to Growth plan to access this section";
+
+    if (subscription.isFreePlan) {
+      const sectionMessages: { [key: string]: string } = {
+        receivables:
+          "Upgrade to Growth plan (299 EGP/month) to access Receivables & Payables",
+        transfers: "Upgrade to Growth plan (299 EGP/month) to access Transfers",
+        orders: "Upgrade to Growth plan (299 EGP/month) to access Orders",
+        tasks: "Upgrade to Growth plan (299 EGP/month) to access Tasks",
+        support: "Upgrade to Growth plan (299 EGP/month) to access Support",
+        "my-tickets":
+          "Upgrade to Growth plan (299 EGP/month) to access My Tickets",
+        reports: "Upgrade to Growth plan (299 EGP/month) to access Reports",
+      };
+      return (
+        sectionMessages[sectionKey] ||
+        "Upgrade to Growth plan (299 EGP/month) to access this section"
+      );
+    }
+
+    if (subscription.plan.name.toLowerCase() === "growth") {
+      if (sectionKey === "reports") {
+        return "Upgrade to Scale plan (399 EGP/month) to access advanced Reports & Analytics";
+      }
+      return "Upgrade to Scale plan (399 EGP/month) to access this section";
+    }
+
+    if (subscription.isExpired) {
+      return "Renew your subscription to access this section";
+    }
+
+    return "Subscribe to Growth plan to access this section";
+  };
+
+  // Test upgrade function for development/testing
+  const testUpgradeToGrowth = useCallback(async () => {
+    if (!subscription || !subscription.isFreePlan) {
+      console.log("Only Free plan users can use test upgrade");
+      return;
+    }
+
+    try {
+      console.log("🧪 Testing upgrade to Growth plan...");
+
+      const response = await subscriptionAPI.testUpgradeToGrowth();
+
+      if (response.success) {
+        setSubscription(response.data);
+        console.log("✅ Test upgrade to Growth plan completed!");
+        console.log("📊 New limits: 5 wallets, 300 inventory items");
+        console.log("🔗 Unlocked integrations: Shopify, Bosta, Shipblu");
+        console.log(
+          "🔒 Still locked: Smart Insights, Advanced Analytics, Priority Support"
+        );
+      } else {
+        console.error("❌ Test upgrade failed:", response.error);
+      }
+    } catch (error) {
+      console.error("❌ Test upgrade failed:", error);
+    }
+  }, [subscription]);
+
+  // Test upgrade function for Scale plan (development/testing)
+  const testUpgradeToScale = useCallback(async () => {
+    if (!subscription) {
+      console.log("No subscription found");
+      return;
+    }
+
+    try {
+      console.log("🧪 Testing upgrade to Scale plan...");
+
+      const response = await subscriptionAPI.testUpgradeToScale();
+
+      if (response.success) {
+        setSubscription(response.data);
+        console.log("✅ Test upgrade to Scale plan completed!");
+        console.log(
+          "📊 New limits: UNLIMITED wallets, UNLIMITED inventory items"
+        );
+        console.log("🔗 Unlocked integrations: Shopify, Bosta, Shipblu");
+        console.log(
+          "🚀 Unlocked features: Smart Insights, Advanced Analytics, Priority Support"
+        );
+        console.log("🎯 FULL ACCESS - No restrictions!");
+      } else {
+        console.error("❌ Test upgrade failed:", response.error);
+      }
+    } catch (error) {
+      console.error("❌ Test upgrade failed:", error);
+    }
+  }, [subscription]);
+
+  // Test reset function for development/testing
+  const testResetToFree = useCallback(async () => {
+    try {
+      console.log("🧪 Testing reset to Free plan...");
+
+      const response = await subscriptionAPI.testResetToFree();
+
+      if (response.success) {
+        setSubscription(response.data);
+        console.log("✅ Test reset to Free plan completed!");
+        console.log("📊 Reset limits: 1 wallet, 20 inventory items");
+        console.log(
+          "🔒 Locked sections: Reports, Tasks, Orders, Transfers, Receivables & Payables"
+        );
+      } else {
+        console.error("❌ Test reset failed:", response.error);
+      }
+    } catch (error) {
+      console.error("❌ Test reset failed:", error);
+    }
+  }, []);
 
   const value = {
     subscription,
@@ -377,9 +621,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
     isFeatureLocked,
     getLockedFeatureMessage,
     hasIntegrationAccess,
+    hasSectionAccess,
+    getSectionLockMessage,
     getPlanLimit,
     useFallback,
     isInitialized: hasInitialized,
+    testUpgradeToGrowth,
+    testUpgradeToScale,
+    testResetToFree,
   };
 
   return (

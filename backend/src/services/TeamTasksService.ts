@@ -14,9 +14,26 @@ export class TeamTasksService {
   // Create team member
   static async createTeamMember(data: CreateTeamMemberDto, createdBy: string) {
     try {
+      let userId = data.userId;
+
+      // If no userId provided, create a new user
+      if (!userId && data.name && data.email) {
+        const newUser = await prisma.user.create({
+          data: {
+            email: data.email,
+            firstName: data.name.split(" ")[0] || "",
+            lastName: data.name.split(" ").slice(1).join(" ") || "",
+            emailVerified: false,
+          },
+        });
+        userId = newUser.id;
+      } else if (!userId) {
+        userId = createdBy; // Fallback to createdBy
+      }
+
       const processedData = {
         brandId: data.brandId,
-        userId: data.userId || createdBy, // Use provided userId or createdBy
+        userId: userId,
         role: data.role,
         permissions: data.permissions,
       };
@@ -25,6 +42,14 @@ export class TeamTasksService {
         data: processedData,
         include: {
           brand: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
         },
       });
 
@@ -69,6 +94,14 @@ export class TeamTasksService {
                 name: true,
               },
             },
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
           },
           orderBy: { joinedAt: "desc" },
           skip,
@@ -98,6 +131,14 @@ export class TeamTasksService {
         where: { id, brandId },
         include: {
           brand: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
         },
       });
 

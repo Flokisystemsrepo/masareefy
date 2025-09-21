@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { SubscriptionController } from "@/controllers/subscription/SubscriptionController";
 import { authenticateToken } from "@/middleware/auth";
+import { getSubscriptionInfo } from "@/middleware/subscription";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.post(
 router.get(
   "/my-subscription",
   authenticateToken,
+  getSubscriptionInfo,
   SubscriptionController.getUserSubscription
 );
 router.put(

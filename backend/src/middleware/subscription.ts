@@ -116,6 +116,7 @@ export const checkSubscription = async (
     console.error("Subscription check error:", error);
     next();
   }
+  return;
 };
 
 // Check if user has access to a specific feature
@@ -157,6 +158,7 @@ export const checkFeatureAccess = (featureName: string) => {
       console.error("Feature access check error:", error);
       next();
     }
+    return;
   };
 };
 
@@ -167,40 +169,123 @@ export const getSubscriptionInfo = async (
   next: NextFunction
 ) => {
   try {
-    if (!req.subscription) {
-      return res.status(403).json({
-        success: false,
-        error: "Subscription required",
-      });
+    if (!req.user) {
+      console.log("getSubscriptionInfo: No user found");
+      next();
+      return;
     }
 
-    const { subscription } = req;
-    const { plan } = subscription;
+    // Get user's current subscription
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        userId: req.user.id,
+        status: { in: ["active", "trialing"] },
+      },
+      include: {
+        plan: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // If no subscription, create a free plan subscription
+    if (!subscription) {
+      const freePlan = await prisma.plan.findFirst({
+        where: { name: "Free" },
+      });
+
+      if (freePlan) {
+        const freeSubscription = await prisma.subscription.create({
+          data: {
+            userId: req.user.id,
+            planId: freePlan.id,
+            status: "active",
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+            paymentMethod: "free",
+          },
+          include: {
+            plan: true,
+          },
+        });
+        req.subscription = freeSubscription;
+      }
+    } else {
+      // Check if subscription has expired
+      const now = new Date();
+      const isExpired =
+        subscription.currentPeriodEnd && subscription.currentPeriodEnd < now;
+      const isTrialExpired =
+        subscription.trialEnd && subscription.trialEnd < now;
+
+      if (isExpired || (subscription.status === "trialing" && isTrialExpired)) {
+        // Downgrade to free plan
+        const freePlan = await prisma.plan.findFirst({
+          where: { name: "Free" },
+        });
+
+        if (freePlan) {
+          // Update existing subscription to free plan
+          const updatedSubscription = await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: {
+              planId: freePlan.id,
+              status: "active",
+              currentPeriodStart: new Date(),
+              currentPeriodEnd: new Date(
+                Date.now() + 365 * 24 * 60 * 60 * 1000
+              ), // 1 year
+              paymentMethod: "free",
+            },
+            include: {
+              plan: true,
+            },
+          });
+          req.subscription = updatedSubscription;
+        }
+      } else {
+        req.subscription = subscription;
+      }
+    }
+
+    if (!req.subscription) {
+      console.log("getSubscriptionInfo: No subscription found or created");
+      next();
+      return;
+    }
+
+    const { plan } = req.subscription;
 
     // Check if subscription is expired or will expire soon
     const now = new Date();
     const isExpired =
-      subscription.currentPeriodEnd && subscription.currentPeriodEnd < now;
+      req.subscription.currentPeriodEnd &&
+      req.subscription.currentPeriodEnd < now;
     const isExpiringSoon =
-      subscription.currentPeriodEnd &&
-      subscription.currentPeriodEnd > now &&
-      subscription.currentPeriodEnd <
+      req.subscription.currentPeriodEnd &&
+      req.subscription.currentPeriodEnd > now &&
+      req.subscription.currentPeriodEnd <
         new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     const subscriptionInfo = {
-      id: subscription.id,
-      status: subscription.status,
+      id: req.subscription.id,
+      status: req.subscription.status,
       plan: {
         id: plan.id,
         name: plan.name,
         features: plan.features,
       },
-      currentPeriodEnd: subscription.currentPeriodEnd,
-      trialEnd: subscription.trialEnd,
+      currentPeriodEnd: req.subscription.currentPeriodEnd,
+      trialEnd: req.subscription.trialEnd,
       isExpired,
       isExpiringSoon,
       isFreePlan: plan.name === "Free",
     };
+
+    console.log("Subscription Info for user", req.user.id, ":", {
+      planName: plan.name,
+      isFreePlan: plan.name === "Free",
+      status: req.subscription.status,
+    });
 
     req.subscription = { ...req.subscription, ...subscriptionInfo };
     next();
@@ -208,4 +293,5 @@ export const getSubscriptionInfo = async (
     console.error("Subscription info error:", error);
     next();
   }
+  return;
 };

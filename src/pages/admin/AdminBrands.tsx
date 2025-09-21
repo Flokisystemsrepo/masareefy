@@ -39,8 +39,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { toast } from "sonner";
 
 interface Brand {
   id: string;
@@ -88,7 +96,16 @@ const AdminBrands: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Subscription management state
+  const [subscriptionData, setSubscriptionData] = useState({
+    subscription_bundle: "",
+    subscription_status: "",
+    billing_start: "",
+    billing_end: "",
+  });
 
   const fetchBrands = async () => {
     try {

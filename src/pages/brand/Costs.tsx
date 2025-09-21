@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { costsAPI, metricsAPI, categoriesAPI } from "@/services/api";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 
 interface Cost {
   id: string;
@@ -79,6 +80,8 @@ const CostsPage: React.FC = () => {
   const [showEditCostModal, setShowEditCostModal] = useState(false);
   const [showManageCategoriesModal, setShowManageCategoriesModal] =
     useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [costToDelete, setCostToDelete] = useState<Cost | null>(null);
   const [selectedCost, setSelectedCost] = useState<Cost | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -447,15 +450,23 @@ const CostsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("cost.messages.costDeleteConfirm"))) return;
+  const handleDelete = (cost: Cost) => {
+    setCostToDelete(cost);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!costToDelete) return;
 
     try {
-      await costsAPI.delete(id);
+      await costsAPI.delete(costToDelete.id);
       toast.success(t("cost.messages.costDeleted"));
       loadData(); // Reload data
     } catch (error: any) {
       toast.error(error.message || t("cost.messages.failedToDeleteCost"));
+    } finally {
+      setShowDeleteConfirmation(false);
+      setCostToDelete(null);
     }
   };
 
@@ -808,7 +819,7 @@ const CostsPage: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDelete(cost.id)}
+                              onClick={() => handleDelete(cost)}
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1381,6 +1392,19 @@ const CostsPage: React.FC = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        onClose={() => {
+          setShowDeleteConfirmation(false);
+          setCostToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title={t("cost.messages.costDeleteConfirm")}
+        description={t("common.deleteConfirmation.description")}
+        itemName={costToDelete?.name}
+      />
     </div>
   );
 };

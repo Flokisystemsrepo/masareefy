@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import TicketController from "../controllers/TicketController";
 import { adminAuth, requirePermission } from "../middleware/adminAuth";
+import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -65,6 +66,12 @@ router.post(
 router.get(
   "/user/:userId",
   TicketController.getUserTickets.bind(TicketController)
+);
+router.post(
+  "/user/:ticketId/response",
+  authenticateToken,
+  upload.array("attachments", 5),
+  TicketController.addUserResponse.bind(TicketController)
 );
 
 // Admin routes (authentication required)

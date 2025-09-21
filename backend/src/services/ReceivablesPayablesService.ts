@@ -13,12 +13,16 @@ export class ReceivablesPayablesService {
   // Create receivable
   static async createReceivable(data: CreateReceivableDto, createdBy: string) {
     try {
+      // Convert date string to DateTime object
+      const processedData = {
+        ...data,
+        dueDate: new Date(data.dueDate),
+        createdBy,
+        status: "current",
+      };
+
       const receivable = await prisma.receivable.create({
-        data: {
-          ...data,
-          createdBy,
-          status: "current",
-        },
+        data: processedData,
         include: {
           brand: true,
           creator: {
@@ -163,23 +167,50 @@ export class ReceivablesPayablesService {
         throw new Error("Receivable not found");
       }
 
-      const updatedReceivable = await prisma.receivable.update({
-        where: { id },
-        data,
-        include: {
-          brand: true,
-          creator: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
+      // Convert date string to DateTime object if dueDate is provided
+      const processedData = {
+        ...data,
+        ...(data.dueDate && { dueDate: new Date(data.dueDate) }),
+      };
+
+      // Check if receivable is converted and has linked revenue
+      if (receivable.convertedRevenueId) {
+        // Use sync method to update both receivable and revenue
+        await this.syncReceivableWithRevenue(id, processedData);
+        return await prisma.receivable.findFirst({
+          where: { id, brandId },
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        // Regular update for non-converted receivables
+        const updatedReceivable = await prisma.receivable.update({
+          where: { id },
+          data: processedData,
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        });
 
-      return updatedReceivable;
+        return updatedReceivable;
+      }
     } catch (error) {
       throw error;
     }
@@ -209,12 +240,16 @@ export class ReceivablesPayablesService {
   // Create payable
   static async createPayable(data: CreatePayableDto, createdBy: string) {
     try {
+      // Convert date string to DateTime object
+      const processedData = {
+        ...data,
+        dueDate: new Date(data.dueDate),
+        createdBy,
+        status: "current",
+      };
+
       const payable = await prisma.payable.create({
-        data: {
-          ...data,
-          createdBy,
-          status: "current",
-        },
+        data: processedData,
         include: {
           brand: true,
           creator: {
@@ -359,23 +394,50 @@ export class ReceivablesPayablesService {
         throw new Error("Payable not found");
       }
 
-      const updatedPayable = await prisma.payable.update({
-        where: { id },
-        data,
-        include: {
-          brand: true,
-          creator: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
+      // Convert date string to DateTime object if dueDate is provided
+      const processedData = {
+        ...data,
+        ...(data.dueDate && { dueDate: new Date(data.dueDate) }),
+      };
+
+      // Check if payable is converted and has linked cost
+      if (payable.convertedCostId) {
+        // Use sync method to update both payable and cost
+        await this.syncPayableWithCost(id, processedData);
+        return await prisma.payable.findFirst({
+          where: { id, brandId },
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        // Regular update for non-converted payables
+        const updatedPayable = await prisma.payable.update({
+          where: { id },
+          data: processedData,
+          include: {
+            brand: true,
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        });
 
-      return updatedPayable;
+        return updatedPayable;
+      }
     } catch (error) {
       throw error;
     }
@@ -494,15 +556,73 @@ export class ReceivablesPayablesService {
       const totalCosts = costsResult._sum.amount || 0;
       const overdueReceivables = overdueReceivablesResult._sum.amount || 0;
       const overduePayables = overduePayablesResult._sum.amount || 0;
+      const netIncome = totalRevenue - totalCosts;
+
+      // Calculate break-even point (revenue needed to cover costs)
+      const breakEvenPoint = totalCosts;
+
+      // Calculate profit margin percentage
+      const profitMargin =
+        totalRevenue > 0 ? (netIncome / totalRevenue) * 100 : 0;
+
+      // Calculate cost percentage of revenue
+      const costPercentage =
+        totalRevenue > 0 ? (totalCosts / totalRevenue) * 100 : 0;
+
+      // Get previous period data for growth calculations
+      const previousStartDate = new Date(
+        startDate.getTime() - (now.getTime() - startDate.getTime())
+      );
+
+      const [previousRevenueResult, previousCostsResult] = await Promise.all([
+        prisma.revenue.aggregate({
+          where: {
+            brandId,
+            createdAt: {
+              gte: previousStartDate,
+              lt: startDate,
+            },
+          },
+          _sum: { amount: true },
+        }),
+        prisma.cost.aggregate({
+          where: {
+            brandId,
+            createdAt: {
+              gte: previousStartDate,
+              lt: startDate,
+            },
+          },
+          _sum: { amount: true },
+        }),
+      ]);
+
+      const previousRevenue = previousRevenueResult._sum.amount || 0;
+      const previousCosts = previousCostsResult._sum.amount || 0;
+
+      // Calculate growth percentages
+      const revenueGrowth =
+        previousRevenue > 0
+          ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
+          : 0;
+      const costGrowth =
+        previousCosts > 0
+          ? ((totalCosts - previousCosts) / previousCosts) * 100
+          : 0;
 
       return {
         totalReceivables,
         totalPayables,
         totalRevenue,
         totalCosts,
-        netIncome: totalRevenue - totalCosts,
+        netIncome,
         overdueReceivables,
         overduePayables,
+        breakEvenPoint,
+        profitMargin,
+        costPercentage,
+        revenueGrowth,
+        costGrowth,
       };
     } catch (error) {
       throw error;
@@ -554,6 +674,298 @@ export class ReceivablesPayablesService {
       return { message: "Statuses updated successfully" };
     } catch (error) {
       throw error;
+    }
+  }
+
+  // Process due receivables and payables - convert to revenue/cost
+  static async processDueItems() {
+    try {
+      const now = new Date();
+      const results = {
+        receivablesProcessed: 0,
+        payablesProcessed: 0,
+        errors: [] as string[],
+      };
+
+      // Process receivables that are due and marked for auto-conversion
+      const dueReceivables = await prisma.receivable.findMany({
+        where: {
+          dueDate: { lte: now },
+          autoConvertToRevenue: true,
+          status: { in: ["current", "overdue"] },
+        },
+        include: {
+          brand: true,
+          creator: true,
+        },
+      });
+
+      for (const receivable of dueReceivables) {
+        try {
+          await prisma.$transaction(async (tx) => {
+            // Create revenue entry
+            const revenue = await tx.revenue.create({
+              data: {
+                brandId: receivable.brandId,
+                name: `Receivable: ${receivable.entityName}`,
+                amount: receivable.amount,
+                category: "Receivables",
+                date: receivable.dueDate,
+                source: "Auto-converted Receivable",
+                createdBy: receivable.createdBy,
+                sourceReceivableId: receivable.id,
+              },
+            });
+
+            // Update receivable status to "converted" and link to revenue
+            await tx.receivable.update({
+              where: { id: receivable.id },
+              data: {
+                status: "converted",
+                convertedRevenueId: revenue.id,
+              },
+            });
+          });
+
+          results.receivablesProcessed++;
+        } catch (error: any) {
+          results.errors.push(
+            `Failed to process receivable ${receivable.id}: ${error.message}`
+          );
+        }
+      }
+
+      // Process payables that are due and marked for auto-conversion
+      const duePayables = await prisma.payable.findMany({
+        where: {
+          dueDate: { lte: now },
+          autoConvertToCost: true,
+          status: { in: ["current", "overdue"] },
+        },
+        include: {
+          brand: true,
+          creator: true,
+        },
+      });
+
+      for (const payable of duePayables) {
+        try {
+          await prisma.$transaction(async (tx) => {
+            // Create cost entry
+            const cost = await tx.cost.create({
+              data: {
+                brandId: payable.brandId,
+                name: `Payable: ${payable.entityName}`,
+                amount: payable.amount,
+                category: "Payables",
+                date: payable.dueDate,
+                vendor: payable.entityName,
+                createdBy: payable.createdBy,
+                sourcePayableId: payable.id,
+              },
+            });
+
+            // Update payable status to "converted" and link to cost
+            await tx.payable.update({
+              where: { id: payable.id },
+              data: {
+                status: "converted",
+                convertedCostId: cost.id,
+              },
+            });
+          });
+
+          results.payablesProcessed++;
+        } catch (error: any) {
+          results.errors.push(
+            `Failed to process payable ${payable.id}: ${error.message}`
+          );
+        }
+      }
+
+      return {
+        success: true,
+        message: `Processed ${results.receivablesProcessed} receivables and ${results.payablesProcessed} payables`,
+        data: results,
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to process due items: ${error.message}`);
+    }
+  }
+
+  // Sync receivable with its converted revenue
+  static async syncReceivableWithRevenue(
+    receivableId: string,
+    updateData: any
+  ) {
+    try {
+      const receivable = await prisma.receivable.findUnique({
+        where: { id: receivableId },
+        include: { brand: true, creator: true },
+      });
+
+      if (!receivable || !receivable.convertedRevenueId) {
+        return {
+          success: false,
+          message: "Receivable not found or not converted",
+        };
+      }
+
+      await prisma.$transaction(async (tx) => {
+        // Update receivable
+        await tx.receivable.update({
+          where: { id: receivableId },
+          data: updateData,
+        });
+
+        // Update linked revenue
+        await tx.revenue.update({
+          where: { id: receivable.convertedRevenueId! },
+          data: {
+            name: `Receivable: ${
+              updateData.entityName || receivable.entityName
+            }`,
+            amount: updateData.amount || receivable.amount,
+            date: updateData.dueDate || receivable.dueDate,
+            receiptUrl: updateData.receiptUrl || receivable.receiptUrl,
+          },
+        });
+      });
+
+      return {
+        success: true,
+        message: "Receivable and revenue synced successfully",
+      };
+    } catch (error: any) {
+      throw new Error(
+        `Failed to sync receivable with revenue: ${error.message}`
+      );
+    }
+  }
+
+  // Sync payable with its converted cost
+  static async syncPayableWithCost(payableId: string, updateData: any) {
+    try {
+      const payable = await prisma.payable.findUnique({
+        where: { id: payableId },
+        include: { brand: true, creator: true },
+      });
+
+      if (!payable || !payable.convertedCostId) {
+        return {
+          success: false,
+          message: "Payable not found or not converted",
+        };
+      }
+
+      await prisma.$transaction(async (tx) => {
+        // Update payable
+        await tx.payable.update({
+          where: { id: payableId },
+          data: updateData,
+        });
+
+        // Update linked cost
+        await tx.cost.update({
+          where: { id: payable.convertedCostId! },
+          data: {
+            name: `Payable: ${updateData.entityName || payable.entityName}`,
+            amount: updateData.amount || payable.amount,
+            date: updateData.dueDate || payable.dueDate,
+            vendor: updateData.entityName || payable.entityName,
+            receiptUrl: updateData.receiptUrl || payable.receiptUrl,
+          },
+        });
+      });
+
+      return { success: true, message: "Payable and cost synced successfully" };
+    } catch (error: any) {
+      throw new Error(`Failed to sync payable with cost: ${error.message}`);
+    }
+  }
+
+  // Sync revenue with its source receivable
+  static async syncRevenueWithReceivable(revenueId: string, updateData: any) {
+    try {
+      const revenue = await prisma.revenue.findUnique({
+        where: { id: revenueId },
+      });
+
+      if (!revenue || !revenue.sourceReceivableId) {
+        return {
+          success: false,
+          message: "Revenue not found or not from receivable",
+        };
+      }
+
+      await prisma.$transaction(async (tx) => {
+        // Update revenue
+        await tx.revenue.update({
+          where: { id: revenueId },
+          data: updateData,
+        });
+
+        // Update linked receivable
+        await tx.receivable.update({
+          where: { id: revenue.sourceReceivableId! },
+          data: {
+            entityName:
+              updateData.name?.replace("Receivable: ", "") || undefined,
+            amount: updateData.amount,
+            dueDate: updateData.date,
+            receiptUrl: updateData.receiptUrl,
+          },
+        });
+      });
+
+      return {
+        success: true,
+        message: "Revenue and receivable synced successfully",
+      };
+    } catch (error: any) {
+      throw new Error(
+        `Failed to sync revenue with receivable: ${error.message}`
+      );
+    }
+  }
+
+  // Sync cost with its source payable
+  static async syncCostWithPayable(costId: string, updateData: any) {
+    try {
+      const cost = await prisma.cost.findUnique({
+        where: { id: costId },
+      });
+
+      if (!cost || !cost.sourcePayableId) {
+        return {
+          success: false,
+          message: "Cost not found or not from payable",
+        };
+      }
+
+      await prisma.$transaction(async (tx) => {
+        // Update cost
+        await tx.cost.update({
+          where: { id: costId },
+          data: updateData,
+        });
+
+        // Update linked payable
+        await tx.payable.update({
+          where: { id: cost.sourcePayableId! },
+          data: {
+            entityName:
+              updateData.name?.replace("Payable: ", "") || updateData.vendor,
+            amount: updateData.amount,
+            dueDate: updateData.date,
+            receiptUrl: updateData.receiptUrl,
+          },
+        });
+      });
+
+      return { success: true, message: "Cost and payable synced successfully" };
+    } catch (error: any) {
+      throw new Error(`Failed to sync cost with payable: ${error.message}`);
     }
   }
 }

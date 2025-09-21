@@ -8,7 +8,13 @@ const updateUserSettingsSchema = Joi.object({
   firstName: Joi.string().min(1).max(50).optional(),
   lastName: Joi.string().min(1).max(50).optional(),
   email: Joi.string().email().optional(),
-  phone: Joi.string().optional(),
+  phone: Joi.string()
+    .pattern(/^(010|011|012|015)\d{8}$/)
+    .messages({
+      "string.pattern.base":
+        "Phone number must be a valid Egyptian mobile number starting with 010, 011, 012, or 015 followed by 8 digits",
+    })
+    .optional(),
   timezone: Joi.string().optional(),
   language: Joi.string().valid("en", "ar").optional(),
   notifications: Joi.object({

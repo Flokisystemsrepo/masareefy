@@ -50,7 +50,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
 }) => {
   const { t, isRTL } = useLanguage();
   const { user } = useAuth();
-  const { subscription, refreshSubscription } = useSubscription();
+  const { subscription, refreshSubscription, forceRefresh } = useSubscription();
 
   const [settings, setSettings] = useState<BrandSettings>({
     brandName: "Your Brand",
@@ -153,6 +153,24 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
     }
   };
 
+  const getButtonLabel = (targetPlan: any) => {
+    if (!subscription) return "Get Started";
+
+    const currentPlanName = subscription.plan.name.toLowerCase();
+    const targetPlanName = targetPlan.name.toLowerCase();
+
+    // Define plan hierarchy (higher index = higher tier)
+    const planHierarchy = ["free", "growth", "scale"];
+    const currentIndex = planHierarchy.indexOf(currentPlanName);
+    const targetIndex = planHierarchy.indexOf(targetPlanName);
+
+    if (currentIndex === targetIndex) return "Current Plan";
+    if (targetIndex > currentIndex) return "Upgrade";
+    if (targetIndex < currentIndex) return "Downgrade";
+
+    return "Change Plan";
+  };
+
   // Handle plan change
   const handlePlanChange = async (planId: string) => {
     try {
@@ -176,7 +194,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
             title: "Success",
             description: "Plan updated successfully!",
           });
-          await refreshSubscription();
+          await forceRefresh();
         } else {
           throw new Error(response.error || "Failed to update plan");
         }
@@ -192,7 +210,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
             title: "Success",
             description: "Plan activated successfully!",
           });
-          await refreshSubscription();
+          await forceRefresh();
         } else {
           throw new Error(response.error || "Failed to activate plan");
         }
@@ -451,26 +469,28 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                           <h3 className="font-semibold text-lg">{plan.name}</h3>
                           <div className="text-right">
                             <p className="text-2xl font-bold">
-                              ${plan.priceMonthly}
+                              {plan.priceMonthly === 0
+                                ? "Free"
+                                : `${plan.priceMonthly} EGP`}
                             </p>
                             <p className="text-sm text-gray-500">/month</p>
                           </div>
                         </div>
 
-                        <div className="space-y-2 mb-4">
-                          {(plan.features?.features || plan.features || [])
-                            .slice(0, 4)
-                            .map((feature: string, index: number) => (
+                        <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                          {(plan.features?.features || plan.features || []).map(
+                            (feature: string, index: number) => (
                               <div
                                 key={index}
-                                className="flex items-center gap-2"
+                                className="flex items-start gap-2"
                               >
-                                <Check className="h-4 w-4 text-green-500" />
-                                <span className="text-sm text-gray-700">
+                                <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 leading-relaxed">
                                   {feature}
                                 </span>
                               </div>
-                            ))}
+                            )
+                          )}
                         </div>
 
                         <Button
@@ -491,7 +511,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                             "Current Plan"
                           ) : (
                             <>
-                              {subscription ? "Change Plan" : "Get Started"}
+                              {getButtonLabel(plan)}
                               <Crown className="h-4 w-4 ml-2" />
                             </>
                           )}

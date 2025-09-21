@@ -47,6 +47,7 @@ import {
   TrendingUp as TrendingUpIcon2,
   AlertTriangle,
   CheckCircle2,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,7 +89,6 @@ import CashFlowReport from "./reports/CashFlowReport";
 import BalanceSheetReport from "./reports/BalanceSheetReport";
 import BrandSettings from "@/components/BrandSettings";
 import { PDFGenerator, generateInsights } from "@/services/pdfGenerator";
-import FeatureLock from "@/components/FeatureLock";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { UpgradePromptModal } from "@/components/UpgradePromptModal";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -901,8 +901,42 @@ interface ReportData {
 
 const ReportsPage: React.FC = () => {
   const { t, isRTL } = useLanguage();
-  const { hasFeatureAccess } = useSubscription();
+  const {
+    hasFeatureAccess,
+    hasSectionAccess,
+    getSectionLockMessage,
+    subscription,
+    testUpgradeToGrowth,
+    testUpgradeToScale,
+  } = useSubscription();
   const navigate = useNavigate();
+
+  // State for upgrade modal
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Helper functions for upgrade modal
+  const getUpgradePlan = () => {
+    if (!subscription) return "Scale";
+    if (subscription.isFreePlan) return "Growth";
+    if (subscription.plan.name.toLowerCase() === "growth") return "Scale";
+    return "Scale";
+  };
+
+  const getUpgradePrice = () => {
+    if (!subscription) return "399 EGP/month";
+    if (subscription.isFreePlan) return "299 EGP/month";
+    if (subscription.plan.name.toLowerCase() === "growth")
+      return "399 EGP/month";
+    return "399 EGP/month";
+  };
+
+  const handleActionClick = () => {
+    if (subscription?.isFreePlan && !hasSectionAccess("reports")) {
+      setShowUpgradeModal(true);
+      return false;
+    }
+    return true;
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
@@ -914,7 +948,6 @@ const ReportsPage: React.FC = () => {
   });
   const [generatingReport, setGeneratingReport] = useState(false);
   const [showBrandSettings, setShowBrandSettings] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [brandSettings, setBrandSettings] = useState({
     primaryColor: "#3B82F6",
     secondaryColor: "#1E40AF",
@@ -1167,256 +1200,348 @@ const ReportsPage: React.FC = () => {
   }
 
   return (
-    <FeatureLock featureName="Reports">
-      <div className={`container mx-auto px-4 py-8 ${isRTL ? "rtl" : "ltr"}`}>
-        {!selectedReport ? (
-          // Main Reports Dashboard
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div
+      className={`container mx-auto px-4 py-8 ${isRTL ? "rtl" : "ltr"} ${
+        !hasSectionAccess("reports") ? "relative" : ""
+      }`}
+    >
+      {!selectedReport ? (
+        // Main Reports Dashboard
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {t("reports.title")}
+                </h1>
+                <p className="text-gray-600">{t("reports.subtitle")}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBrandSettings(true)}
+                  className="gap-2"
+                >
+                  <Palette className="h-4 w-4" />
+                  {t("reports.brandSettings")}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Quick export all reports
+                    toast({
+                      title: t("reports.exportAll"),
+                      description: t("reports.exportAllDescription"),
+                    });
+                  }}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {t("reports.exportAll")}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Date Range Filter */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                {t("reports.dateRangeFilter")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 items-center">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {t("reports.title")}
-                  </h1>
-                  <p className="text-gray-600">{t("reports.subtitle")}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("reports.startDate")}
+                  </label>
+                  <Input
+                    type="date"
+                    value={dateRange.startDate}
+                    onChange={(e) =>
+                      setDateRange((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                    className="w-48"
+                  />
                 </div>
-                <div className="flex gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("reports.endDate")}
+                  </label>
+                  <Input
+                    type="date"
+                    value={dateRange.endDate}
+                    onChange={(e) =>
+                      setDateRange((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                    className="w-48"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDateRange({
+                      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                        .toISOString()
+                        .split("T")[0],
+                      endDate: new Date().toISOString().split("T")[0],
+                    });
+                  }}
+                  className="mt-6"
+                >
+                  {t("reports.last30Days")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Smart Insights Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-500" />
+                {t("reports.smartInsights")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {hasFeatureAccess("smart insights") ? (
+                <SmartInsightsSection />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <Brain className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {t("reports.smartInsightsNotAvailable")}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {t("reports.smartInsightsDescription")}
+                    </p>
+                  </div>
                   <Button
-                    variant="outline"
-                    onClick={() => setShowBrandSettings(true)}
-                    className="gap-2"
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
                   >
-                    <Palette className="h-4 w-4" />
-                    {t("reports.brandSettings")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      // Quick export all reports
-                      toast({
-                        title: t("reports.exportAll"),
-                        description: t("reports.exportAllDescription"),
-                      });
-                    }}
-                    className="gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    {t("reports.exportAll")}
+                    {t("reports.upgradeToProfessional")}
                   </Button>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Reports Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reportTypes.map((report) => (
+              <motion.div
+                key={report.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-300"
+                  onClick={() => handleReportClick(report.id)}
+                >
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div
+                        className={`p-3 rounded-lg ${report.color} text-white`}
+                      >
+                        <report.icon className="h-6 w-6" />
+                      </div>
+                      <ArrowUpRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <CardTitle className="text-xl mt-4">
+                      {report.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {report.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs">
+                        {t("reports.clickToView")}
+                      </Badge>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          <Download className="h-3 w-3 mr-1" />
+                          {t("reports.pdf")}
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs">
+                          <FileText className="h-3 w-3 mr-1" />
+                          {t("reports.excel")}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        // Individual Report View
+        <motion.div
+          initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="mb-6">
+            <Button
+              variant="outline"
+              onClick={handleBackToReports}
+              className="mb-4"
+            >
+              <ChevronDown className="h-4 w-4 mr-2 rotate-90" />
+              {t("reports.backToReports")}
+            </Button>
+          </div>
+          {renderReportComponent()}
+        </motion.div>
+      )}
+
+      {/* Brand Settings Modal */}
+      <BrandSettings
+        isOpen={showBrandSettings}
+        onClose={() => setShowBrandSettings(false)}
+        onSettingsChange={(settings) => {
+          setBrandSettings(settings);
+          toast({
+            title: t("reports.success"),
+            description: t("reports.brandSettingsUpdated"),
+          });
+        }}
+      />
+
+      {/* Upgrade Prompt Modal */}
+      <UpgradePromptModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={() => {
+          // Navigate to subscription page
+          const brandId = localStorage.getItem("brandId");
+          if (brandId) {
+            navigate(`/brand/${brandId}/subscription`);
+          }
+        }}
+        resourceType="smart_insights"
+        currentPlan="Starter"
+        limit={0}
+        current={0}
+      />
+
+      {/* Blur overlay for locked sections - only for Free plan users */}
+      {subscription?.isFreePlan && !hasSectionAccess("reports") && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="text-center p-8 bg-white rounded-lg shadow-lg border max-w-md">
+            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="h-8 w-8 text-yellow-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              🔒 Section Locked
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {getSectionLockMessage("reports")}
+            </p>
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {getUpgradePrice()}
+              </div>
+              <div className="text-sm text-gray-600">
+                {getUpgradePlan()} Plan
+              </div>
+            </div>
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => {
+                if (subscription?.isFreePlan) {
+                  testUpgradeToGrowth();
+                } else if (subscription?.plan.name.toLowerCase() === "growth") {
+                  testUpgradeToScale();
+                } else {
+                  window.location.href = "/pricing";
+                }
+              }}
+            >
+              <ArrowUpRight className="h-4 w-4 mr-2" />
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              🔒 Action Locked
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="h-8 w-8 text-yellow-600" />
+              </div>
+              <p className="text-gray-600 text-base">
+                {getSectionLockMessage("reports")}
+              </p>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {getUpgradePrice()}
+              </div>
+              <div className="text-sm text-gray-600">
+                {getUpgradePlan()} Plan
               </div>
             </div>
 
-            {/* Date Range Filter */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {t("reports.dateRangeFilter")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4 items-center">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t("reports.startDate")}
-                    </label>
-                    <Input
-                      type="date"
-                      value={dateRange.startDate}
-                      onChange={(e) =>
-                        setDateRange((prev) => ({
-                          ...prev,
-                          startDate: e.target.value,
-                        }))
-                      }
-                      className="w-48"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t("reports.endDate")}
-                    </label>
-                    <Input
-                      type="date"
-                      value={dateRange.endDate}
-                      onChange={(e) =>
-                        setDateRange((prev) => ({
-                          ...prev,
-                          endDate: e.target.value,
-                        }))
-                      }
-                      className="w-48"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setDateRange({
-                        startDate: new Date(
-                          Date.now() - 30 * 24 * 60 * 60 * 1000
-                        )
-                          .toISOString()
-                          .split("T")[0],
-                        endDate: new Date().toISOString().split("T")[0],
-                      });
-                    }}
-                    className="mt-6"
-                  >
-                    {t("reports.last30Days")}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Smart Insights Section */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-purple-500" />
-                  {t("reports.smartInsights")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {hasFeatureAccess("smart insights") ? (
-                  <SmartInsightsSection />
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="mb-4">
-                      <Brain className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {t("reports.smartInsightsNotAvailable")}
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        {t("reports.smartInsightsDescription")}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                      {t("reports.upgradeToProfessional")}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Reports Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reportTypes.map((report) => (
-                <motion.div
-                  key={report.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Card
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-300"
-                    onClick={() => handleReportClick(report.id)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div
-                          className={`p-3 rounded-lg ${report.color} text-white`}
-                        >
-                          <report.icon className="h-6 w-6" />
-                        </div>
-                        <ArrowUpRight className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <CardTitle className="text-xl mt-4">
-                        {report.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm mb-4">
-                        {report.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-xs">
-                          {t("reports.clickToView")}
-                        </Badge>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            {t("reports.pdf")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            <FileText className="h-3 w-3 mr-1" />
-                            {t("reports.excel")}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          // Individual Report View
-          <motion.div
-            initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="mb-6">
+            <div className="space-y-2">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  if (subscription?.isFreePlan) {
+                    testUpgradeToGrowth();
+                    setShowUpgradeModal(false);
+                  } else if (
+                    subscription?.plan.name.toLowerCase() === "growth"
+                  ) {
+                    testUpgradeToScale();
+                    setShowUpgradeModal(false);
+                  } else {
+                    window.location.href = "/pricing";
+                  }
+                }}
+              >
+                <ArrowUpRight className="h-4 w-4 mr-2" />
+                Upgrade Now
+              </Button>
               <Button
                 variant="outline"
-                onClick={handleBackToReports}
-                className="mb-4"
+                className="w-full"
+                onClick={() => setShowUpgradeModal(false)}
               >
-                <ChevronDown className="h-4 w-4 mr-2 rotate-90" />
-                {t("reports.backToReports")}
+                Maybe Later
               </Button>
             </div>
-            {renderReportComponent()}
-          </motion.div>
-        )}
-
-        {/* Brand Settings Modal */}
-        <BrandSettings
-          isOpen={showBrandSettings}
-          onClose={() => setShowBrandSettings(false)}
-          onSettingsChange={(settings) => {
-            setBrandSettings(settings);
-            toast({
-              title: t("reports.success"),
-              description: t("reports.brandSettingsUpdated"),
-            });
-          }}
-        />
-
-        {/* Upgrade Prompt Modal */}
-        <UpgradePromptModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          onUpgrade={() => {
-            // Navigate to subscription page
-            const brandId = localStorage.getItem("brandId");
-            if (brandId) {
-              navigate(`/brand/${brandId}/subscription`);
-            }
-          }}
-          resourceType="smart_insights"
-          currentPlan="Starter"
-          limit={0}
-          current={0}
-        />
-      </div>
-    </FeatureLock>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

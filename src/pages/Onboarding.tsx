@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
 import { ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,10 +67,13 @@ const Onboarding: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
-  const [isGoogleUser, setIsGoogleUser] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [showSessionRestore, setShowSessionRestore] = useState(false);
   const [sessionData, setSessionData] = useState<OnboardingData | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const { toast } = useToast();
   const { login } = useAuth();
 
@@ -224,7 +226,7 @@ const Onboarding: React.FC = () => {
             newErrors.phoneNumber = t(
               "auth.onboarding.validation.phoneRequired"
             );
-          else if (!/^10\d{8}$/.test(data.phoneNumber)) {
+          else if (!/^(010|011|012|015)\d{8}$/.test(data.phoneNumber.trim())) {
             newErrors.phoneNumber = t(
               "auth.onboarding.validation.phoneInvalid"
             );
@@ -271,7 +273,9 @@ const Onboarding: React.FC = () => {
       case 4: // Credentials
         const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
         const passwordValid = data.password.length >= 8;
-        const phoneValid = /^10\d{8}$/.test(data.phoneNumber);
+        const phoneValid = /^(010|011|012|015)\d{8}$/.test(
+          data.phoneNumber.trim()
+        );
         return emailValid && passwordValid && phoneValid;
       case 5: // Business
         const businessValid = data.businessName.trim().length > 0;
@@ -348,26 +352,156 @@ const Onboarding: React.FC = () => {
     return true;
   }, []);
 
-  const validatePhone = useCallback((phone: string) => {
-    if (!phone) {
-      setErrors((prev) => ({
-        ...prev,
-        phoneNumber: t("auth.onboarding.validation.phoneRequired"),
-      }));
-      return false;
+  const validatePhone = useCallback(
+    (phone: string) => {
+      if (!phone) {
+        setErrors((prev) => ({
+          ...prev,
+          phoneNumber: t("auth.onboarding.validation.phoneRequired"),
+        }));
+        return false;
+      }
+
+      // Remove any whitespace and ensure we're only checking the Egyptian mobile part
+      const cleanPhone = phone.trim();
+
+      if (!/^(010|011|012|015)\d{8}$/.test(cleanPhone)) {
+        setErrors((prev) => ({
+          ...prev,
+          phoneNumber: t("auth.onboarding.validation.phoneInvalid"),
+        }));
+        return false;
+      }
+
+      // Clear the error when phone is valid
+      setErrors((prev) => ({ ...prev, phoneNumber: "" }));
+      return true;
+    },
+    [t]
+  );
+
+  // SMS Verification functions
+  const sendOTP = useCallback(async () => {
+    if (!data.phoneNumber) {
+      toast({
+        title: "Error",
+        description: "Phone number is required",
+        variant: "destructive",
+      });
+      return;
     }
 
-    if (!/^10\d{8}$/.test(phone)) {
-      setErrors((prev) => ({
-        ...prev,
-        phoneNumber: t("auth.onboarding.validation.phoneInvalid"),
-      }));
-      return false;
+    try {
+      setOtpLoading(true);
+      const response = await fetch(
+        "http://localhost:3001/api/otp/registration/send",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phone: data.phoneNumber,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        setOtpSent(true);
+        toast({
+          title: "OTP Sent",
+          description: "Verification code sent to your phone",
+        });
+        // Start resend cooldown
+        setResendCooldown(60);
+        const interval = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to send OTP",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setOtpLoading(false);
+    }
+  }, [data.phoneNumber, toast]);
+
+  const verifyOTP = useCallback(async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid 6-digit code",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setErrors((prev) => ({ ...prev, phoneNumber: "" }));
-    return true;
-  }, []);
+    try {
+      setOtpLoading(true);
+      const response = await fetch(
+        "http://localhost:3001/api/otp/registration/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phone: data.phoneNumber,
+            otpCode: otpCode,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Phone Verified",
+          description: "Your phone number has been verified successfully",
+        });
+        // Move to next step
+        setCurrentStep(currentStep + 1);
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: result.error || "Invalid verification code",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to verify code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setOtpLoading(false);
+    }
+  }, [otpCode, data.phoneNumber, currentStep, toast]);
+
+  // Auto-send OTP when reaching verification step
+  useEffect(() => {
+    if (currentStep === 7 && !otpSent && data.phoneNumber) {
+      sendOTP();
+    }
+  }, [currentStep, otpSent, data.phoneNumber, sendOTP]);
 
   const validateName = useCallback((firstName: string, lastName: string) => {
     let isValid = true;
@@ -551,58 +685,6 @@ const Onboarding: React.FC = () => {
     setCurrentStep(Math.max(0, currentStep - 1));
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      setIsLoading(true);
-
-      // Call Google sign up API
-      const response = await authAPI.googleSignUp(
-        credentialResponse.credential
-      );
-
-      // Auto-fill user data from Google
-      setData({
-        ...data,
-        firstName: response.user.firstName || "",
-        lastName: response.user.lastName || "",
-        email: response.user.email,
-        // Keep these empty - user must fill them
-        age: 0,
-        businessName: "",
-        niche: "",
-        phoneNumber: "",
-      });
-
-      setIsGoogleUser(true);
-
-      // Skip to business details step (Step 5)
-      setCurrentStep(5);
-
-      toast({
-        title: "Google account connected!",
-        description:
-          "We've pre-filled your details. Please complete the remaining information.",
-      });
-    } catch (error: any) {
-      console.error("Google sign up error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to connect Google account",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    toast({
-      title: "Google sign up failed",
-      description: "Please try again or continue with email",
-      variant: "destructive",
-    });
-  };
-
   const handleCreateAccount = async () => {
     console.log("handleCreateAccount called");
     setIsLoading(true);
@@ -746,18 +828,6 @@ const Onboarding: React.FC = () => {
                     {t("auth.onboarding.content.authChoice.or")}
                   </span>
                 </div>
-              </div>
-
-              <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="filled_blue"
-                  size="large"
-                  text="continue_with"
-                  shape="rectangular"
-                  width="100%"
-                />
               </div>
             </div>
           </motion.div>
@@ -973,6 +1043,10 @@ const Onboarding: React.FC = () => {
                       setData({ ...data, phoneNumber: value });
                       // Real-time validation
                       validatePhone(value);
+                      // Also clear error immediately if phone is valid
+                      if (/^(010|011|012|015)\d{8}$/.test(value.trim())) {
+                        setErrors((prev) => ({ ...prev, phoneNumber: "" }));
+                      }
                     }}
                     onKeyDown={handleKeyDown}
                     className="h-24 text-5xl text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/30 focus:border-white/40 placeholder:text-white/80 placeholder:font-medium text-white font-bold pl-16"
@@ -1186,7 +1260,7 @@ const Onboarding: React.FC = () => {
                     plans.map((plan) => (
                       <Card
                         key={plan.id}
-                        className={`cursor-pointer transition-all duration-300 h-80 ${
+                        className={`cursor-pointer transition-all duration-300 h-96 ${
                           data.plan === plan.id
                             ? "ring-4 ring-white/60 bg-white/25 backdrop-blur-md scale-105 shadow-2xl"
                             : "bg-white/10 backdrop-blur-md hover:bg-white/20 hover:scale-105"
@@ -1238,11 +1312,10 @@ const Onboarding: React.FC = () => {
                               </div>
                             )}
                           </div>
-                          <div className="space-y-2 mt-4">
+                          <div className="space-y-2 mt-4 max-h-48 overflow-y-auto">
                             {Array.isArray(plan.features.features) ? (
-                              plan.features.features
-                                .slice(0, 5)
-                                .map((feature: string, index: number) => (
+                              plan.features.features.map(
+                                (feature: string, index: number) => (
                                   <div
                                     key={index}
                                     className="flex items-center space-x-3"
@@ -1252,7 +1325,8 @@ const Onboarding: React.FC = () => {
                                       {feature}
                                     </span>
                                   </div>
-                                ))
+                                )
+                              )
                             ) : (
                               <div className="text-white/90 text-sm">
                                 {plan.maxUsers === -1
@@ -1264,13 +1338,6 @@ const Onboarding: React.FC = () => {
                                   : `${plan.maxBrands} brands`}
                               </div>
                             )}
-                            {Array.isArray(plan.features.features) &&
-                              plan.features.features.length > 5 && (
-                                <div className="text-white/60 text-xs text-center pt-2">
-                                  +{plan.features.features.length - 5} more
-                                  features
-                                </div>
-                              )}
                           </div>
                           <RadioGroup
                             value={data.plan}
@@ -1394,29 +1461,58 @@ const Onboarding: React.FC = () => {
           >
             <div className="text-center space-y-4">
               <h1 className="text-6xl font-bold text-white">
-                {t("auth.onboarding.verification.title")}
+                Verify Your Phone
               </h1>
               <p className="text-xl text-[#CBD5E1]">
-                {t("auth.onboarding.verification.subtitle")}
+                We've sent a verification code to{" "}
+                <span className="font-bold text-white">
+                  +20{data.phoneNumber}
+                </span>
               </p>
             </div>
             <div className="space-y-6">
               <div className="space-y-2">
                 <Input
                   type="text"
-                  placeholder="Enter verification code"
+                  placeholder="Enter 6-digit code"
+                  value={otpCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setOtpCode(value);
+                  }}
                   className="h-24 text-6xl text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/30 focus:border-white/40 placeholder:text-white/80 placeholder:font-medium text-white font-bold tracking-widest"
                   autoFocus
+                  maxLength={6}
                 />
-                <p className="text-[#CBD5E1] text-sm text-center">
-                  For demo purposes, use code:{" "}
-                  <span className="font-bold text-[#064FB5]">1234</span>
-                </p>
+                {otpSent && (
+                  <p className="text-green-400 text-sm text-center">
+                    ✓ Verification code sent successfully
+                  </p>
+                )}
               </div>
-              <div className="text-center">
-                <button className="text-[#064FB5] hover:underline text-sm">
-                  Didn't receive the code? Resend in 30s
-                </button>
+              <div className="text-center space-y-4">
+                <Button
+                  onClick={verifyOTP}
+                  disabled={otpCode.length !== 6 || otpLoading}
+                  className="w-full h-16 text-xl font-semibold bg-white text-[#064FB5] hover:bg-white/90"
+                >
+                  {otpLoading ? "Verifying..." : "Verify Phone"}
+                </Button>
+                <div className="text-center">
+                  {resendCooldown > 0 ? (
+                    <p className="text-[#CBD5E1] text-sm">
+                      Resend code in {resendCooldown}s
+                    </p>
+                  ) : (
+                    <button
+                      onClick={sendOTP}
+                      disabled={otpLoading}
+                      className="text-[#064FB5] hover:underline text-sm"
+                    >
+                      Didn't receive the code? Resend
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
@@ -1458,11 +1554,82 @@ const Onboarding: React.FC = () => {
             </div>
             <div className="space-y-4">
               <Button
-                onClick={() => (window.location.href = "/brand/dashboard")}
+                onClick={async () => {
+                  try {
+                    setIsLoading(true);
+
+                    // Complete the registration
+                    const registrationData = {
+                      planId: data.plan,
+                      email: data.email,
+                      firstName: data.firstName,
+                      lastName: data.lastName,
+                      brandName: data.businessName,
+                      password: data.password,
+                      phoneNumber: data.phoneNumber,
+                      paymentMethod: "mock", // For now, use mock payment
+                    };
+
+                    const response = await fetch(
+                      "/api/auth/register/step4-complete",
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(registrationData),
+                      }
+                    );
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                      // Store auth data
+                      localStorage.setItem("token", result.data.token);
+                      localStorage.setItem(
+                        "refreshToken",
+                        result.data.refreshToken
+                      );
+                      localStorage.setItem("isAuthenticated", "true");
+                      localStorage.setItem("userEmail", result.data.user.email);
+                      localStorage.setItem(
+                        "userName",
+                        `${result.data.user.firstName} ${result.data.user.lastName}`
+                      );
+                      localStorage.setItem(
+                        "companyName",
+                        result.data.brand.name
+                      );
+                      localStorage.setItem("brandId", result.data.brand.id);
+                      localStorage.setItem("userId", result.data.user.id);
+
+                      toast({
+                        title: "Account Created Successfully!",
+                        description: "Welcome to Masareefy!",
+                      });
+
+                      // Redirect to dashboard
+                      window.location.href = "/brand/dashboard";
+                    } else {
+                      throw new Error(result.error || "Registration failed");
+                    }
+                  } catch (error: any) {
+                    toast({
+                      title: "Registration Failed",
+                      description:
+                        error.message ||
+                        "Failed to create account. Please try again.",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
                 size="lg"
                 className="bg-[#064FB5] hover:bg-[#064FB5]/90"
               >
-                Go to Dashboard
+                {isLoading ? "Creating Account..." : "Continue"}
               </Button>
             </div>
           </motion.div>

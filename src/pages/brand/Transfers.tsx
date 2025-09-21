@@ -35,8 +35,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { transfersAPI, metricsAPI, inventoryAPI } from "@/services/api";
 import { toast } from "sonner";
-import FeatureLock from "@/components/FeatureLock";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Lock, ArrowUpRight } from "lucide-react";
 
 interface Transfer {
   id: string;
@@ -73,6 +81,47 @@ interface TransferMetrics {
 
 const TransfersPage: React.FC = () => {
   const { t, isRTL } = useLanguage();
+  const {
+    hasSectionAccess,
+    getSectionLockMessage,
+    subscription,
+    testUpgradeToGrowth,
+    testUpgradeToScale,
+  } = useSubscription();
+
+  // State for upgrade modal
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // State for delete confirmation
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [transferToDelete, setTransferToDelete] = useState<Transfer | null>(
+    null
+  );
+
+  // Helper functions for upgrade modal
+  const getUpgradePlan = () => {
+    if (!subscription) return "Growth";
+    if (subscription.isFreePlan) return "Growth";
+    if (subscription.plan.name.toLowerCase() === "growth") return "Scale";
+    return "Growth";
+  };
+
+  const getUpgradePrice = () => {
+    if (!subscription) return "299 EGP/month";
+    if (subscription.isFreePlan) return "299 EGP/month";
+    if (subscription.plan.name.toLowerCase() === "growth")
+      return "399 EGP/month";
+    return "299 EGP/month";
+  };
+
+  const handleActionClick = () => {
+    if (subscription?.isFreePlan && !hasSectionAccess("transfers")) {
+      setShowUpgradeModal(true);
+      return false;
+    }
+    return true;
+  };
+
   const queryClient = useQueryClient();
   const [showAddTransferModal, setShowAddTransferModal] = useState(false);
   const [showEditTransferModal, setShowEditTransferModal] = useState(false);
@@ -101,6 +150,11 @@ const TransfersPage: React.FC = () => {
     inventoryItemId: "",
     deductFromStock: false,
   });
+
+  // Inventory stock tracking
+  const [selectedInventoryStock, setSelectedInventoryStock] =
+    useState<number>(0);
+  const [stockValidationError, setStockValidationError] = useState<string>("");
 
   // React Query hooks
   const {
@@ -172,11 +226,13 @@ const TransfersPage: React.FC = () => {
   };
 
   const openAddModal = () => {
+    if (!handleActionClick()) return;
     resetForm();
     setShowAddTransferModal(true);
   };
 
   const openEditModal = (transfer: Transfer) => {
+    if (!handleActionClick()) return;
     setSelectedTransfer(transfer);
     setFormData({
       type: transfer.type,
@@ -188,6 +244,12 @@ const TransfersPage: React.FC = () => {
       inventoryItemId: transfer.inventoryItemId || "",
       deductFromStock: transfer.deductFromStock || false,
     });
+
+    // Update selected inventory stock if it's an inventory transfer
+    if (transfer.inventoryItemId) {
+      updateSelectedInventoryStock(transfer.inventoryItemId);
+    }
+
     setShowEditTransferModal(true);
   };
 
@@ -239,9 +301,66 @@ const TransfersPage: React.FC = () => {
     },
   });
 
+  const handleDeleteTransfer = (transfer: Transfer) => {
+    setTransferToDelete(transfer);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = () => {
+    if (!transferToDelete) return;
+
+    deleteTransferMutation.mutate(transferToDelete.id);
+    setShowDeleteConfirmation(false);
+    setTransferToDelete(null);
+  };
+
+  // Update selected inventory stock when inventory item changes
+  const updateSelectedInventoryStock = useCallback(
+    (inventoryItemId: string) => {
+      if (inventoryItemId) {
+        const selectedItem = inventoryItems.find(
+          (item) => item.id === inventoryItemId
+        );
+        if (selectedItem) {
+          setSelectedInventoryStock(selectedItem.currentStock);
+        }
+      } else {
+        setSelectedInventoryStock(0);
+      }
+      setStockValidationError(""); // Clear any previous errors
+    },
+    [inventoryItems]
+  );
+
+  // Validate inventory stock before submission
+  const validateInventoryStock = useCallback(() => {
+    if (
+      formData.type === "inventory" &&
+      formData.deductFromStock &&
+      formData.inventoryItemId &&
+      formData.quantity
+    ) {
+      const requestedQuantity = parseInt(formData.quantity);
+      if (requestedQuantity > selectedInventoryStock) {
+        setStockValidationError(
+          `Insufficient stock! Available: ${selectedInventoryStock}, Requested: ${requestedQuantity}`
+        );
+        return false;
+      }
+    }
+    setStockValidationError("");
+    return true;
+  }, [formData, selectedInventoryStock]);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+
+      // Validate inventory stock before submission
+      if (!validateInventoryStock()) {
+        toast.error(stockValidationError);
+        return;
+      }
 
       const submitData = {
         type: formData.type,
@@ -269,15 +388,9 @@ const TransfersPage: React.FC = () => {
       selectedTransfer,
       createTransferMutation,
       updateTransferMutation,
+      validateInventoryStock,
+      stockValidationError,
     ]
-  );
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (!confirm(t("transfers.messages.deleteConfirm"))) return;
-      deleteTransferMutation.mutate(id);
-    },
-    [deleteTransferMutation]
   );
 
   const formatDate = (dateString: string) => {
@@ -340,11 +453,11 @@ const TransfersPage: React.FC = () => {
   }
 
   return (
-    <FeatureLock featureName="Transfers">
+    <>
       <div
         className={`p-6 space-y-6 bg-gray-50 min-h-screen ${
           isRTL ? "rtl" : "ltr"
-        }`}
+        } ${!hasSectionAccess("transfers") ? "relative" : ""}`}
       >
         {/* Header */}
         <motion.div
@@ -613,7 +726,7 @@ const TransfersPage: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDelete(transfer.id)}
+                                onClick={() => handleDeleteTransfer(transfer)}
                                 className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -847,9 +960,10 @@ const TransfersPage: React.FC = () => {
                       </label>
                       <Select
                         value={formData.inventoryItemId}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, inventoryItemId: value })
-                        }
+                        onValueChange={(value) => {
+                          setFormData({ ...formData, inventoryItemId: value });
+                          updateSelectedInventoryStock(value);
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue
@@ -882,11 +996,51 @@ const TransfersPage: React.FC = () => {
                       type="number"
                       placeholder={t("transfers.form.quantityPlaceholder")}
                       value={formData.quantity}
-                      onChange={(e) =>
-                        setFormData({ ...formData, quantity: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setFormData({ ...formData, quantity: e.target.value });
+                        // Real-time validation
+                        if (
+                          formData.type === "inventory" &&
+                          formData.deductFromStock &&
+                          formData.inventoryItemId
+                        ) {
+                          const requestedQuantity = parseInt(e.target.value);
+                          if (requestedQuantity > selectedInventoryStock) {
+                            setStockValidationError(
+                              `Insufficient stock! Available: ${selectedInventoryStock}, Requested: ${requestedQuantity}`
+                            );
+                          } else {
+                            setStockValidationError("");
+                          }
+                        }
+                      }}
                       required
+                      disabled={
+                        showEditTransferModal &&
+                        selectedTransfer?.deductFromStock
+                      }
+                      className={stockValidationError ? "border-red-500" : ""}
                     />
+                    {stockValidationError && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {stockValidationError}
+                      </p>
+                    )}
+                    {formData.type === "inventory" &&
+                      formData.deductFromStock &&
+                      formData.inventoryItemId &&
+                      selectedInventoryStock > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          Available stock: {selectedInventoryStock}
+                        </p>
+                      )}
+                    {showEditTransferModal &&
+                      selectedTransfer?.deductFromStock && (
+                        <p className="text-sm text-amber-600 mt-1">
+                          ⚠️ Quantity cannot be edited for transfers with stock
+                          deduction
+                        </p>
+                      )}
                   </div>
 
                   <div>
@@ -1015,8 +1169,126 @@ const TransfersPage: React.FC = () => {
             </motion.div>
           </motion.div>
         )}
+
+        {/* Blur overlay for locked sections - only for Free plan users */}
+        {subscription?.isFreePlan && !hasSectionAccess("transfers") && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+            <div className="text-center p-8 bg-white rounded-lg shadow-lg border max-w-md">
+              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="h-8 w-8 text-yellow-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                🔒 Section Locked
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {getSectionLockMessage("transfers")}
+              </p>
+              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <div className="text-2xl font-bold text-blue-600 mb-1">
+                  {getUpgradePrice()}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {getUpgradePlan()} Plan
+                </div>
+              </div>
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  if (subscription?.isFreePlan) {
+                    testUpgradeToGrowth();
+                  } else if (
+                    subscription?.plan.name.toLowerCase() === "growth"
+                  ) {
+                    testUpgradeToScale();
+                  } else {
+                    window.location.href = "/pricing";
+                  }
+                }}
+              >
+                <ArrowUpRight className="h-4 w-4 mr-2" />
+                Upgrade Now
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
-    </FeatureLock>
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              🔒 Action Locked
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="h-8 w-8 text-yellow-600" />
+              </div>
+              <p className="text-gray-600 text-base">
+                {getSectionLockMessage("transfers")}
+              </p>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {getUpgradePrice()}
+              </div>
+              <div className="text-sm text-gray-600">
+                {getUpgradePlan()} Plan
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  if (subscription?.isFreePlan) {
+                    testUpgradeToGrowth();
+                    setShowUpgradeModal(false);
+                  } else if (
+                    subscription?.plan.name.toLowerCase() === "growth"
+                  ) {
+                    testUpgradeToScale();
+                    setShowUpgradeModal(false);
+                  } else {
+                    window.location.href = "/pricing";
+                  }
+                }}
+              >
+                <ArrowUpRight className="h-4 w-4 mr-2" />
+                Upgrade Now
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowUpgradeModal(false)}
+              >
+                Maybe Later
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        onClose={() => {
+          setShowDeleteConfirmation(false);
+          setTransferToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title={t("common.deleteConfirmation.title")}
+        description={t("transfers.messages.deleteConfirm")}
+        itemName={
+          transferToDelete?.description ||
+          `Transfer to ${transferToDelete?.toLocation}`
+        }
+      />
+    </>
   );
 };
 

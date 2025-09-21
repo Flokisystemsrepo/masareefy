@@ -365,4 +365,22 @@ export class ReceivablesPayablesController {
       });
     }
   }
+
+  // Process due receivables and payables (admin only)
+  static async processDueItems(req: Request, res: Response) {
+    try {
+      const result = await ReceivablesPayablesService.processDueItems();
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+        data: result.data,
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message || "Failed to process due items",
+      });
+    }
+  }
 }

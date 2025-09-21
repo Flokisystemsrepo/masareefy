@@ -112,6 +112,8 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({
             open={true}
             onOpenChange={(open) => !open && setSelectedImportType(null)}
             onImportSuccess={handleImportSuccess}
+            currentInventoryCount={currentInventoryCount}
+            inventoryLimit={inventoryLimit}
           />
         )}
       </>

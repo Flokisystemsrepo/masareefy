@@ -7,9 +7,19 @@ import {
   BarChart3,
   Info,
   Star,
+  AlertTriangle,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { revenuesAPI } from "@/services/api";
@@ -31,10 +41,22 @@ const RevenueReport: React.FC<RevenueReportProps> = ({
   const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     loadRevenueData();
+  }, [dateRange]);
+
+  useEffect(() => {
+    setCustomDateRange({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
   }, [dateRange]);
 
   const loadRevenueData = async () => {

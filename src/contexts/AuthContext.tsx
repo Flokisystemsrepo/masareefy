@@ -13,6 +13,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber?: string;
   name?: string;
   companyName?: string;
   brandId: string;
@@ -130,7 +131,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     // Circuit breaker: if too many failures, disable auth completely
-    if (authFailureCount >= 10) { // Increased threshold to prevent premature lockout
+    if (authFailureCount >= 10) {
+      // Increased threshold to prevent premature lockout
       console.warn("Too many auth failures, disabling auth system");
       clearAllAuthData();
       setUser(null);
@@ -176,6 +178,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             email: userEmail,
             firstName: profileData.user.firstName,
             lastName: profileData.user.lastName,
+            phoneNumber: profileData.user.phoneNumber,
             name:
               userName ||
               `${profileData.user.firstName} ${profileData.user.lastName}`,
@@ -186,6 +189,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log("AuthContext: Setting user data:", userData);
           setUser(userData);
           setAuthFailureCount(0); // Reset failure count on success
+
+          // Trigger subscription refresh after successful auth check
+          setTimeout(() => {
+            if (
+              typeof window !== "undefined" &&
+              (window as any).triggerSubscriptionRefresh
+            ) {
+              console.log("Triggering subscription refresh after auth check");
+              (window as any).triggerSubscriptionRefresh();
+            }
+          }, 100); // Small delay to ensure localStorage is updated
         } catch (error: any) {
           console.error("AuthContext: Profile API failed:", error);
 
@@ -267,6 +281,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
 
       setUser(userData);
+
+      // Trigger subscription refresh after successful token refresh
+      setTimeout(() => {
+        if (
+          typeof window !== "undefined" &&
+          (window as any).triggerSubscriptionRefresh
+        ) {
+          console.log("Triggering subscription refresh after token refresh");
+          (window as any).triggerSubscriptionRefresh();
+        }
+      }, 100); // Small delay to ensure localStorage is updated
     } catch (error) {
       console.error("Token refresh failed:", error);
       throw error;
@@ -302,6 +327,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
 
       setUser(userData);
+
+      // Trigger subscription refresh after successful login
+      setTimeout(() => {
+        if (
+          typeof window !== "undefined" &&
+          (window as any).triggerSubscriptionRefresh
+        ) {
+          console.log("Triggering subscription refresh after login");
+          (window as any).triggerSubscriptionRefresh();
+        }
+      }, 100); // Small delay to ensure localStorage is updated
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Login failed";
@@ -333,6 +369,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       clearAllAuthData();
       setUser(null);
       setError(null);
+
+      // Trigger subscription refresh to clear subscription data
+      setTimeout(() => {
+        if (
+          typeof window !== "undefined" &&
+          (window as any).triggerSubscriptionRefresh
+        ) {
+          console.log("Triggering subscription refresh after logout");
+          (window as any).triggerSubscriptionRefresh();
+        }
+      }, 100); // Small delay to ensure localStorage is cleared
     }
   };
 

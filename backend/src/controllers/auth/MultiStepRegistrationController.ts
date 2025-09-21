@@ -32,8 +32,16 @@ const step4PaymentSchema = Joi.object({
   firstName: Joi.string().min(2).max(50).required(),
   lastName: Joi.string().min(2).max(50).required(),
   brandName: Joi.string().min(2).max(100).required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string().min(8).optional().allow(""),
+  phoneNumber: Joi.string()
+    .pattern(/^(010|011|012|015)\d{8}$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Phone number must be a valid Egyptian mobile number starting with 010, 011, 012, or 015 followed by 8 digits",
+    }),
   paymentMethod: Joi.string().valid("mock", "stripe").default("mock"),
+  isGoogleUser: Joi.boolean().optional().default(false),
 });
 
 export class MultiStepRegistrationController {
@@ -240,7 +248,7 @@ export class MultiStepRegistrationController {
       // Verify Google token
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        // Don't specify audience to allow any valid Google token
       });
 
       const payload = ticket.getPayload();

@@ -13,6 +13,8 @@ import {
   Eye,
   Edit,
   Trash2,
+  CreditCard,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -66,7 +69,18 @@ interface User {
   brands: Array<{
     id: string;
     name: string;
+    settings?: any;
   }>;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  priceMonthly: number;
+  priceYearly: number;
+  maxBrands: number;
+  maxUsers: number;
+  trialDays: number;
 }
 
 interface UsersResponse {
@@ -99,7 +113,17 @@ const AdminUsers: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [plans, setPlans] = useState<Plan[]>([]);
+
+  // Subscription management state
+  const [subscriptionData, setSubscriptionData] = useState({
+    planId: "",
+    subscription_status: "",
+    billing_start: "",
+    billing_end: "",
+  });
 
   const fetchUsers = async () => {
     try {
@@ -146,7 +170,29 @@ const AdminUsers: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchPlans();
   }, [currentPage, searchTerm, statusFilter]);
+
+  const fetchPlans = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch("http://localhost:3001/api/admin/plans", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setPlans(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+    }
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -221,11 +267,122 @@ const AdminUsers: React.FC = () => {
       await fetchUsers();
       setShowDeleteModal(false);
       setSelectedUser(null);
+      toast.success("User deleted successfully");
     } catch (error) {
       console.error("Error deleting user:", error);
       setError(
         error instanceof Error ? error.message : "Failed to delete user"
       );
+      toast.error("Failed to delete user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Subscription Management Functions
+  const handleManageSubscription = (user: User) => {
+    setSelectedUser(user);
+
+    // Get the first brand's subscription data (users can have multiple brands)
+    const firstBrand = user.brands[0];
+    if (firstBrand) {
+      // Initialize with current subscription data from brand settings
+      let initialPlanId = "";
+      let initialStatus = "active";
+
+      if (firstBrand.settings) {
+        const settings = firstBrand.settings as any;
+        const subscriptionBundle = settings.subscription_bundle;
+        const subscriptionStatus = settings.subscription_status;
+
+        if (subscriptionBundle) {
+          // Find the plan by name
+          const matchingPlan = plans.find(
+            (plan) => plan.name === subscriptionBundle
+          );
+          initialPlanId = matchingPlan?.id || plans[0]?.id || "";
+        } else {
+          initialPlanId = plans[0]?.id || "";
+        }
+
+        initialStatus = subscriptionStatus || "active";
+      } else {
+        // Fallback to user subscriptions if no brand settings
+        const currentSubscription = user.subscriptions[0];
+        if (currentSubscription?.plan?.name) {
+          const matchingPlan = plans.find(
+            (plan) => plan.name === currentSubscription.plan.name
+          );
+          initialPlanId = matchingPlan?.id || plans[0]?.id || "";
+        } else {
+          initialPlanId = plans[0]?.id || "";
+        }
+        initialStatus = currentSubscription?.status || "active";
+      }
+
+      setSubscriptionData({
+        planId: initialPlanId,
+        subscription_status: initialStatus,
+        billing_start: "",
+        billing_end: "",
+      });
+    }
+
+    setShowSubscriptionModal(true);
+  };
+
+  const handleUpdateSubscription = async () => {
+    if (!selectedUser || !selectedUser.brands[0]) return;
+
+    try {
+      setActionLoading(true);
+      const token = localStorage.getItem("adminToken");
+      const brandId = selectedUser.brands[0].id;
+
+      // Find the selected plan to get its name
+      const selectedPlan = plans.find(
+        (plan) => plan.id === subscriptionData.planId
+      );
+      const subscriptionBundle = selectedPlan?.name || "";
+
+      const requestData = {
+        subscription_bundle: subscriptionBundle,
+        subscription_status: subscriptionData.subscription_status,
+        billing_start: subscriptionData.billing_start,
+        billing_end: subscriptionData.billing_end,
+      };
+
+      console.log("Sending subscription update:", requestData);
+      console.log("Selected plan:", selectedPlan);
+      console.log("Available plans:", plans);
+
+      const response = await fetch(
+        `http://localhost:3001/api/admin/brands/${brandId}/subscription`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      if (response.ok) {
+        await fetchUsers();
+        setShowSubscriptionModal(false);
+        setSelectedUser(null);
+        toast.success("Subscription updated successfully");
+      } else {
+        const errorData = await response.json();
+        console.error("Subscription update error:", errorData);
+        setError(errorData.error || "Failed to update subscription");
+        toast.error(errorData.error || "Failed to update subscription");
+      }
+    } catch (error) {
+      console.error("Update subscription error:", error);
+      setError("Failed to update subscription");
+      toast.error("Failed to update subscription");
     } finally {
       setActionLoading(false);
     }
@@ -237,6 +394,8 @@ const AdminUsers: React.FC = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem("adminToken");
+
+      console.log("Updating user with data:", userData);
 
       const response = await fetch(
         `http://localhost:3001/api/admin/users/${selectedUser.id}`,
@@ -251,18 +410,25 @@ const AdminUsers: React.FC = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update user");
+        const errorData = await response.json();
+        console.error("Update user error:", errorData);
+        throw new Error(errorData.error || "Failed to update user");
       }
+
+      const responseData = await response.json();
+      console.log("User update response:", responseData);
 
       // Refresh the users list
       await fetchUsers();
       setShowEditModal(false);
       setSelectedUser(null);
+      toast.success("User updated successfully");
     } catch (error) {
       console.error("Error updating user:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to update user"
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update user";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setActionLoading(false);
     }
@@ -416,21 +582,58 @@ const AdminUsers: React.FC = () => {
                             <div className="text-sm">{user.email}</div>
                           </TableCell>
                           <TableCell>
-                            {user.subscriptions.length > 0 ? (
-                              <div>
-                                <div className="font-medium">
-                                  {user.subscriptions[0].plan.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  ${user.subscriptions[0].plan.priceMonthly}
-                                  /month
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">
-                                No subscription
-                              </span>
-                            )}
+                            {(() => {
+                              // Get subscription data from brand settings
+                              const firstBrand = user.brands[0];
+                              if (firstBrand?.settings) {
+                                const settings = firstBrand.settings as any;
+                                const subscriptionBundle =
+                                  settings.subscription_bundle;
+                                const subscriptionStatus =
+                                  settings.subscription_status;
+
+                                if (subscriptionBundle) {
+                                  // Find the plan by name to get the price
+                                  const plan = plans.find(
+                                    (p) => p.name === subscriptionBundle
+                                  );
+                                  return (
+                                    <div>
+                                      <div className="font-medium">
+                                        {subscriptionBundle}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        {plan?.priceMonthly === 0
+                                          ? "Free"
+                                          : `${plan?.priceMonthly || 0} EGP`}
+                                        /month
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              }
+
+                              // Fallback to user subscriptions if no brand settings
+                              if (user.subscriptions.length > 0) {
+                                return (
+                                  <div>
+                                    <div className="font-medium">
+                                      {user.subscriptions[0].plan.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      ${user.subscriptions[0].plan.priceMonthly}
+                                      /month
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <span className="text-gray-400">
+                                  No subscription
+                                </span>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-1">
@@ -455,17 +658,44 @@ const AdminUsers: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {user.subscriptions.length > 0 ? (
-                              <Badge
-                                variant={getStatusBadgeVariant(
-                                  user.subscriptions[0].status
-                                )}
-                              >
-                                {user.subscriptions[0].status}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline">No subscription</Badge>
-                            )}
+                            {(() => {
+                              // Get subscription status from brand settings
+                              const firstBrand = user.brands[0];
+                              if (firstBrand?.settings) {
+                                const settings = firstBrand.settings as any;
+                                const subscriptionStatus =
+                                  settings.subscription_status;
+
+                                if (subscriptionStatus) {
+                                  return (
+                                    <Badge
+                                      variant={getStatusBadgeVariant(
+                                        subscriptionStatus
+                                      )}
+                                    >
+                                      {subscriptionStatus}
+                                    </Badge>
+                                  );
+                                }
+                              }
+
+                              // Fallback to user subscriptions if no brand settings
+                              if (user.subscriptions.length > 0) {
+                                return (
+                                  <Badge
+                                    variant={getStatusBadgeVariant(
+                                      user.subscriptions[0].status
+                                    )}
+                                  >
+                                    {user.subscriptions[0].status}
+                                  </Badge>
+                                );
+                              }
+
+                              return (
+                                <Badge variant="outline">No subscription</Badge>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -485,6 +715,16 @@ const AdminUsers: React.FC = () => {
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit User
                                 </DropdownMenuItem>
+                                {user.brands.length > 0 && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleManageSubscription(user)
+                                    }
+                                  >
+                                    <CreditCard className="h-4 w-4 mr-2" />
+                                    Edit Subscription
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   className="text-red-600"
                                   onClick={() => handleDeleteUser(user)}
@@ -694,6 +934,119 @@ const AdminUsers: React.FC = () => {
                 disabled={actionLoading}
               >
                 {actionLoading ? "Creating..." : "Create User"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Subscription Management Modal */}
+        <Dialog
+          open={showSubscriptionModal}
+          onOpenChange={setShowSubscriptionModal}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Manage Subscription</DialogTitle>
+              <DialogDescription>
+                Update subscription settings for {selectedUser?.firstName}{" "}
+                {selectedUser?.lastName}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="planId">Subscription Plan</Label>
+                <Select
+                  value={subscriptionData.planId}
+                  onValueChange={(value) =>
+                    setSubscriptionData((prev) => ({
+                      ...prev,
+                      planId: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{plan.name}</span>
+                          <span className="text-sm text-gray-500">
+                            ${plan.priceMonthly}/month
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="subscription_status">Status</Label>
+                <Select
+                  value={subscriptionData.subscription_status}
+                  onValueChange={(value) =>
+                    setSubscriptionData((prev) => ({
+                      ...prev,
+                      subscription_status: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="billing_start">Billing Start Date</Label>
+                <Input
+                  id="billing_start"
+                  type="date"
+                  value={subscriptionData.billing_start}
+                  onChange={(e) =>
+                    setSubscriptionData((prev) => ({
+                      ...prev,
+                      billing_start: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="billing_end">Billing End Date</Label>
+                <Input
+                  id="billing_end"
+                  type="date"
+                  value={subscriptionData.billing_end}
+                  onChange={(e) =>
+                    setSubscriptionData((prev) => ({
+                      ...prev,
+                      billing_end: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowSubscriptionModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateSubscription}
+                disabled={actionLoading}
+              >
+                {actionLoading ? "Updating..." : "Update Subscription"}
               </Button>
             </DialogFooter>
           </DialogContent>

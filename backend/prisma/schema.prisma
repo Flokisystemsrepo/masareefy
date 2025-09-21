@@ -13,6 +13,7 @@ model User {
   passwordHash       String?
   firstName          String
   lastName           String
+  phoneNumber        String?
   emailVerified      Boolean             @default(false)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -30,8 +31,10 @@ model User {
   revenues           Revenue[]
   subscriptions      Subscription[]
   tasks              Task[]
+  teamMembers        TeamMember[]
   tickets            Ticket[]
   transfers          Transfer[]
+  trialNotifications TrialNotification[]
   usageTracking      UsageTracking[]
   sessions           Session[]
   walletTransactions WalletTransaction[]
@@ -59,7 +62,7 @@ model Plan {
   features      Json
   maxBrands     Int
   maxUsers      Int
-  trialDays     Int            @default(7)
+  trialDays     Int            @default(0)
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -69,24 +72,28 @@ model Plan {
 }
 
 model Subscription {
-  id                   String    @id @default(cuid())
-  userId               String
-  planId               String
-  status               String
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  stripeSubscriptionId String?   @unique
-  stripeCustomerId     String?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  cancelAtPeriodEnd    Boolean   @default(false)
-  cancelledAt          DateTime?
-  paymentMethod        String    @default("mock")
-  trialEnd             DateTime?
-  trialStart           DateTime?
-  invoices             Invoice[]
-  plan                 Plan      @relation(fields: [planId], references: [id])
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  userId                String
+  planId                String
+  status                String
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  stripeSubscriptionId  String?   @unique
+  stripeCustomerId      String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  cancelAtPeriodEnd     Boolean   @default(false)
+  cancelledAt           DateTime?
+  paymentMethod         String    @default("mock")
+  trialEnd              DateTime?
+  trialStart            DateTime?
+  downgradedAt          DateTime?
+  isTrialActive         Boolean   @default(false)
+  trialDays             Int       @default(0)
+  trialNotificationSent Boolean   @default(false)
+  invoices              Invoice[]
+  plan                  Plan      @relation(fields: [planId], references: [id])
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
 }
@@ -170,6 +177,7 @@ model Receivable {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   autoConvertToRevenue Boolean  @default(false)
+  convertedRevenueId   String?  @unique
   brand                Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
   creator              User     @relation(fields: [createdBy], references: [id])
 
@@ -190,6 +198,7 @@ model Payable {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   autoConvertToCost Boolean  @default(false)
+  convertedCostId   String?  @unique
   brand             Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
   creator           User     @relation(fields: [createdBy], references: [id])
 
@@ -223,6 +232,7 @@ model Revenue {
   updatedAt       DateTime       @updatedAt
   bostaImportId   String?
   bostaShipmentId String?
+  sourceReceivableId String?     @unique
   bostaImport     BostaImport?   @relation(fields: [bostaImportId], references: [id])
   bostaShipment   BostaShipment? @relation(fields: [bostaShipmentId], references: [id])
   brand           Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
@@ -244,6 +254,7 @@ model Cost {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   costType   String   @default("variable")
+  sourcePayableId String? @unique
   brand      Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
   creator    User     @relation(fields: [createdBy], references: [id])
 
@@ -387,6 +398,7 @@ model TeamMember {
   permissions Json     @default("[]")
   joinedAt    DateTime @default(now())
   brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([brandId, userId])
   @@map("team_members")
@@ -580,4 +592,32 @@ model UsageTracking {
 
   @@unique([userId, brandId, resourceType])
   @@map("usage_tracking")
+}
+
+model TrialNotification {
+  id             String   @id @default(cuid())
+  userId         String
+  subscriptionId String
+  type           String
+  message        String
+  isRead         Boolean  @default(false)
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trial_notifications")
+}
+
+model PhoneVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  otpCode   String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([phone, otpCode])
+  @@map("phone_verifications")
 }

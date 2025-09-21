@@ -1,13 +1,14 @@
 // API Service for all financial features
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = "/api";
 
 // Helper function to get auth token
 const getAuthToken = () => localStorage.getItem("token");
 
-// Rate limiting mechanism
+// Rate limiting mechanism - Different limits for development vs production
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 100; // Increased to 100 requests per minute to prevent auth issues
+const isDevelopment = import.meta.env.DEV;
+const MAX_REQUESTS_PER_WINDOW = isDevelopment ? 1000 : 100; // Much higher limit in development
 
 // Bulk import mode tracking
 let bulkImportMode = false;
@@ -22,8 +23,8 @@ const subscriptionRateLimit = new Map<
   string,
   { count: number; resetTime: number }
 >();
-const SUBSCRIPTION_RATE_LIMIT_WINDOW = 30000; // 30 seconds (increased)
-const MAX_SUBSCRIPTION_REQUESTS_PER_WINDOW = 10; // Max 10 subscription requests per 30 seconds (increased)
+const SUBSCRIPTION_RATE_LIMIT_WINDOW = 30000; // 30 seconds
+const MAX_SUBSCRIPTION_REQUESTS_PER_WINDOW = isDevelopment ? 100 : 10; // Much higher limit in development
 
 // Bulk import mode functions
 export const enableBulkImportMode = () => {
@@ -40,6 +41,12 @@ export const disableBulkImportMode = () => {
 };
 
 const checkRateLimit = (endpoint: string): boolean => {
+  // Completely disable rate limiting in development
+  if (isDevelopment) {
+    console.log(`Development mode - skipping rate limit for ${endpoint}`);
+    return true;
+  }
+
   const now = Date.now();
   const key = endpoint.split("?")[0]; // Remove query params for rate limiting
 
@@ -93,6 +100,14 @@ const checkRateLimit = (endpoint: string): boolean => {
 };
 
 const checkSubscriptionRateLimit = (endpoint: string): boolean => {
+  // Completely disable rate limiting in development
+  if (isDevelopment) {
+    console.log(
+      `Development mode - skipping subscription rate limit for ${endpoint}`
+    );
+    return true;
+  }
+
   if (!endpoint.includes("/subscription/")) {
     return true; // Not a subscription endpoint, use regular rate limiting
   }
@@ -119,7 +134,9 @@ const checkSubscriptionRateLimit = (endpoint: string): boolean => {
       )} seconds.`
     );
     // Don't block subscription requests - just warn
-    console.log("Allowing subscription request despite rate limit to prevent auth issues");
+    console.log(
+      "Allowing subscription request despite rate limit to prevent auth issues"
+    );
     return true; // Allow anyway to prevent logout
   }
 
@@ -289,18 +306,41 @@ const getBrandId = () => {
 export const authAPI = {
   // Login
   login: async (email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || "Login failed");
+      // Check if response is ok (status 200-299)
+      if (!response.ok) {
+        let errorMessage = "Login failed";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          // If we can't parse the error response, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      return data.data;
+    } catch (error) {
+      // Re-throw network errors with more context
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        throw new Error(
+          "Network connection failed. Please check your internet connection."
+        );
+      }
+      throw error;
     }
-
-    return data.data;
   },
 
   // Refresh token
@@ -583,6 +623,25 @@ export const subscriptionAPI = {
   // Check trial status
   getTrialStatus: async () => {
     return apiCall("/subscription/trial-status");
+  },
+
+  // Test upgrade functions (development/testing only)
+  testUpgradeToGrowth: async () => {
+    return apiCall("/test-upgrade/upgrade-to-growth", {
+      method: "POST",
+    });
+  },
+
+  testUpgradeToScale: async () => {
+    return apiCall("/test-upgrade/upgrade-to-scale", {
+      method: "POST",
+    });
+  },
+
+  testResetToFree: async () => {
+    return apiCall("/test-upgrade/reset-to-free", {
+      method: "POST",
+    });
   },
 };
 

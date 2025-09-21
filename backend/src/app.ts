@@ -17,6 +17,9 @@ import bostaImportRoutes from "@/routes/bostaImport";
 import adminRoutes from "@/routes/admin";
 import ticketRoutes from "@/routes/tickets";
 import usageRoutes from "@/routes/usage";
+import testUpgradeRoutes from "@/routes/test-upgrade";
+import trialRoutes from "@/routes/trial";
+import otpRoutes from "@/routes/otp";
 
 // Import middleware
 import { authenticateToken } from "@/middleware/auth";
@@ -36,22 +39,29 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting - Different limits for development vs production
 const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMaxRequests,
+  max: config.isDevelopment ? 1000 : config.rateLimitMaxRequests, // Much higher limit in development
   message: {
     success: false,
     error: "Too many requests from this IP, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for development on localhost
+    if (config.isDevelopment && req.ip === "127.0.0.1") {
+      return true;
+    }
+    return false;
+  },
 });
 
 // More lenient rate limit for subscription endpoints
 const subscriptionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 requests per 15 minutes (more restrictive)
+  max: config.isDevelopment ? 100 : 20, // Much higher limit in development
   message: {
     success: false,
     error: "Too many subscription requests, please try again later.",
@@ -59,6 +69,13 @@ const subscriptionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful requests
+  skip: (req) => {
+    // Skip rate limiting for development on localhost
+    if (config.isDevelopment && req.ip === "127.0.0.1") {
+      return true;
+    }
+    return false;
+  },
 });
 
 app.use(limiter);
@@ -89,6 +106,7 @@ app.get("/health", (req, res) => {
 
 // API routes
 app.use("/api/auth", authRoutes);
+app.use("/api/otp", otpRoutes);
 
 // Admin routes (must be before routes with global auth middleware)
 app.use("/api", adminRoutes);
@@ -99,7 +117,11 @@ app.use("/api/tickets", ticketRoutes);
 // Usage tracking routes
 app.use("/api/usage", authenticateToken, usageRoutes);
 
+// Trial routes
+app.use("/api/trial", trialRoutes);
+
 app.use("/api/subscription", subscriptionLimiter, subscriptionRoutes);
+app.use("/api/test-upgrade", testUpgradeRoutes);
 app.use("/api/financial", financialRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", brandSettingsRoutes);

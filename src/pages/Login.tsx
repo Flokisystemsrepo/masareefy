@@ -13,11 +13,26 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const navigate = useNavigate();
 
   const { login } = useAuth();
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
+
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +49,37 @@ const LoginPage: React.FC = () => {
         navigate("/brand/demo-brand-123");
       }
     } catch (error: any) {
+      // Handle specific error messages
+      let errorTitle = t("auth.login.errorTitle");
+      let errorDescription = error.message || t("auth.login.errorMessage");
+
+      // Check for network errors first
+      if (!navigator.onLine) {
+        errorTitle = t("auth.login.noInternet");
+        errorDescription = t("auth.login.noInternetMessage");
+      } else if (
+        error.name === "TypeError" &&
+        error.message.includes("fetch")
+      ) {
+        errorTitle = t("auth.login.connectionError");
+        errorDescription = t("auth.login.connectionErrorMessage");
+      } else if (error.message?.includes("Network connection failed")) {
+        errorTitle = t("auth.login.connectionError");
+        errorDescription = t("auth.login.connectionErrorMessage");
+      } else if (error.message?.includes("Invalid email or password")) {
+        errorTitle = t("auth.login.invalidCredentials");
+        errorDescription = t("auth.login.invalidCredentialsMessage");
+      } else if (error.message?.includes("No password set")) {
+        errorTitle = t("auth.login.googleAccount");
+        errorDescription = t("auth.login.googleAccountMessage");
+      } else if (error.message?.includes("No brand found")) {
+        errorTitle = t("auth.login.noBrand");
+        errorDescription = t("auth.login.noBrandMessage");
+      }
+
       toast({
-        title: t("common.error"),
-        description: error.message || t("auth.login.errorMessage"),
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {
@@ -146,6 +189,18 @@ const LoginPage: React.FC = () => {
               <p className="text-lg text-white/80">
                 {t("auth.login.subtitle")}
               </p>
+
+              {/* Offline Indicator */}
+              {!isOnline && (
+                <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-3 mt-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-red-200 text-sm font-medium">
+                      {t("auth.login.noInternet")}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Login Form */}
@@ -189,9 +244,10 @@ const LoginPage: React.FC = () => {
               <div className="space-y-4 pt-2">
                 <Button
                   type="submit"
-                  disabled={isLoading || !email || !password}
+                  disabled={isLoading || !email || !password || !isOnline}
                   size="lg"
                   className="w-full h-14 text-lg bg-white/20 backdrop-blur-md text-white border-2 border-white/40 hover:bg-white/30 hover:border-white/60 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                  style={{ height: "56px" }}
                 >
                   {isLoading ? (
                     <div className="flex items-center space-x-2">

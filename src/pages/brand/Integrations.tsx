@@ -47,6 +47,8 @@ import {
   MoreHorizontal,
   RefreshCw,
   Plus,
+  Lock,
+  ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +56,7 @@ import * as XLSX from "xlsx";
 import { inventoryAPI, revenuesAPI, bostaImportAPI } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 // Get brand ID from localStorage
 const getBrandId = () => {
@@ -1344,6 +1347,42 @@ const ManualOrdersTab: React.FC = () => {
 
 export default function OrdersPage() {
   const { t, isRTL } = useLanguage();
+  const {
+    hasIntegrationAccess,
+    getLockedFeatureMessage,
+    hasSectionAccess,
+    getSectionLockMessage,
+    subscription,
+    testUpgradeToGrowth,
+    testUpgradeToScale,
+  } = useSubscription();
+
+  // State for upgrade modal
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Helper functions for upgrade modal
+  const getUpgradePlan = () => {
+    if (!subscription) return "Growth";
+    if (subscription.isFreePlan) return "Growth";
+    if (subscription.plan.name.toLowerCase() === "growth") return "Scale";
+    return "Growth";
+  };
+
+  const getUpgradePrice = () => {
+    if (!subscription) return "299 EGP/month";
+    if (subscription.isFreePlan) return "299 EGP/month";
+    if (subscription.plan.name.toLowerCase() === "growth")
+      return "399 EGP/month";
+    return "299 EGP/month";
+  };
+
+  const handleActionClick = () => {
+    if (subscription?.isFreePlan && !hasSectionAccess("orders")) {
+      setShowUpgradeModal(true);
+      return false;
+    }
+    return true;
+  };
   const [activeTab, setActiveTab] = useState("manual");
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -1357,6 +1396,7 @@ export default function OrdersPage() {
   const [selectedRevenueGroup, setSelectedRevenueGroup] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedImport, setSelectedImport] = useState<any>(null);
+  const [upgradeFeature, setUpgradeFeature] = useState<string>("");
 
   // Pagination and filtering state
   const [currentPage, setCurrentPage] = useState(1);
@@ -3444,7 +3484,9 @@ export default function OrdersPage() {
 
   return (
     <motion.div
-      className={`p-6 space-y-6 ${isRTL ? "rtl" : "ltr"}`}
+      className={`p-6 space-y-6 ${isRTL ? "rtl" : "ltr"} ${
+        !hasSectionAccess("orders") ? "relative" : ""
+      }`}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -3460,7 +3502,24 @@ export default function OrdersPage() {
 
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={(value) => {
+          if (value === "shopify" && !hasIntegrationAccess("shopify")) {
+            setUpgradeFeature("Shopify Integration");
+            setShowUpgradeModal(true);
+            return;
+          }
+          if (value === "bosta" && !hasIntegrationAccess("bosta")) {
+            setUpgradeFeature("Bosta Integration");
+            setShowUpgradeModal(true);
+            return;
+          }
+          if (value === "shipblu" && !hasIntegrationAccess("shipblu")) {
+            setUpgradeFeature("Shipblu Integration");
+            setShowUpgradeModal(true);
+            return;
+          }
+          setActiveTab(value);
+        }}
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-4">
@@ -3474,723 +3533,828 @@ export default function OrdersPage() {
           <ManualOrdersTab />
         </TabsContent>
 
-        <TabsContent value="shopify" className="space-y-6">
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-green-600" />
-                  {t("orders.import.shopifyOrdersImport")}
-                </CardTitle>
-                <CardDescription>
-                  {t("orders.import.shopifyOrdersDescription")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* File Upload Area */}
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                      dragActive
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                    onDragEnter={handleShopifyOrdersDrag}
-                    onDragLeave={handleShopifyOrdersDrag}
-                    onDragOver={handleShopifyOrdersDrag}
-                    onDrop={handleShopifyOrdersDrop}
-                  >
-                    <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      {t("orders.import.uploadShopifyOrders")}
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      {t("orders.import.dragDropOrders")}
-                    </p>
-                    <div className="space-y-2">
-                      <input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleShopifyOrdersFileInputChange}
-                        className="hidden"
-                        id="shopify-file-input"
-                      />
-                      <Button
-                        onClick={() =>
-                          document.getElementById("shopify-file-input")?.click()
-                        }
-                        disabled={isUploadingShopifyOrders}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        {isUploadingShopifyOrders ? (
-                          <>
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                            {t("orders.import.processing")}
-                          </>
-                        ) : (
-                          <>
+        <TabsContent value="shopify" className="space-y-6 relative">
+          <div
+            className={`${
+              !hasIntegrationAccess("shopify")
+                ? "blur-sm pointer-events-none"
+                : ""
+            }`}
+          >
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-green-600" />
+                    {t("orders.import.shopifyOrdersImport")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t("orders.import.shopifyOrdersDescription")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* File Upload Area */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        dragActive
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                      onDragEnter={handleShopifyOrdersDrag}
+                      onDragLeave={handleShopifyOrdersDrag}
+                      onDragOver={handleShopifyOrdersDrag}
+                      onDrop={handleShopifyOrdersDrop}
+                    >
+                      <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {t("orders.import.uploadShopifyOrders")}
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        {t("orders.import.dragDropOrders")}
+                      </p>
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={handleShopifyOrdersFileInputChange}
+                          className="hidden"
+                          id="shopify-file-input"
+                        />
+                        <Button
+                          onClick={() =>
+                            document
+                              .getElementById("shopify-file-input")
+                              ?.click()
+                          }
+                          disabled={isUploadingShopifyOrders}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {isUploadingShopifyOrders ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                              {t("orders.import.processing")}
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              {t("orders.import.selectFile")}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Supported format: CSV (.csv)
+                      </p>
+                    </div>
+
+                    {/* Expected Fields Info */}
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        Expected Shopify Fields:
+                      </h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p>
+                          <strong>Required:</strong> Handle, Title, Variant SKU
+                        </p>
+                        <p>
+                          <strong>Optional:</strong> Vendor, Product Type,
+                          Variant Price, Variant Inventory Quantity, Cost per
+                          item, and more...
+                        </p>
+                        <p className="text-xs text-blue-600 mt-2">
+                          The system will automatically map all available
+                          Shopify export fields to your inventory.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+          {!hasIntegrationAccess("shopify") && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-lg">
+              <div className="text-center p-8">
+                <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                  <Package className="h-12 w-12 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Growth Plan Required
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {getLockedFeatureMessage("Shopify Integration")}
+                </p>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setUpgradeFeature("Shopify Integration");
+                    setShowUpgradeModal(true);
+                  }}
+                >
+                  Upgrade to Growth (299 EGP/month)
+                </Button>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="bosta" className="space-y-6 relative">
+          <div
+            className={`${
+              !hasIntegrationAccess("bosta")
+                ? "blur-sm pointer-events-none"
+                : ""
+            }`}
+          >
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-blue-600" />
+                    Bosta Integration
+                  </CardTitle>
+                  <CardDescription>
+                    Import your Bosta delivery data from Excel sheets
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* File Upload Area */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        dragActive
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
+                    >
+                      <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Upload Bosta Order Sheet
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Drag and drop your Excel file here, or click to browse
+                      </p>
+                      <div className="space-y-2">
+                        <Input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={handleFileInputChange}
+                          className="hidden"
+                          id="file-upload"
+                          disabled={isUploading}
+                        />
+                        <Label htmlFor="file-upload" asChild>
+                          <Button
+                            disabled={isUploading}
+                            className="cursor-pointer"
+                          >
                             <Upload className="h-4 w-4 mr-2" />
-                            {t("orders.import.selectFile")}
-                          </>
+                            {isUploading ? "Processing..." : "Choose File"}
+                          </Button>
+                        </Label>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Supports .xlsx and .xls files
+                      </p>
+                    </div>
+
+                    {/* Required Fields Info */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        Required Excel Columns:
+                      </h4>
+                      <ul className="text-sm text-blue-800 space-y-1">
+                        <li>
+                          • <strong>Tracking Number</strong> - Unique shipment
+                          identifier
+                        </li>
+                        <li>
+                          • <strong>Delivery State</strong> - Status (delivered,
+                          returned, in progress, etc.)
+                        </li>
+                        <li>
+                          • <strong>COD Amount</strong> - Cash on delivery
+                          amount in EGP
+                        </li>
+                      </ul>
+                      <p className="text-sm text-blue-700 mt-2">
+                        Optional columns: SKU, Business Reference Number,
+                        Description, Consignee Name, etc.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Filters and Search */}
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Filter className="h-5 w-5 text-blue-600" />
+                    Filters & Search
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Search Bar */}
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Search by tracking number, customer, SKU, city..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      <Button onClick={handleSearch} disabled={isLoadingOrders}>
+                        Search
+                      </Button>
+                      <Button variant="outline" onClick={clearFilters}>
+                        Clear
+                      </Button>
+                    </div>
+
+                    {/* Filter Row 1 */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label className="text-xs">Status</Label>
+                        <Select
+                          value={statusFilter}
+                          onValueChange={setStatusFilter}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="delivered">Delivered</SelectItem>
+                            <SelectItem value="returned">Returned</SelectItem>
+                            <SelectItem value="in-progress">
+                              In Progress
+                            </SelectItem>
+                            <SelectItem value="out-for-delivery">
+                              Out for Delivery
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Date From</Label>
+                        <Input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Date To</Label>
+                        <Input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => setDateTo(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Sort By</Label>
+                        <Select value={sortBy} onValueChange={setSortBy}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="createdAt">
+                              Import Date
+                            </SelectItem>
+                            <SelectItem value="expectedCash">Amount</SelectItem>
+                            <SelectItem value="totalOrders">
+                              Order Count
+                            </SelectItem>
+                            <SelectItem value="deliveryRate">
+                              Delivery Rate
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Filter Row 2 */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label className="text-xs">Min Amount (EGP)</Label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={minAmount}
+                          onChange={(e) => setMinAmount(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Max Amount (EGP)</Label>
+                        <Input
+                          type="number"
+                          placeholder="10000"
+                          value={maxAmount}
+                          onChange={(e) => setMaxAmount(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">City</Label>
+                        <Input
+                          placeholder="Enter city"
+                          value={cityFilter}
+                          onChange={(e) => setCityFilter(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Customer</Label>
+                        <Input
+                          placeholder="Enter customer name"
+                          value={customerFilter}
+                          onChange={(e) => setCustomerFilter(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Imported Orders View */}
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5 text-green-600" />
+                        Imported Orders ({totalItems})
+                      </CardTitle>
+                      <CardDescription>
+                        View and manage your imported Bosta orders
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => loadImportedOrders()}
+                        disabled={isLoadingOrders}
+                      >
+                        {isLoadingOrders ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        ) : (
+                          "Refresh"
                         )}
                       </Button>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Supported format: CSV (.csv)
-                    </p>
-                  </div>
-
-                  {/* Expected Fields Info */}
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-900 mb-2">
-                      Expected Shopify Fields:
-                    </h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p>
-                        <strong>Required:</strong> Handle, Title, Variant SKU
-                      </p>
-                      <p>
-                        <strong>Optional:</strong> Vendor, Product Type, Variant
-                        Price, Variant Inventory Quantity, Cost per item, and
-                        more...
-                      </p>
-                      <p className="text-xs text-blue-600 mt-2">
-                        The system will automatically map all available Shopify
-                        export fields to your inventory.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="bosta" className="space-y-6">
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-blue-600" />
-                  Bosta Integration
-                </CardTitle>
-                <CardDescription>
-                  Import your Bosta delivery data from Excel sheets
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* File Upload Area */}
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                      dragActive
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                  >
-                    <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Upload Bosta Order Sheet
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Drag and drop your Excel file here, or click to browse
-                    </p>
-                    <div className="space-y-2">
-                      <Input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={handleFileInputChange}
-                        className="hidden"
-                        id="file-upload"
-                        disabled={isUploading}
-                      />
-                      <Label htmlFor="file-upload" asChild>
+                      {selectedShipments.length > 0 && (
                         <Button
-                          disabled={isUploading}
-                          className="cursor-pointer"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowBulkActions(!showBulkActions)}
                         >
-                          <Upload className="h-4 w-4 mr-2" />
-                          {isUploading ? "Processing..." : "Choose File"}
+                          Bulk Actions ({selectedShipments.length})
                         </Button>
-                      </Label>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Supports .xlsx and .xls files
-                    </p>
-                  </div>
-
-                  {/* Required Fields Info */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">
-                      Required Excel Columns:
-                    </h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>
-                        • <strong>Tracking Number</strong> - Unique shipment
-                        identifier
-                      </li>
-                      <li>
-                        • <strong>Delivery State</strong> - Status (delivered,
-                        returned, in progress, etc.)
-                      </li>
-                      <li>
-                        • <strong>COD Amount</strong> - Cash on delivery amount
-                        in EGP
-                      </li>
-                    </ul>
-                    <p className="text-sm text-blue-700 mt-2">
-                      Optional columns: SKU, Business Reference Number,
-                      Description, Consignee Name, etc.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Filters and Search */}
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5 text-blue-600" />
-                  Filters & Search
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Search Bar */}
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Search by tracking number, customer, SKU, city..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Button onClick={handleSearch} disabled={isLoadingOrders}>
-                      Search
-                    </Button>
-                    <Button variant="outline" onClick={clearFilters}>
-                      Clear
-                    </Button>
-                  </div>
-
-                  {/* Filter Row 1 */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <Label className="text-xs">Status</Label>
-                      <Select
-                        value={statusFilter}
-                        onValueChange={setStatusFilter}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Status</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="returned">Returned</SelectItem>
-                          <SelectItem value="in-progress">
-                            In Progress
-                          </SelectItem>
-                          <SelectItem value="out-for-delivery">
-                            Out for Delivery
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Date From</Label>
-                      <Input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Date To</Label>
-                      <Input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Sort By</Label>
-                      <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="createdAt">Import Date</SelectItem>
-                          <SelectItem value="expectedCash">Amount</SelectItem>
-                          <SelectItem value="totalOrders">
-                            Order Count
-                          </SelectItem>
-                          <SelectItem value="deliveryRate">
-                            Delivery Rate
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Filter Row 2 */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <Label className="text-xs">Min Amount (EGP)</Label>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={minAmount}
-                        onChange={(e) => setMinAmount(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Max Amount (EGP)</Label>
-                      <Input
-                        type="number"
-                        placeholder="10000"
-                        value={maxAmount}
-                        onChange={(e) => setMaxAmount(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">City</Label>
-                      <Input
-                        placeholder="Enter city"
-                        value={cityFilter}
-                        onChange={(e) => setCityFilter(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Customer</Label>
-                      <Input
-                        placeholder="Enter customer name"
-                        value={customerFilter}
-                        onChange={(e) => setCustomerFilter(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Imported Orders View */}
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5 text-green-600" />
-                      Imported Orders ({totalItems})
-                    </CardTitle>
-                    <CardDescription>
-                      View and manage your imported Bosta orders
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => loadImportedOrders()}
-                      disabled={isLoadingOrders}
-                    >
-                      {isLoadingOrders ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      ) : (
-                        "Refresh"
                       )}
-                    </Button>
-                    {selectedShipments.length > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowBulkActions(!showBulkActions)}
-                      >
-                        Bulk Actions ({selectedShipments.length})
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Bulk Actions Bar */}
-                {showBulkActions && selectedShipments.length > 0 && (
-                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-blue-900">
-                          {selectedShipments.length} shipments selected
-                        </span>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setBulkActionType("delete")}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setBulkActionType("status")}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Update Status
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setBulkActionType("edit");
-                              setShowBulkEditModal(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit Fields
-                          </Button>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedShipments([]);
-                          setShowBulkActions(false);
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
-                )}
-
-                {isLoadingOrders ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="text-gray-600 mt-2">
-                      Loading imported orders...
-                    </p>
-                  </div>
-                ) : importedOrders.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No Imported Orders
-                    </h3>
-                    <p className="text-gray-600">
-                      Import your first Bosta order sheet to get started
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Select All Checkbox */}
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                      <Checkbox
-                        checked={
-                          selectedShipments.length > 0 &&
-                          selectedShipments.length ===
-                            importedOrders.flatMap(
-                              (importRecord) =>
-                                importRecord.shipments?.map(
-                                  (shipment: any) => shipment.id
-                                ) || []
-                            ).length
-                        }
-                        onCheckedChange={handleSelectAll}
-                      />
-                      <span className="text-sm text-gray-600">
-                        Select All Shipments
-                      </span>
-                    </div>
-
-                    {importedOrders.map((importRecord) => (
-                      <Card
-                        key={importRecord.id}
-                        className="border-l-4 border-l-blue-500"
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">
-                                {importRecord.fileName}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                Imported on{" "}
-                                {new Date(
-                                  importRecord.createdAt
-                                ).toLocaleDateString()}
-                              </p>
-                              <div className="flex gap-4 mt-2 text-sm">
-                                <span className="text-blue-600">
-                                  {importRecord.totalOrders} orders
-                                </span>
-                                <span className="text-green-600">
-                                  {importRecord.delivered} delivered
-                                </span>
-                                <span className="text-red-600">
-                                  {importRecord.returned} returned
-                                </span>
-                                <span className="text-gray-600">
-                                  {importRecord.expectedCash.toLocaleString()}{" "}
-                                  EGP expected
-                                </span>
-                              </div>
-
-                              {/* Individual Shipment Checkboxes */}
-                              {importRecord.shipments &&
-                                importRecord.shipments.length > 0 && (
-                                  <div className="mt-3 space-y-1">
-                                    <p className="text-xs text-gray-500 font-medium">
-                                      Shipments:
-                                    </p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                                      {importRecord.shipments
-                                        .slice(0, 4)
-                                        .map((shipment: any) => (
-                                          <div
-                                            key={shipment.id}
-                                            className="flex items-center gap-2 text-xs"
-                                          >
-                                            <Checkbox
-                                              checked={selectedShipments.includes(
-                                                shipment.id
-                                              )}
-                                              onCheckedChange={(checked) =>
-                                                handleShipmentSelect(
-                                                  shipment.id,
-                                                  checked === true
-                                                )
-                                              }
-                                            />
-                                            <span className="font-mono">
-                                              {shipment.trackingNumber}
-                                            </span>
-                                            <Badge
-                                              variant={
-                                                shipment.deliveryState ===
-                                                "delivered"
-                                                  ? "default"
-                                                  : shipment.deliveryState ===
-                                                    "returned"
-                                                  ? "destructive"
-                                                  : "secondary"
-                                              }
-                                              className="text-xs"
-                                            >
-                                              {shipment.deliveryState}
-                                            </Badge>
-                                            <span className="text-gray-500">
-                                              {shipment.codAmount} EGP
-                                            </span>
-                                          </div>
-                                        ))}
-                                      {importRecord.shipments.length > 4 && (
-                                        <div className="text-xs text-gray-500">
-                                          +{importRecord.shipments.length - 4}{" "}
-                                          more shipments
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  loadImportDetails(importRecord.id)
-                                }
-                              >
-                                View Details
-                              </Button>
-                              {importRecord.revenues &&
-                                importRecord.revenues.length > 0 && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={async () => {
-                                      const groupedRevenue =
-                                        await loadGroupedRevenue();
-                                      const group = groupedRevenue.find(
-                                        (g: any) =>
-                                          g.import.id === importRecord.id
-                                      );
-                                      if (group) {
-                                        setSelectedRevenueGroup(group);
-                                        setShowRevenueModal(true);
-                                      }
-                                    }}
-                                  >
-                                    View Revenue ({importRecord.revenues.length}
-                                    )
-                                  </Button>
-                                )}
-                            </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Bulk Actions Bar */}
+                  {showBulkActions && selectedShipments.length > 0 && (
+                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-medium text-blue-900">
+                            {selectedShipments.length} shipments selected
+                          </span>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setBulkActionType("delete")}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setBulkActionType("status")}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Update Status
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setBulkActionType("edit");
+                                setShowBulkEditModal(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit Fields
+                            </Button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedShipments([]);
+                            setShowBulkActions(false);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="mt-6 flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                      {Math.min(currentPage * pageSize, totalItems)} of{" "}
-                      {totalItems} results
+                  {isLoadingOrders ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-gray-600 mt-2">
+                        Loading imported orders...
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => loadImportedOrders(currentPage - 1)}
-                        disabled={currentPage === 1 || isLoadingOrders}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-                      <span className="text-sm text-gray-600">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => loadImportedOrders(currentPage + 1)}
-                        disabled={currentPage === totalPages || isLoadingOrders}
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+                  ) : importedOrders.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No Imported Orders
+                      </h3>
+                      <p className="text-gray-600">
+                        Import your first Bosta order sheet to get started
+                      </p>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Select All Checkbox */}
+                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                        <Checkbox
+                          checked={
+                            selectedShipments.length > 0 &&
+                            selectedShipments.length ===
+                              importedOrders.flatMap(
+                                (importRecord) =>
+                                  importRecord.shipments?.map(
+                                    (shipment: any) => shipment.id
+                                  ) || []
+                              ).length
+                          }
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <span className="text-sm text-gray-600">
+                          Select All Shipments
+                        </span>
+                      </div>
+
+                      {importedOrders.map((importRecord) => (
+                        <Card
+                          key={importRecord.id}
+                          className="border-l-4 border-l-blue-500"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">
+                                  {importRecord.fileName}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  Imported on{" "}
+                                  {new Date(
+                                    importRecord.createdAt
+                                  ).toLocaleDateString()}
+                                </p>
+                                <div className="flex gap-4 mt-2 text-sm">
+                                  <span className="text-blue-600">
+                                    {importRecord.totalOrders} orders
+                                  </span>
+                                  <span className="text-green-600">
+                                    {importRecord.delivered} delivered
+                                  </span>
+                                  <span className="text-red-600">
+                                    {importRecord.returned} returned
+                                  </span>
+                                  <span className="text-gray-600">
+                                    {importRecord.expectedCash.toLocaleString()}{" "}
+                                    EGP expected
+                                  </span>
+                                </div>
+
+                                {/* Individual Shipment Checkboxes */}
+                                {importRecord.shipments &&
+                                  importRecord.shipments.length > 0 && (
+                                    <div className="mt-3 space-y-1">
+                                      <p className="text-xs text-gray-500 font-medium">
+                                        Shipments:
+                                      </p>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                                        {importRecord.shipments
+                                          .slice(0, 4)
+                                          .map((shipment: any) => (
+                                            <div
+                                              key={shipment.id}
+                                              className="flex items-center gap-2 text-xs"
+                                            >
+                                              <Checkbox
+                                                checked={selectedShipments.includes(
+                                                  shipment.id
+                                                )}
+                                                onCheckedChange={(checked) =>
+                                                  handleShipmentSelect(
+                                                    shipment.id,
+                                                    checked === true
+                                                  )
+                                                }
+                                              />
+                                              <span className="font-mono">
+                                                {shipment.trackingNumber}
+                                              </span>
+                                              <Badge
+                                                variant={
+                                                  shipment.deliveryState ===
+                                                  "delivered"
+                                                    ? "default"
+                                                    : shipment.deliveryState ===
+                                                      "returned"
+                                                    ? "destructive"
+                                                    : "secondary"
+                                                }
+                                                className="text-xs"
+                                              >
+                                                {shipment.deliveryState}
+                                              </Badge>
+                                              <span className="text-gray-500">
+                                                {shipment.codAmount} EGP
+                                              </span>
+                                            </div>
+                                          ))}
+                                        {importRecord.shipments.length > 4 && (
+                                          <div className="text-xs text-gray-500">
+                                            +{importRecord.shipments.length - 4}{" "}
+                                            more shipments
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    loadImportDetails(importRecord.id)
+                                  }
+                                >
+                                  View Details
+                                </Button>
+                                {importRecord.revenues &&
+                                  importRecord.revenues.length > 0 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={async () => {
+                                        const groupedRevenue =
+                                          await loadGroupedRevenue();
+                                        const group = groupedRevenue.find(
+                                          (g: any) =>
+                                            g.import.id === importRecord.id
+                                        );
+                                        if (group) {
+                                          setSelectedRevenueGroup(group);
+                                          setShowRevenueModal(true);
+                                        }
+                                      }}
+                                    >
+                                      View Revenue (
+                                      {importRecord.revenues.length})
+                                    </Button>
+                                  )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                        {Math.min(currentPage * pageSize, totalItems)} of{" "}
+                        {totalItems} results
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => loadImportedOrders(currentPage - 1)}
+                          disabled={currentPage === 1 || isLoadingOrders}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => loadImportedOrders(currentPage + 1)}
+                          disabled={
+                            currentPage === totalPages || isLoadingOrders
+                          }
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+          {!hasIntegrationAccess("bosta") && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-lg">
+              <div className="text-center p-8">
+                <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                  <Truck className="h-12 w-12 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Growth Plan Required
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {getLockedFeatureMessage("Bosta Integration")}
+                </p>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setUpgradeFeature("Bosta Integration");
+                    setShowUpgradeModal(true);
+                  }}
+                >
+                  Upgrade to Growth (299 EGP/month)
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="shipblu" className="space-y-6">
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-purple-600" />
-                  Shipblu Integration
-                </CardTitle>
-                <CardDescription>
-                  Import your Shipblu order tracking data from Excel sheets
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* File Upload Area */}
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                      dragActive
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                    onDragEnter={handleShipbluDrag}
-                    onDragLeave={handleShipbluDrag}
-                    onDragOver={handleShipbluDrag}
-                    onDrop={handleShipbluDrop}
-                  >
-                    <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Upload Shipblu Order Sheet
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Drag and drop your Excel file here, or click to browse
-                    </p>
-                    <div className="space-y-2">
-                      <Input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={handleShipbluFileInputChange}
-                        className="hidden"
-                        id="shipblu-file-upload"
-                        disabled={isUploadingShipblu}
-                      />
-                      <Label htmlFor="shipblu-file-upload" asChild>
-                        <Button
+        <TabsContent value="shipblu" className="space-y-6 relative">
+          <div
+            className={`${
+              !hasIntegrationAccess("shipblu")
+                ? "blur-sm pointer-events-none"
+                : ""
+            }`}
+          >
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-purple-600" />
+                    Shipblu Integration
+                  </CardTitle>
+                  <CardDescription>
+                    Import your Shipblu order tracking data from Excel sheets
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* File Upload Area */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        dragActive
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                      onDragEnter={handleShipbluDrag}
+                      onDragLeave={handleShipbluDrag}
+                      onDragOver={handleShipbluDrag}
+                      onDrop={handleShipbluDrop}
+                    >
+                      <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Upload Shipblu Order Sheet
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Drag and drop your Excel file here, or click to browse
+                      </p>
+                      <div className="space-y-2">
+                        <Input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={handleShipbluFileInputChange}
+                          className="hidden"
+                          id="shipblu-file-upload"
                           disabled={isUploadingShipblu}
-                          className="cursor-pointer bg-purple-600 hover:bg-purple-700"
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          {isUploadingShipblu ? "Processing..." : "Choose File"}
-                        </Button>
-                      </Label>
+                        />
+                        <Label htmlFor="shipblu-file-upload" asChild>
+                          <Button
+                            disabled={isUploadingShipblu}
+                            className="cursor-pointer bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {isUploadingShipblu
+                              ? "Processing..."
+                              : "Choose File"}
+                          </Button>
+                        </Label>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Supports .xlsx and .xls files
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Supports .xlsx and .xls files
-                    </p>
-                  </div>
 
-                  {/* Required Fields Info */}
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-purple-900 mb-2">
-                      Required Excel Columns:
-                    </h4>
-                    <ul className="text-sm text-purple-800 space-y-1">
-                      <li>
-                        • <strong>Tracking Number</strong> - Unique shipment
-                        identifier
-                      </li>
-                      <li>
-                        • <strong>Pickup Date</strong> - Date when order was
-                        picked up
-                      </li>
-                      <li>
-                        • <strong>Customer Name</strong> - Customer's full name
-                      </li>
-                      <li>
-                        • <strong>Customer Phone</strong> - Customer's phone
-                        number
-                      </li>
-                      <li>
-                        • <strong>Customer Zone</strong> - Delivery zone/area
-                      </li>
-                      <li>
-                        • <strong>Customer City</strong> - Customer's city
-                      </li>
-                      <li>
-                        • <strong>CoD Estimated Date</strong> - Estimated
-                        delivery date
-                      </li>
-                      <li>
-                        • <strong>Status</strong> - Current order status
-                      </li>
-                    </ul>
-                    <p className="text-sm text-purple-700 mt-2">
-                      The system will automatically map all available Shipblu
-                      fields to your order tracking system.
-                    </p>
+                    {/* Required Fields Info */}
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-purple-900 mb-2">
+                        Required Excel Columns:
+                      </h4>
+                      <ul className="text-sm text-purple-800 space-y-1">
+                        <li>
+                          • <strong>Tracking Number</strong> - Unique shipment
+                          identifier
+                        </li>
+                        <li>
+                          • <strong>Pickup Date</strong> - Date when order was
+                          picked up
+                        </li>
+                        <li>
+                          • <strong>Customer Name</strong> - Customer's full
+                          name
+                        </li>
+                        <li>
+                          • <strong>Customer Phone</strong> - Customer's phone
+                          number
+                        </li>
+                        <li>
+                          • <strong>Customer Zone</strong> - Delivery zone/area
+                        </li>
+                        <li>
+                          • <strong>Customer City</strong> - Customer's city
+                        </li>
+                        <li>
+                          • <strong>CoD Estimated Date</strong> - Estimated
+                          delivery date
+                        </li>
+                        <li>
+                          • <strong>Status</strong> - Current order status
+                        </li>
+                      </ul>
+                      <p className="text-sm text-purple-700 mt-2">
+                        The system will automatically map all available Shipblu
+                        fields to your order tracking system.
+                      </p>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+          {!hasIntegrationAccess("shipblu") && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-lg">
+              <div className="text-center p-8">
+                <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                  <Truck className="h-12 w-12 text-gray-400" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Growth Plan Required
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {getLockedFeatureMessage("Shipblu Integration")}
+                </p>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setUpgradeFeature("Shipblu Integration");
+                    setShowUpgradeModal(true);
+                  }}
+                >
+                  Upgrade to Growth (299 EGP/month)
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -5397,6 +5561,158 @@ export default function OrdersPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-blue-600" />
+              Growth Plan Required
+            </DialogTitle>
+            <DialogDescription>
+              Upgrade to access {upgradeFeature}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center py-6">
+              <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <Package className="h-10 w-10 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Unlock {upgradeFeature}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {getLockedFeatureMessage(upgradeFeature)}
+              </p>
+              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <div className="text-2xl font-bold text-blue-600 mb-1">
+                  299 EGP/month
+                </div>
+                <div className="text-sm text-gray-600">Growth Plan</div>
+              </div>
+              <div className="space-y-2">
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    // TODO: Implement upgrade flow
+                    setShowUpgradeModal(false);
+                  }}
+                >
+                  Upgrade Now
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowUpgradeModal(false)}
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Blur overlay for locked sections - only for Free plan users */}
+      {subscription?.isFreePlan && !hasSectionAccess("orders") && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="text-center p-8 bg-white rounded-lg shadow-lg border max-w-md">
+            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="h-8 w-8 text-yellow-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              🔒 Section Locked
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {getSectionLockMessage("orders")}
+            </p>
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {getUpgradePrice()}
+              </div>
+              <div className="text-sm text-gray-600">
+                {getUpgradePlan()} Plan
+              </div>
+            </div>
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => {
+                if (subscription?.isFreePlan) {
+                  testUpgradeToGrowth();
+                } else if (subscription?.plan.name.toLowerCase() === "growth") {
+                  testUpgradeToScale();
+                } else {
+                  window.location.href = "/pricing";
+                }
+              }}
+            >
+              <ArrowUpRight className="h-4 w-4 mr-2" />
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              🔒 Action Locked
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="h-8 w-8 text-yellow-600" />
+              </div>
+              <p className="text-gray-600 text-base">
+                {getSectionLockMessage("orders")}
+              </p>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {getUpgradePrice()}
+              </div>
+              <div className="text-sm text-gray-600">
+                {getUpgradePlan()} Plan
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  if (subscription?.isFreePlan) {
+                    testUpgradeToGrowth();
+                    setShowUpgradeModal(false);
+                  } else if (
+                    subscription?.plan.name.toLowerCase() === "growth"
+                  ) {
+                    testUpgradeToScale();
+                    setShowUpgradeModal(false);
+                  } else {
+                    window.location.href = "/pricing";
+                  }
+                }}
+              >
+                <ArrowUpRight className="h-4 w-4 mr-2" />
+                Upgrade Now
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowUpgradeModal(false)}
+              >
+                Maybe Later
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </motion.div>

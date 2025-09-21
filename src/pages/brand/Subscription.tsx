@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 
 const SubscriptionPage: React.FC = () => {
   const { t, isRTL } = useLanguage();
-  const { subscription, refreshSubscription } = useSubscription();
+  const { subscription, refreshSubscription, forceRefresh } = useSubscription();
   const navigate = useNavigate();
 
   // Debug: Log subscription data
@@ -144,6 +144,24 @@ const SubscriptionPage: React.FC = () => {
     fetchPlans();
   }, []);
 
+  const getButtonLabel = (targetPlan: any) => {
+    if (!subscription) return "Get Started";
+
+    const currentPlanName = subscription.plan.name.toLowerCase();
+    const targetPlanName = targetPlan.name.toLowerCase();
+
+    // Define plan hierarchy (higher index = higher tier)
+    const planHierarchy = ["free", "growth", "scale"];
+    const currentIndex = planHierarchy.indexOf(currentPlanName);
+    const targetIndex = planHierarchy.indexOf(targetPlanName);
+
+    if (currentIndex === targetIndex) return "Current Plan";
+    if (targetIndex > currentIndex) return "Upgrade";
+    if (targetIndex < currentIndex) return "Downgrade";
+
+    return "Change Plan";
+  };
+
   const handleUpgrade = async (planId: string) => {
     try {
       setUpgrading(true);
@@ -168,7 +186,7 @@ const SubscriptionPage: React.FC = () => {
 
         if (response.success) {
           toast.success("Upgrade successful!");
-          await refreshSubscription();
+          await forceRefresh();
         } else {
           console.error("Update subscription failed:", response);
           toast.error(
@@ -190,7 +208,7 @@ const SubscriptionPage: React.FC = () => {
 
         if (response.success) {
           toast.success("Upgrade successful!");
-          await refreshSubscription();
+          await forceRefresh();
         } else {
           console.error("Create subscription failed:", response);
           toast.error(
@@ -314,9 +332,13 @@ const SubscriptionPage: React.FC = () => {
                     <CardTitle className="text-2xl">{plan.name}</CardTitle>
                     <div className="mt-4">
                       <span className="text-4xl font-bold">
-                        ${plan.priceMonthly || plan.price}
+                        {plan.priceMonthly === 0
+                          ? "Free"
+                          : `${plan.priceMonthly} EGP`}
                       </span>
-                      <span className="text-gray-600">/month</span>
+                      {plan.priceMonthly > 0 && (
+                        <span className="text-gray-600">/month</span>
+                      )}
                     </div>
                   </CardHeader>
 
@@ -351,7 +373,7 @@ const SubscriptionPage: React.FC = () => {
                       ) : (
                         <>
                           <Crown className="h-4 w-4 mr-2" />
-                          {subscription ? "Upgrade" : "Get Started"}
+                          {getButtonLabel(plan)}
                         </>
                       )}
                     </Button>

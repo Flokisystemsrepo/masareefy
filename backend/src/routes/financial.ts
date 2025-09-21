@@ -226,5 +226,9 @@ router.get(
 
 // ===== STATUS UPDATES =====
 router.post("/update-statuses", ReceivablesPayablesController.updateStatuses);
+router.post(
+  "/process-due-items",
+  ReceivablesPayablesController.processDueItems
+);
 
 export default router;

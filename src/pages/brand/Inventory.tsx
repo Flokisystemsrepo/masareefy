@@ -63,6 +63,7 @@ import { UpgradePromptModal } from "@/components/UpgradePromptModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import TagInput from "@/components/ui/TagInput";
 import BulkImportModal from "@/components/BulkImportModal";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 
 interface InventoryItem {
   id: string;
@@ -117,21 +118,19 @@ const InventoryPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { subscription } = useSubscription();
-
-  // Usage tracking with emergency fallback to prevent auth issues
   const {
-    getUsage,
-    canAddResource,
-    isLoading: usageLoading,
-    syncUsage,
-  } = useUsageTrackingFallback(user?.brandId || ""); // Using fallback temporarily
+    subscription,
+    hasIntegrationAccess,
+    getLockedFeatureMessage,
+    getPlanLimit,
+  } = useSubscription();
 
   // Use the new inventory usage hook for accurate counting
   const { currentCount: inventoryCount } = useInventoryUsage();
 
-  // Check if at limit
-  const isAtLimit = inventoryCount >= (getUsage("inventory")?.limit || 100);
+  // Check if at limit using subscription context
+  const inventoryLimit = getPlanLimit("inventoryItems");
+  const isAtLimit = inventoryLimit !== -1 && inventoryCount >= inventoryLimit;
 
   // Disable background sync temporarily to fix logout issue
   // useBackgroundSync();
@@ -141,6 +140,10 @@ const InventoryPage: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterSupplier, setFilterSupplier] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
+
+  // Delete confirmation state
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -288,9 +291,8 @@ const InventoryPage: React.FC = () => {
   // Simple, reliable mutations
   const createInventoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Check limit before creating
-      const limitCheck = await canAddResource("inventory");
-      if (!limitCheck.canAdd) {
+      // Check limit before creating using subscription context
+      if (isAtLimit) {
         throw new Error("Inventory limit reached. Please upgrade your plan.");
       }
       return inventoryAPI.create(data);
@@ -299,10 +301,7 @@ const InventoryPage: React.FC = () => {
       // Invalidate both inventory and usage queries
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["usage", user?.brandId] });
-      // Force sync usage after successful creation (but delay more to prevent API spam)
-      setTimeout(() => {
-        syncUsage("inventory");
-      }, 5000);
+      // Usage will be updated automatically through the inventory query
       toast({
         title: "Success",
         description: "Item added successfully",
@@ -356,9 +355,7 @@ const InventoryPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["usage", user?.brandId] });
       // Force sync usage after successful deletion (but delay more to prevent API spam)
-      setTimeout(() => {
-        syncUsage("inventory");
-      }, 5000);
+      // Usage will be updated automatically through the inventory query
       toast({
         title: "Success",
         description: "Item deleted successfully",
@@ -392,9 +389,7 @@ const InventoryPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["usage", user?.brandId] });
       // Force sync usage after successful bulk deletion (but delay more to prevent API spam)
-      setTimeout(() => {
-        syncUsage("inventory");
-      }, 5000);
+      // Usage will be updated automatically through the inventory query
       setSelectedItems([]);
       setShowBulkDeleteModal(false);
       toast({
@@ -431,25 +426,19 @@ const InventoryPage: React.FC = () => {
   };
 
   // Check if user can add inventory items
-  const handleAddItem = async () => {
+  const handleAddItem = () => {
     if (!user?.brandId) return;
 
-    try {
-      const limitCheck = await canAddResource("inventory");
+    const inventoryLimit = getPlanLimit("inventoryItems");
+    const isAtLimit = inventoryLimit !== -1 && inventoryCount >= inventoryLimit;
 
-      if (!limitCheck.canAdd) {
-        setUpgradeResourceType("inventory");
-        setShowUpgradeModal(true);
-        return;
-      }
-
-      setShowAddItemModal(true);
-    } catch (error) {
-      console.error("Error checking inventory limit:", error);
-      // If limit check fails, show upgrade modal to be safe
+    if (isAtLimit) {
       setUpgradeResourceType("inventory");
       setShowUpgradeModal(true);
+      return;
     }
+
+    setShowAddItemModal(true);
   };
 
   const handleSubmit = useCallback(
@@ -772,23 +761,12 @@ const InventoryPage: React.FC = () => {
     }
 
     // Check inventory limit before import
-    try {
-      const limitCheck = await canAddResource("inventory");
-
-      if (!limitCheck.canAdd) {
-        toast({
-          title: "Limit Reached",
-          description: `You have reached your limit of ${limitCheck.limit} products. Please upgrade your plan to add more products.`,
-          variant: "destructive",
-        });
-        setUpgradeResourceType("inventory");
-        setShowUpgradeModal(true);
-        return;
-      }
-    } catch (error) {
-      console.error("Error checking inventory limit:", error);
-      // If limit check fails, show upgrade modal to be safe
-      setUpgradeResourceType("inventory");
+    if (isAtLimit) {
+      toast({
+        title: "Limit Reached",
+        description: `You have reached your limit of ${inventoryLimit} products. Please upgrade your plan to add more products.`,
+        variant: "destructive",
+      });
       setShowUpgradeModal(true);
       return;
     }
@@ -893,9 +871,8 @@ const InventoryPage: React.FC = () => {
           ? actualInventory.length
           : 0;
 
-        // Get inventory limit from subscription
-        const inventoryUsage = getUsage("inventory");
-        const inventoryLimit = inventoryUsage?.limit || 100; // Default to 100 if not set
+        // Get inventory limit from subscription context
+        const inventoryLimit = getPlanLimit("inventoryItems");
         const skusToAdd = bostaImportData.stats.unknownSkus.length;
 
         console.log("Inventory limit check:", {
@@ -1100,7 +1077,7 @@ const InventoryPage: React.FC = () => {
 
       {/* Usage Display */}
       <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-        {usageLoading ? (
+        {false ? (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -1131,30 +1108,26 @@ const InventoryPage: React.FC = () => {
                   <p className="text-2xl font-bold text-blue-600">
                     {inventoryStats.totalItems}
                   </p>
-                  {/* Show X/100 format only for starter plan (299 EGP) */}
-                  {subscription?.plan?.priceMonthly === 299 && (
+                  {/* Show X/limit format for limited plans */}
+                  {inventoryLimit !== -1 && (
                     <span className="text-sm text-gray-500">
-                      / {subscription.plan.features.limits.inventoryItems}
+                      / {inventoryLimit}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-gray-500">
-                  {subscription?.plan?.priceMonthly === 299 ? (
+                  {inventoryLimit !== -1 ? (
                     <span
                       className={`${
-                        inventoryStats.totalItems >=
-                        subscription.plan.features.limits.inventoryItems
+                        inventoryStats.totalItems >= inventoryLimit
                           ? "text-red-500"
-                          : inventoryStats.totalItems >=
-                            subscription.plan.features.limits.inventoryItems *
-                              0.8
+                          : inventoryStats.totalItems >= inventoryLimit * 0.8
                           ? "text-yellow-500"
                           : "text-green-500"
                       }`}
                     >
-                      {subscription.plan.features.limits.inventoryItems -
-                        inventoryStats.totalItems}{" "}
-                      remaining
+                      {inventoryLimit - inventoryStats.totalItems}{" "}
+                      {t("inventory.metrics.remaining")}
                     </span>
                   ) : (
                     "In catalog"
@@ -1176,7 +1149,9 @@ const InventoryPage: React.FC = () => {
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(inventoryStats.totalValue)}
                 </p>
-                <p className="text-xs text-gray-500">Current inventory value</p>
+                <p className="text-xs text-gray-500">
+                  {t("inventory.metrics.currentInventoryValue")}
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-600" />
             </div>
@@ -1191,7 +1166,9 @@ const InventoryPage: React.FC = () => {
                 <p className="text-2xl font-bold text-purple-600">
                   {formatCurrency(inventoryStats.inventoryCost)}
                 </p>
-                <p className="text-xs text-gray-500">Total cost basis</p>
+                <p className="text-xs text-gray-500">
+                  {t("inventory.metrics.totalCostBasis")}
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-purple-600" />
             </div>
@@ -1208,7 +1185,9 @@ const InventoryPage: React.FC = () => {
                 <p className="text-2xl font-bold text-orange-600">
                   {inventoryStats.lowStockItems}
                 </p>
-                <p className="text-xs text-gray-500">Items need reorder</p>
+                <p className="text-xs text-gray-500">
+                  {t("inventory.metrics.itemsNeedReorder")}
+                </p>
               </div>
               <AlertTriangle className="h-8 w-8 text-orange-600" />
             </div>
@@ -1225,7 +1204,9 @@ const InventoryPage: React.FC = () => {
                 <p className="text-2xl font-bold text-red-600">
                   {inventoryStats.outOfStockItems}
                 </p>
-                <p className="text-xs text-gray-500">Items unavailable</p>
+                <p className="text-xs text-gray-500">
+                  {t("inventory.metrics.itemsUnavailable")}
+                </p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
@@ -1909,14 +1890,16 @@ const InventoryPage: React.FC = () => {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         resourceType={upgradeResourceType}
+        limit={getPlanLimit("inventoryItems")}
+        current={inventoryCount}
         onUpgrade={() => {
           // TODO: Redirect to upgrade page or handle upgrade flow
           console.log("Upgrade clicked");
           setShowUpgradeModal(false);
         }}
-        currentPlan="starter"
-        limit={getUsage("inventory")?.limit || 100}
-        current={inventoryCount}
+        currentPlan={
+          subscription?.isFreePlan ? "Free" : subscription?.plan?.name || "Free"
+        }
       />
 
       {/* Bulk Import Modal */}
@@ -1933,7 +1916,7 @@ const InventoryPage: React.FC = () => {
           });
         }}
         currentInventoryCount={allInventoryItems.length}
-        inventoryLimit={getUsage("inventory")?.limit || 100}
+        inventoryLimit={getPlanLimit("inventoryItems")}
       />
 
       {/* Import Type Selection Modal */}
@@ -1998,12 +1981,24 @@ const InventoryPage: React.FC = () => {
                 </div>
 
                 <div
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    importType === "bosta"
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    hasIntegrationAccess("bosta")
+                      ? `cursor-pointer ${
+                          importType === "bosta"
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`
+                      : "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
                   }`}
-                  onClick={() => handleImportTypeSelect("bosta")}
+                  onClick={() =>
+                    hasIntegrationAccess("bosta") &&
+                    handleImportTypeSelect("bosta")
+                  }
+                  title={
+                    !hasIntegrationAccess("bosta")
+                      ? getLockedFeatureMessage("Bosta Integration")
+                      : ""
+                  }
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-green-100 rounded-lg">
@@ -2018,15 +2013,23 @@ const InventoryPage: React.FC = () => {
                         order tracking
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          .xlsx, .xls
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          SKU Validation
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Order Tracking
-                        </Badge>
+                        {hasIntegrationAccess("bosta") ? (
+                          <>
+                            <Badge variant="outline" className="text-xs">
+                              .xlsx, .xls
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              SKU Validation
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Order Tracking
+                            </Badge>
+                          </>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs">
+                            Professional Plan Required
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div
@@ -2044,12 +2047,24 @@ const InventoryPage: React.FC = () => {
                 </div>
 
                 <div
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    importType === "shopify"
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    hasIntegrationAccess("shopify")
+                      ? `cursor-pointer ${
+                          importType === "shopify"
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`
+                      : "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
                   }`}
-                  onClick={() => handleImportTypeSelect("shopify")}
+                  onClick={() =>
+                    hasIntegrationAccess("shopify") &&
+                    handleImportTypeSelect("shopify")
+                  }
+                  title={
+                    !hasIntegrationAccess("shopify")
+                      ? getLockedFeatureMessage("Shopify Integration")
+                      : ""
+                  }
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-100 rounded-lg">
@@ -2063,15 +2078,23 @@ const InventoryPage: React.FC = () => {
                         Import product data from Shopify with variant management
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          .csv
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Variants
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Coming Soon
-                        </Badge>
+                        {hasIntegrationAccess("shopify") ? (
+                          <>
+                            <Badge variant="outline" className="text-xs">
+                              .csv
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Variants
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Coming Soon
+                            </Badge>
+                          </>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs">
+                            Professional Plan Required
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div
