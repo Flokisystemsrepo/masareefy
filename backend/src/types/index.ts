@@ -72,7 +72,6 @@ export interface Step4PaymentDto {
   password: string;
   phoneNumber: string;
   paymentMethod?: "mock" | "stripe";
-  isGoogleUser?: boolean;
 }
 
 export interface LoginUserDto {

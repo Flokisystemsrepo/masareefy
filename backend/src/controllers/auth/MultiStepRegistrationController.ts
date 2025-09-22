@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import { RegistrationService } from "@/services/RegistrationService";
-import { OAuth2Client } from "google-auth-library";
 import Joi from "joi";
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Validation schemas for each step
 const step1PlanSelectionSchema = Joi.object({
@@ -41,7 +38,6 @@ const step4PaymentSchema = Joi.object({
         "Phone number must be a valid Egyptian mobile number starting with 010, 011, 012, or 015 followed by 8 digits",
     }),
   paymentMethod: Joi.string().valid("mock", "stripe").default("mock"),
-  isGoogleUser: Joi.boolean().optional().default(false),
 });
 
 export class MultiStepRegistrationController {
@@ -228,76 +224,6 @@ export class MultiStepRegistrationController {
         success: false,
         error:
           error instanceof Error ? error.message : "Failed to process payment",
-      });
-    }
-  }
-
-  // Google OAuth Sign Up
-  static async googleSignUp(req: Request, res: Response): Promise<void> {
-    try {
-      const { idToken } = req.body;
-
-      if (!idToken) {
-        res.status(400).json({
-          success: false,
-          error: "Google ID token is required",
-        });
-        return;
-      }
-
-      // Verify Google token
-      const ticket = await client.verifyIdToken({
-        idToken,
-        // Don't specify audience to allow any valid Google token
-      });
-
-      const payload = ticket.getPayload();
-      if (!payload) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid Google token",
-        });
-        return;
-      }
-
-      // Extract user data from Google payload
-      if (!payload.email) {
-        res.status(400).json({
-          success: false,
-          error: "Email is required from Google account",
-        });
-        return;
-      }
-
-      const googleUser = {
-        email: payload.email,
-        firstName: payload.given_name || "",
-        lastName: payload.family_name || "",
-        googleId: payload.sub,
-        picture: payload.picture,
-      };
-
-      // Call service to handle Google sign up
-      const result = await RegistrationService.googleSignUp(googleUser);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          user: {
-            firstName: result.user.firstName,
-            lastName: result.user.lastName,
-            email: result.user.email,
-          },
-          message: "Google sign up successful",
-        },
-      });
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to process Google sign up",
       });
     }
   }

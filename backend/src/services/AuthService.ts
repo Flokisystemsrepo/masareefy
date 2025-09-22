@@ -89,7 +89,7 @@ export class AuthService {
       // Verify password
       if (!user.passwordHash) {
         throw new Error(
-          "No password set for this account. Please use Google login."
+          "No password set for this account. Please contact support."
         );
       }
       const isValidPassword = await verifyPassword(
@@ -384,7 +384,7 @@ export class AuthService {
       // Verify current password
       if (!user.passwordHash) {
         throw new Error(
-          "No password set for this account. Please use Google login."
+          "No password set for this account. Please contact support."
         );
       }
       const isValidPassword = await verifyPassword(
@@ -461,77 +461,6 @@ export class AuthService {
       // In a real implementation, you would verify the token and update the user's emailVerified status
 
       return { message: "Email verified successfully" };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Google OAuth Login
-  static async googleLogin(email: string): Promise<any> {
-    try {
-      // Find user by email
-      const user = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          brands: true,
-          brandUsers: {
-            include: {
-              brand: true,
-            },
-          },
-        },
-      });
-
-      if (!user) {
-        throw new Error("User not found. Please sign up first.");
-      }
-
-      // Generate tokens
-      const accessToken = jwt.sign(
-        { userId: user.id, email: user.email },
-        config.jwtSecret,
-        { expiresIn: "15m" }
-      );
-
-      const refreshToken = jwt.sign(
-        { userId: user.id, email: user.email },
-        config.jwtSecret, // Use same secret for refresh token
-        { expiresIn: "7d" }
-      );
-
-      // Store refresh token
-      await prisma.session.create({
-        data: {
-          userId: user.id,
-          token: refreshToken,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        },
-      });
-
-      // Get the user's primary brand (first brand they own)
-      let userBrand = user.brands[0]; // Direct brand ownership
-
-      // If no direct brand, check brandUsers for ownership
-      if (!userBrand) {
-        const brandUser = user.brandUsers.find(
-          (brandUser) => brandUser.role === "owner"
-        );
-        if (brandUser) {
-          userBrand = brandUser.brand;
-        }
-      }
-
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
-        brand: userBrand || null,
-        token: accessToken,
-        refreshToken,
-      };
     } catch (error) {
       throw error;
     }

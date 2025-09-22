@@ -331,9 +331,7 @@ export class RegistrationService {
       // Start transaction
       const result = await prisma.$transaction(async (tx) => {
         // 1. Create user
-        const hashedPassword = data.isGoogleUser
-          ? null
-          : await hashPassword(data.password);
+        const hashedPassword = await hashPassword(data.password);
         const user = await tx.user.create({
           data: {
             email: data.email,
@@ -476,58 +474,6 @@ export class RegistrationService {
       throw new Error(
         error instanceof Error ? error.message : "Failed to process payment"
       );
-    }
-  }
-
-  // Google OAuth Sign Up
-  static async googleSignUp(googleUser: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    googleId: string;
-    picture?: string;
-  }) {
-    try {
-      // Check if user already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email: googleUser.email },
-      });
-
-      if (existingUser) {
-        // User exists, return their data for the onboarding flow
-        return {
-          user: {
-            firstName: existingUser.firstName,
-            lastName: existingUser.lastName,
-            email: existingUser.email,
-          },
-          message: "User already exists",
-        };
-      }
-
-      // Create new user with Google data
-      const newUser = await prisma.user.create({
-        data: {
-          email: googleUser.email,
-          firstName: googleUser.firstName,
-          lastName: googleUser.lastName,
-          emailVerified: true, // Google accounts are pre-verified
-          googleId: googleUser.googleId,
-          picture: googleUser.picture,
-          // Note: No password hash for Google users
-        },
-      });
-
-      return {
-        user: {
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          email: newUser.email,
-        },
-        message: "Google user created successfully",
-      };
-    } catch (error) {
-      throw error;
     }
   }
 }

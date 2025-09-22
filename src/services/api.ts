@@ -431,37 +431,6 @@ export const authAPI = {
     return data.data;
   },
 
-  // Google OAuth
-  googleSignUp: async (idToken: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/google/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    });
-
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || "Google sign up failed");
-    }
-
-    return data.data;
-  },
-
-  googleLogin: async (idToken: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/google/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    });
-
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || "Google login failed");
-    }
-
-    return data.data;
-  },
-
   processPayment: async (subscriptionId: string) => {
     const response = await fetch(
       `${API_BASE_URL}/auth/register/process-payment/${subscriptionId}`,

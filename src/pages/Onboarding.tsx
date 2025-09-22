@@ -818,17 +818,6 @@ const Onboarding: React.FC = () => {
               >
                 {t("auth.onboarding.content.authChoice.continueWithEmail")}
               </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/20"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#064FB5] text-white/60">
-                    {t("auth.onboarding.content.authChoice.or")}
-                  </span>
-                </div>
-              </div>
             </div>
           </motion.div>
         );

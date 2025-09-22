@@ -1,1859 +1,1856 @@
 {
-    "common": {
-        "loading": "Loading...",
-        "error": "Error",
-        "success": "Success",
-        "cancel": "Cancel",
-        "save": "Save",
-        "delete": "Delete",
-        "edit": "Edit",
-        "add": "Add",
-        "search": "Search",
-        "filter": "Filter",
-        "export": "Export",
-        "import": "Import",
-        "close": "Close",
-        "back": "Back",
-        "next": "Next",
-        "previous": "Previous",
-        "submit": "Submit",
-        "confirm": "Confirm",
-        "yes": "Yes",
-        "no": "No",
-        "deleting": "Deleting...",
-        "deleteConfirmation": {
-            "title": "Delete Item",
-            "description": "Are you sure you want to delete this item? This action cannot be undone."
-        }
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "deleting": "Deleting...",
+    "deleteConfirmation": {
+      "title": "Delete Item",
+      "description": "Are you sure you want to delete this item? This action cannot be undone."
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "revenues": "Revenues",
+    "costs": "Costs",
+    "wallet": "Wallet",
+    "transfers": "Transfers",
+    "receivables": "Receivables",
+    "payables": "Payables",
+    "bestSellers": "Best Sellers",
+    "integrations": "Integrations",
+    "tasks": "Tasks",
+    "reports": "Reports",
+    "settings": "Settings",
+    "support": "Support",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "landing": {
+    "hero": {
+      "title": " Smarter Finances, Stronger Business",
+      "subtitle": "Track expenses, manage revenues, and unlock insights to grow your business ,all in one clean, easy-to-use platform. ",
+      "cta": "Get Started Free",
+      "learnMore": "Learn More"
     },
-    "navigation": {
-        "home": "Home",
-        "dashboard": "Dashboard",
-        "inventory": "Inventory",
-        "revenues": "Revenues",
-        "costs": "Costs",
-        "wallet": "Wallet",
-        "transfers": "Transfers",
-        "receivables": "Receivables",
-        "payables": "Payables",
-        "bestSellers": "Best Sellers",
-        "integrations": "Integrations",
-        "tasks": "Tasks",
-        "reports": "Reports",
-        "settings": "Settings",
-        "support": "Support",
-        "login": "Login",
-        "register": "Register",
-        "logout": "Logout"
-    },
-    "landing": {
-        "hero": {
-            "title": " Smarter Finances, Stronger Business",
-            "subtitle": "Track expenses, manage revenues, and unlock insights to grow your business ,all in one clean, easy-to-use platform. ",
-            "cta": "Get Started Free",
-            "learnMore": "Learn More"
-        },
-        "features": {
-            "title": "Complete Business Management, All in One Platform",
-            "subtitle": "Everything you need to manage your business finances, inventory, and operations efficiently",
-            "inventory": {
-                "title": "Inventory Management",
-                "description": "Complete inventory tracking with stock levels, transfers, categories, and automated reorder alerts"
-            },
-            "financial": {
-                "title": "Financial Management",
-                "description": "Track revenues, costs, receivables, and payables with comprehensive financial reporting and analytics"
-            },
-            "analytics": {
-                "title": "Advanced Analytics",
-                "description": "Generate detailed reports including P&L, cash flow, balance sheet, and custom financial insights"
-            },
-            "automation": {
-                "title": "Task Management",
-                "description": "Organize and track tasks with priorities, due dates, assignments, and progress monitoring"
-            },
-            "wallet": {
-                "title": "Multi-Wallet System",
-                "description": "Manage multiple wallets with different currencies, track transactions, and monitor balances in real-time"
-            },
-            "creative": {
-                "title": "Team Collaboration",
-                "description": "Invite team members, manage roles and permissions, and collaborate on projects and tasks"
-            }
-        },
-        "dashboard": {
-            "totalRevenue": "Total Revenue",
-            "activeProjects": "Active Projects",
-            "netProfit": "Net Profit",
-            "thisMonth": "this month",
-            "completedToday": "completed today"
-        },
-        "pricing": {
-            "title": "Simple, Transparent Pricing",
-            "subtitle": "Choose the plan that fits your business needs",
-            "monthly": "Monthly",
-            "yearly": "Yearly",
-            "save": "Save 20%",
-            "free": {
-                "name": "Free",
-                "price": "0",
-                "currency": "EGP",
-                "period": "/month",
-                "description": "Perfect for getting started",
-                "features": [
-                    "Dashboard stat cards only",
-                    "Revenue & Cost tracking",
-                    "Basic financial reports",
-                    "Settings access",
-                    "Email support",
-                    "1 Wallet",
-                    "20 Inventory items"
-                ],
-                "cta": "Start Free"
-            },
-            "growth": {
-                "name": "Growth",
-                "price": "299",
-                "currency": "EGP",
-                "period": "/month",
-                "description": "Perfect for growing businesses",
-                "features": [
-                    "Everything in Free",
-                    "Receivables & Payables",
-                    "Transfers",
-                    "Reports & analytics",
-                    "Tasks & support tickets",
-                    "5 Wallets",
-                    "300 Inventory items",
-                    "Shopify integration",
-                    "Bosta integration",
-                    "Shipblu integration",
-                    "Standard support"
-                ],
-                "cta": "Start Free Trial",
-                "popular": "Most Popular"
-            },
-            "scale": {
-                "name": "Scale",
-                "price": "399",
-                "currency": "EGP",
-                "period": "/month",
-                "description": "For established businesses",
-                "features": [
-                    "Everything in Growth",
-                    "Unlimited wallets",
-                    "Unlimited inventory items",
-                    "Smart Insights (AI-powered)",
-                    "Advanced analytics",
-                    "Priority support",
-                    "Onboarding assistance",
-                    "All integrations unlocked"
-                ],
-                "cta": "Start Free Trial"
-            }
-        },
-        "testimonials": {
-            "title": "What Our Customers Say",
-            "subtitle": "Join thousands of satisfied businesses"
-        },
-        "cta": {
-            "title": "Ready to Transform Your Business?",
-            "subtitle": "Join thousands of businesses already using our platform",
-            "button": "Get Started Today"
-        },
-        "footer": {
-            "description": "Revolutionary AI-powered business management platform",
-            "product": "Product",
-            "company": "Company",
-            "support": "Support",
-            "links": {
-                "about": "About",
-                "features": "Features",
-                "pricing": "Pricing",
-                "contact": "Contact",
-                "privacy": "Privacy Policy",
-                "terms": "Terms of Service",
-                "integrations": "Integrations",
-                "api": "API",
-                "blog": "Blog",
-                "careers": "Careers",
-                "help": "Help Center",
-                "documentation": "Documentation",
-                "status": "Status"
-            },
-            "copyright": "© 2024 Masareefy. All rights reserved."
-        }
-    },
-    "auth": {
-        "login": {
-            "title": "Welcome Back",
-            "subtitle": "Sign in to your account",
-            "email": "Email",
-            "password": "Password",
-            "rememberMe": "Remember me",
-            "forgotPassword": "Forgot password?",
-            "signIn": "Sign In",
-            "or": "or",
-            "noAccount": "Don't have an account?",
-            "signUp": "Sign up",
-            "errorMessage": "Please check your credentials and try again",
-            "errorTitle": "Login Failed",
-            "invalidCredentials": "Invalid Credentials",
-            "invalidCredentialsMessage": "The email or password you entered is incorrect. Please check your credentials and try again.",
-            "googleAccount": "Google Account Detected",
-            "googleAccountMessage": "This account was created with Google. Please use the 'Continue with Google' option to sign in.",
-            "noBrand": "Account Setup Issue",
-            "noBrandMessage": "Your account is not properly set up. Please contact support for assistance.",
-            "noInternet": "No Internet Connection",
-            "noInternetMessage": "Please check your internet connection and try again.",
-            "connectionError": "Connection Error",
-            "connectionErrorMessage": "Unable to connect to the server. Please check your internet connection and try again.",
-            "backToHome": "← Back to Home",
-            "showcase": {
-                "slide1": {
-                    "title": "Track your business performance",
-                    "description": "Track your business performance with real-time analytics and insights that help you make data-driven decisions."
-                },
-                "slide2": {
-                    "title": "Manage your inventory like a pro",
-                    "description": "Keep track of stock levels, sales trends, and product performance with our intuitive inventory management system."
-                },
-                "slide3": {
-                    "title": "Smart financial tracking",
-                    "description": "Monitor revenues, costs, receivables, and payables with automated reports and intelligent cash flow analysis."
-                },
-                "slide4": {
-                    "title": "Smarter Than Spreadsheets, Cheaper Than Accountants",
-                    "description": "We are not afraid to say it, this is the future of business management."
-                }
-            }
-        },
-        "register": {
-            "title": "Create Account",
-            "subtitle": "Get started with your free account",
-            "firstName": "First Name",
-            "lastName": "Last Name",
-            "email": "Email",
-            "password": "Password",
-            "confirmPassword": "Confirm Password",
-            "agreeTerms": "I agree to the Terms of Service and Privacy Policy",
-            "createAccount": "Create Account",
-            "hasAccount": "Already have an account?",
-            "signIn": "Sign in",
-            "errorMessage": "Please check your information and try again",
-            "backToHome": "← Back to Home"
-        },
-        "onboarding": {
-            "steps": {
-                "authChoice": "Choose Auth Method",
-                "name": "Your Name",
-                "age": "Age",
-                "credentials": "Credentials",
-                "business": "Business Details",
-                "plan": "Choose Plan",
-                "review": "Review",
-                "verification": "Verification",
-                "success": "Success"
-            },
-            "content": {
-                "authChoice": {
-                    "title": "How would you like to sign up?",
-                    "subtitle": "Choose your preferred way to create your account",
-                    "continueWithEmail": "Continue with Email",
-                    "or": "or",
-                    "continueWithGoogle": "Continue with Google"
-                },
-                "name": {
-                    "title": "What's your name?",
-                    "subtitle": "Let's start with the basics",
-                    "firstName": "First Name",
-                    "lastName": "Last Name",
-                    "firstNamePlaceholder": "Enter your first name",
-                    "lastNamePlaceholder": "Enter your last name"
-                },
-                "age": {
-                    "title": "How old are you?",
-                    "subtitle": "This helps us personalize your experience",
-                    "age": "Age",
-                    "agePlaceholder": "Enter your age"
-                },
-                "credentials": {
-                    "title": "Create your account",
-                    "subtitle": "Set up your login credentials",
-                    "email": "Email Address",
-                    "emailPlaceholder": "Enter your email",
-                    "password": "Password",
-                    "passwordPlaceholder": "Create a strong password",
-                    "phoneNumber": "Phone Number",
-                    "phonePlaceholder": "Enter your phone number"
-                },
-                "business": {
-                    "title": "Tell us about your business",
-                    "subtitle": "Help us understand what you do",
-                    "businessName": "Business Name",
-                    "businessNamePlaceholder": "Enter your business name",
-                    "niche": "Business Type",
-                    "selectNiche": "Select your business type",
-                    "other": "Other",
-                    "customNiche": "Please specify",
-                    "customNichePlaceholder": "Describe your business type"
-                },
-                "plan": {
-                    "title": "Choose your plan",
-                    "subtitle": "Select the plan that fits your needs",
-                    "monthly": "Monthly",
-                    "yearly": "Yearly",
-                    "save": "Save",
-                    "mostPopular": "Most Popular",
-                    "trialDays": "days free trial",
-                    "perMonth": "per month",
-                    "perYear": "per year"
-                },
-                "review": {
-                    "title": "Review your information",
-                    "subtitle": "Please verify everything looks correct",
-                    "personalInfo": "Personal Information",
-                    "businessInfo": "Business Information",
-                    "planInfo": "Selected Plan",
-                    "edit": "Edit"
-                },
-                "verification": {
-                    "title": "Verify your email",
-                    "subtitle": "We've sent a verification code to your email",
-                    "enterCode": "Enter verification code",
-                    "codePlaceholder": "Enter 6-digit code",
-                    "resendCode": "Resend code",
-                    "didntReceive": "Didn't receive the code?"
-                },
-                "success": {
-                    "title": "Welcome to Masareefy!",
-                    "subtitle": "Your account has been created successfully",
-                    "getStarted": "Get Started",
-                    "dashboard": "Go to Dashboard"
-                }
-            },
-            "authChoice": {
-                "title": "Welcome to Masareefy",
-                "subtitle": "Choose how you'd like to get started",
-                "googleSignUp": "Continue with Google",
-                "emailSignUp": "Continue with Email",
-                "hasAccount": "Already have an account?",
-                "signIn": "Sign in here"
-            },
-            "name": {
-                "title": "What's your name?",
-                "subtitle": "This will be used to personalize your experience",
-                "firstName": "First Name",
-                "lastName": "Last Name",
-                "firstNamePlaceholder": "Enter your first name",
-                "lastNamePlaceholder": "Enter your last name"
-            },
-            "age": {
-                "title": "How old are you?",
-                "subtitle": "This helps us provide age-appropriate features",
-                "agePlaceholder": "Enter your age"
-            },
-            "credentials": {
-                "title": "Create your account",
-                "subtitle": "Set up your login credentials",
-                "email": "Email Address",
-                "emailPlaceholder": "Enter your email address",
-                "password": "Password",
-                "passwordPlaceholder": "Create a strong password",
-                "confirmPassword": "Confirm Password",
-                "confirmPasswordPlaceholder": "Confirm your password",
-                "showPassword": "Show password",
-                "hidePassword": "Hide password"
-            },
-            "business": {
-                "title": "Tell us about your business",
-                "subtitle": "Help us customize your experience",
-                "businessName": "Business Name",
-                "businessNamePlaceholder": "Enter your business name",
-                "phoneNumber": "Phone Number",
-                "phoneNumberPlaceholder": "Enter your phone number",
-                "niche": "Business Type",
-                "nichePlaceholder": "Select your business type",
-                "customNiche": "Custom Business Type",
-                "customNichePlaceholder": "Describe your business type"
-            },
-            "plan": {
-                "title": "Choose your plan",
-                "subtitle": "Select the plan that best fits your needs",
-                "monthly": "Monthly",
-                "yearly": "Yearly",
-                "save": "Save 20%",
-                "selectPlan": "Select Plan",
-                "popular": "Most Popular"
-            },
-            "review": {
-                "title": "Review your information",
-                "subtitle": "Please review and confirm your details",
-                "edit": "Edit",
-                "confirm": "Confirm & Continue"
-            },
-            "verification": {
-                "title": "Verify your email",
-                "subtitle": "We've sent a verification link to your email",
-                "checkEmail": "Check your email",
-                "resendEmail": "Resend verification email",
-                "emailSent": "Verification email sent!"
-            },
-            "success": {
-                "title": "Welcome to Masareefy!",
-                "subtitle": "Your account has been created successfully",
-                "getStarted": "Get Started",
-                "redirecting": "Redirecting to your dashboard..."
-            },
-            "common": {
-                "next": "Next",
-                "previous": "Previous",
-                "skip": "Skip",
-                "continue": "Continue",
-                "back": "Back",
-                "loading": "Loading...",
-                "error": "Error",
-                "success": "Success"
-            },
-            "sessionRestore": {
-                "title": "Welcome Back!",
-                "subtitle": "We found your previous registration progress. Would you like to continue where you left off?",
-                "progress": "Your progress:",
-                "continue": "Continue Where I Left Off",
-                "startFresh": "Start Fresh"
-            },
-            "navigation": {
-                "switchToLogin": "Switch to Login",
-                "goHome": "Go Home",
-                "saveProgress": "Save Progress",
-                "clearProgress": "Clear Progress"
-            },
-            "validation": {
-                "firstNameRequired": "First name is required",
-                "lastNameRequired": "Last name is required",
-                "firstNameMinLength": "First name must be at least 2 characters",
-                "lastNameMinLength": "Last name must be at least 2 characters",
-                "ageRequired": "Age is required",
-                "ageRange": "Age must be between 16 and 100",
-                "emailRequired": "Email is required",
-                "emailInvalid": "Please enter a valid email",
-                "passwordRequired": "Password is required",
-                "passwordMinLength": "Password must be at least 8 characters",
-                "passwordLetter": "Password must contain at least one letter",
-                "passwordNumber": "Password must contain at least one number",
-                "phoneRequired": "Phone number is required",
-                "phoneInvalid": "Please enter a valid Egyptian phone number",
-                "businessNameRequired": "Business name is required",
-                "nicheRequired": "Please select a niche",
-                "customNicheRequired": "Please specify your niche",
-                "planRequired": "Please select a plan",
-                "plansLoading": "Plans are still loading"
-            },
-            "errors": {
-                "loadPlans": "Failed to load subscription plans",
-                "checkEmail": "Failed to check email availability",
-                "register": "Registration failed. Please try again.",
-                "verifyEmail": "Failed to verify email. Please try again."
-            },
-            "loading": {
-                "plans": "Please wait while we load the available plans",
-                "title": "Loading"
-            },
-            "messages": {
-                "planRequired": "Please select a plan to continue",
-                "planRequiredTitle": "Plan Required"
-            }
-        }
+    "features": {
+      "title": "Complete Business Management, All in One Platform",
+      "subtitle": "Everything you need to manage your business finances, inventory, and operations efficiently",
+      "inventory": {
+        "title": "Inventory Management",
+        "description": "Complete inventory tracking with stock levels, transfers, categories, and automated reorder alerts"
+      },
+      "financial": {
+        "title": "Financial Management",
+        "description": "Track revenues, costs, receivables, and payables with comprehensive financial reporting and analytics"
+      },
+      "analytics": {
+        "title": "Advanced Analytics",
+        "description": "Generate detailed reports including P&L, cash flow, balance sheet, and custom financial insights"
+      },
+      "automation": {
+        "title": "Task Management",
+        "description": "Organize and track tasks with priorities, due dates, assignments, and progress monitoring"
+      },
+      "wallet": {
+        "title": "Multi-Wallet System",
+        "description": "Manage multiple wallets with different currencies, track transactions, and monitor balances in real-time"
+      },
+      "creative": {
+        "title": "Team Collaboration",
+        "description": "Invite team members, manage roles and permissions, and collaborate on projects and tasks"
+      }
     },
     "dashboard": {
-        "title": "Dashboard",
-        "subtitle": "Welcome back! Here's your brand overview",
-        "loading": "Loading dashboard...",
-        "retry": "Retry",
-        "refresh": "Refresh",
-        "refreshing": "Refreshing...",
-        "dateRange": {
-            "last7Days": "Last 7 days",
-            "last30Days": "Last 30 days",
-            "last90Days": "Last 90 days",
-            "loading": "Loading..."
-        },
-        "metrics": {
-            "totalRevenue": "Total Revenue",
-            "totalCosts": "Total Costs",
-            "netProfit": "Net Profit",
-            "walletBalance": "Wallet Balance",
-            "breakEvenPoint": "Break-Even Point",
-            "profitMargin": "Profit Margin",
-            "vsLastMonth": "vs last month",
-            "revenueNeeded": "Revenue needed",
-            "breakEvenAchieved": "Break-even achieved",
-            "profitGenerated": "Profit generated",
-            "costsPercentage": "costs",
-            "exceededBy": "Exceeded by",
-            "stillNotReached": "Still not reached",
-            "left": "left",
-            "youBrokeEven": "You broke even"
-        },
-        "tooltips": {
-            "totalRevenue": "Total income from all revenue sources in the selected period",
-            "totalCosts": "Total expenses and costs incurred in the selected period",
-            "netProfit": "Total revenue minus total costs. Positive means profit, negative means loss",
-            "walletBalance": "Current available balance in your wallet for transactions",
-            "breakEvenPoint": "The point where revenue equals costs. Shows if you're profitable or need more revenue",
-            "profitMargin": "Percentage of revenue that becomes profit after covering all costs"
-        },
-        "charts": {
-            "costsByCategory": "Costs by Category",
-            "revenueProfitTrend": "Revenue & Profit Trend",
-            "updatingChart": "Updating chart...",
-            "cost": "Cost",
-            "amount": "Amount"
-        },
-        "recentActivity": {
-            "title": "Recent Activity",
-            "noActivity": "No recent activity"
-        }
+      "totalRevenue": "Total Revenue",
+      "activeProjects": "Active Projects",
+      "netProfit": "Net Profit",
+      "thisMonth": "this month",
+      "completedToday": "completed today"
     },
-    "sidebar": {
-        "groups": {
-            "overview": "OVERVIEW",
-            "financial": "FINANCIAL",
-            "operations": "OPERATIONS",
-            "integrations": "INTEGRATIONS",
-            "management": "MANAGEMENT",
-            "analysis": "ANALYSIS",
-            "settings": "SETTINGS"
-        },
-        "navigation": {
-            "dashboard": "Dashboard",
-            "revenues": "Revenues",
-            "costs": "Costs",
-            "wallet": "Wallet",
-            "transfers": "Transfers",
-            "receivablesPayables": "Receivables/Payables",
-            "inventory": "Inventory",
-            "orders": "Orders",
-            "tasks": "Tasks",
-            "support": "Support",
-            "supportCenter": "Support Center",
-            "supportRequests": "Support Requests",
-            "myTickets": "My Tickets",
-            "reports": "Reports",
-            "settings": "Settings"
-        },
-        "user": {
-            "signOut": "Sign Out"
-        }
+    "pricing": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "Choose the plan that fits your business needs",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "save": "Save 20%",
+      "free": {
+        "name": "Free",
+        "price": "0",
+        "currency": "EGP",
+        "period": "/month",
+        "description": "Perfect for getting started",
+        "features": [
+          "Dashboard stat cards only",
+          "Revenue & Cost tracking",
+          "Basic financial reports",
+          "Settings access",
+          "Email support",
+          "1 Wallet",
+          "20 Inventory items"
+        ],
+        "cta": "Start Free"
+      },
+      "growth": {
+        "name": "Growth",
+        "price": "299",
+        "currency": "EGP",
+        "period": "/month",
+        "description": "Perfect for growing businesses",
+        "features": [
+          "Everything in Free",
+          "Receivables & Payables",
+          "Transfers",
+          "Reports & analytics",
+          "Tasks & support tickets",
+          "5 Wallets",
+          "300 Inventory items",
+          "Shopify integration",
+          "Bosta integration",
+          "Shipblu integration",
+          "Standard support"
+        ],
+        "cta": "Start Free Trial",
+        "popular": "Most Popular"
+      },
+      "scale": {
+        "name": "Scale",
+        "price": "399",
+        "currency": "EGP",
+        "period": "/month",
+        "description": "For established businesses",
+        "features": [
+          "Everything in Growth",
+          "Unlimited wallets",
+          "Unlimited inventory items",
+          "Smart Insights (AI-powered)",
+          "Advanced analytics",
+          "Priority support",
+          "Onboarding assistance",
+          "All integrations unlocked"
+        ],
+        "cta": "Start Free Trial"
+      }
     },
-    "revenue": {
-        "title": "Revenues",
-        "subtitle": "Track and manage your business income",
-        "addRevenue": "Add Revenue",
-        "manageCategories": "Manage Categories",
-        "metrics": {
-            "totalRevenue": "Total Revenue",
-            "monthlyRevenue": "Monthly Revenue",
-            "totalEntries": "Total Entries"
-        },
-        "filters": {
-            "title": "Filters",
-            "allCategories": "All Categories",
-            "startDate": "Start Date",
-            "endDate": "End Date",
-            "clearFilters": "Clear Filters",
-            "searchPlaceholder": "Search revenues..."
-        },
-        "table": {
-            "noRevenues": "No revenues found",
-            "noRevenuesDescription": "Get started by adding your first revenue entry.",
-            "amount": "Amount:",
-            "source": "Source:",
-            "date": "Date:",
-            "created": "Created:",
-            "viewReceipt": "View Receipt",
-            "showing": "Showing",
-            "to": "to",
-            "of": "of",
-            "results": "results",
-            "perPage": "per page",
-            "previous": "Previous",
-            "next": "Next"
-        },
-        "form": {
-            "addTitle": "Add Revenue",
-            "editTitle": "Edit Revenue",
-            "revenueName": "Revenue Name",
-            "revenueNamePlaceholder": "Enter revenue name",
-            "amount": "Amount",
-            "amountPlaceholder": "0.00",
-            "category": "Category",
-            "categoryPlaceholder": "Select or type a category",
-            "categorySearchPlaceholder": "Type to search or add new category",
-            "date": "Date",
-            "source": "Source",
-            "sourcePlaceholder": "e.g., E-commerce, Direct Contract",
-            "receipt": "Receipt (Optional)",
-            "receiptDragText": "Drag and drop a receipt here, or",
-            "receiptBrowse": "browse",
-            "receiptSupport": "Supports JPG, PNG, PDF (max 10MB)",
-            "remove": "Remove",
-            "cancel": "Cancel",
-            "create": "Create",
-            "update": "Update"
-        },
-        "categories": {
-            "title": "Manage Categories",
-            "addNew": "Add New Category",
-            "addNewPlaceholder": "Enter category name",
-            "add": "Add",
-            "existing": "Existing Categories"
-        },
-        "messages": {
-            "loading": "Loading...",
-            "categoryAdded": "Category added successfully",
-            "categoryUpdated": "Category updated successfully",
-            "categoryDeleted": "Category deleted successfully",
-            "categoryDeleteConfirm": "Are you sure you want to delete this category?",
-            "revenueCreated": "Revenue created successfully",
-            "revenueUpdated": "Revenue updated successfully",
-            "revenueDeleted": "Revenue deleted successfully",
-            "revenueDeleteConfirm": "Are you sure you want to delete this revenue?",
-            "receiptUploaded": "Receipt uploaded successfully",
-            "invalidFileType": "Please upload an image or PDF file",
-            "failedToLoad": "Failed to load data",
-            "failedToAddCategory": "Failed to add category",
-            "failedToUpdateCategory": "Failed to update category",
-            "failedToDeleteCategory": "Failed to delete category",
-            "failedToSaveRevenue": "Failed to save revenue",
-            "failedToDeleteRevenue": "Failed to delete revenue"
-        }
+    "testimonials": {
+      "title": "What Our Customers Say",
+      "subtitle": "Join thousands of satisfied businesses"
     },
-    "cost": {
-        "title": "Costs",
-        "subtitle": "Track and manage your business expenses",
-        "addCost": "Add Cost",
-        "manageCategories": "Manage Categories",
-        "metrics": {
-            "totalCosts": "Total Costs",
-            "monthlyCosts": "Monthly Costs",
-            "totalEntries": "Total Entries"
-        },
-        "filters": {
-            "title": "Filters",
-            "allCategories": "All Categories",
-            "allCostTypes": "All Cost Types",
-            "fixedCost": "Fixed Cost",
-            "variableCost": "Variable Cost",
-            "startDate": "Start Date",
-            "endDate": "End Date",
-            "clearFilters": "Clear Filters",
-            "searchPlaceholder": "Search costs..."
-        },
-        "table": {
-            "noCosts": "No costs found",
-            "noCostsDescription": "Get started by adding your first cost entry.",
-            "amount": "Amount:",
-            "vendor": "Vendor:",
-            "date": "Date:",
-            "created": "Created:",
-            "viewReceipt": "View Receipt",
-            "fixed": "Fixed",
-            "variable": "Variable",
-            "showing": "Showing",
-            "to": "to",
-            "of": "of",
-            "results": "results",
-            "perPage": "per page",
-            "previous": "Previous",
-            "next": "Next"
-        },
-        "form": {
-            "addTitle": "Add Cost",
-            "editTitle": "Edit Cost",
-            "costName": "Cost Name",
-            "costNamePlaceholder": "Enter cost name",
-            "amount": "Amount",
-            "amountPlaceholder": "0.00",
-            "category": "Category",
-            "categoryPlaceholder": "Select or type a category",
-            "categorySearchPlaceholder": "Type to search or add new category",
-            "costType": "Cost Type",
-            "costTypePlaceholder": "Select cost type",
-            "date": "Date",
-            "vendor": "Vendor",
-            "vendorPlaceholder": "e.g., Supplier name, Service provider",
-            "receipt": "Receipt (Optional)",
-            "receiptDragText": "Drag and drop a receipt here, or",
-            "receiptBrowse": "browse",
-            "receiptSupport": "Supports JPG, PNG, PDF (max 10MB)",
-            "remove": "Remove",
-            "cancel": "Cancel",
-            "create": "Create",
-            "update": "Update"
-        },
-        "categories": {
-            "title": "Manage Categories",
-            "addNew": "Add New Category",
-            "addNewPlaceholder": "Enter category name",
-            "add": "Add",
-            "existing": "Existing Categories"
-        },
-        "messages": {
-            "loading": "Loading...",
-            "categoryAdded": "Category added successfully",
-            "categoryUpdated": "Category updated successfully",
-            "categoryDeleted": "Category deleted successfully",
-            "categoryDeleteConfirm": "Are you sure you want to delete this category?",
-            "costCreated": "Cost created successfully",
-            "costUpdated": "Cost updated successfully",
-            "costDeleted": "Cost deleted successfully",
-            "costDeleteConfirm": "Are you sure you want to delete this cost?",
-            "receiptUploaded": "Receipt uploaded successfully",
-            "invalidFileType": "Please upload an image or PDF file",
-            "failedToLoad": "Failed to load data",
-            "failedToAddCategory": "Failed to add category",
-            "failedToUpdateCategory": "Failed to update category",
-            "failedToDeleteCategory": "Failed to delete category",
-            "failedToSaveCost": "Failed to save cost",
-            "failedToDeleteCost": "Failed to delete cost"
-        }
+    "cta": {
+      "title": "Ready to Transform Your Business?",
+      "subtitle": "Join thousands of businesses already using our platform",
+      "button": "Get Started Today"
     },
-    "wallet": {
-        "title": "Wallet Management",
-        "subtitle": "Manage your wallets and track transactions",
-        "addWallet": "Add Wallet",
-        "export": "Export",
-        "retry": "Retry",
-        "loading": "Loading wallets...",
-        "metrics": {
-            "totalBalance": "Total Balance",
-            "totalWallets": "Total Wallets",
-            "activeWallets": "Active Wallets",
-            "recentTransactions": "Recent Transactions",
-            "remaining": "remaining",
-            "vsLastMonth": "vs last month"
+    "footer": {
+      "description": "Revolutionary AI-powered business management platform",
+      "product": "Product",
+      "company": "Company",
+      "support": "Support",
+      "links": {
+        "about": "About",
+        "features": "Features",
+        "pricing": "Pricing",
+        "contact": "Contact",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "integrations": "Integrations",
+        "api": "API",
+        "blog": "Blog",
+        "careers": "Careers",
+        "help": "Help Center",
+        "documentation": "Documentation",
+        "status": "Status"
+      },
+      "copyright": "© 2024 Masareefy. All rights reserved."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your account",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "or": "or",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "errorMessage": "Please check your credentials and try again",
+      "errorTitle": "Login Failed",
+      "invalidCredentials": "Invalid Credentials",
+      "invalidCredentialsMessage": "The email or password you entered is incorrect. Please check your credentials and try again.",
+      "accountError": "Account Error",
+      "accountErrorMessage": "There was an issue with your account. Please contact support for assistance.",
+      "noBrand": "Account Setup Issue",
+      "noBrandMessage": "Your account is not properly set up. Please contact support for assistance.",
+      "noInternet": "No Internet Connection",
+      "noInternetMessage": "Please check your internet connection and try again.",
+      "connectionError": "Connection Error",
+      "connectionErrorMessage": "Unable to connect to the server. Please check your internet connection and try again.",
+      "backToHome": "← Back to Home",
+      "showcase": {
+        "slide1": {
+          "title": "Track your business performance",
+          "description": "Track your business performance with real-time analytics and insights that help you make data-driven decisions."
         },
-        "tabs": {
-            "wallets": "Wallets",
-            "transactions": "Wallet Transactions"
+        "slide2": {
+          "title": "Manage your inventory like a pro",
+          "description": "Keep track of stock levels, sales trends, and product performance with our intuitive inventory management system."
         },
-        "filters": {
-            "all": "All",
-            "active": "Active",
-            "empty": "Empty",
-            "searchPlaceholder": "Search wallets..."
+        "slide3": {
+          "title": "Smart financial tracking",
+          "description": "Monitor revenues, costs, receivables, and payables with automated reports and intelligent cash flow analysis."
         },
-        "walletTypes": {
-            "business": "Business",
-            "personal": "Personal",
-            "savings": "Savings",
-            "custom": "Custom"
+        "slide4": {
+          "title": "Smarter Than Spreadsheets, Cheaper Than Accountants",
+          "description": "We are not afraid to say it, this is the future of business management."
+        }
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Get started with your free account",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "agreeTerms": "I agree to the Terms of Service and Privacy Policy",
+      "createAccount": "Create Account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errorMessage": "Please check your information and try again",
+      "backToHome": "← Back to Home"
+    },
+    "onboarding": {
+      "steps": {
+        "authChoice": "Choose Auth Method",
+        "name": "Your Name",
+        "age": "Age",
+        "credentials": "Credentials",
+        "business": "Business Details",
+        "plan": "Choose Plan",
+        "review": "Review",
+        "verification": "Verification",
+        "success": "Success"
+      },
+      "content": {
+        "authChoice": {
+          "title": "How would you like to sign up?",
+          "subtitle": "Choose your preferred way to create your account",
+          "continueWithEmail": "Continue with Email"
         },
-        "cardLabels": {
-            "cardHolder": "CARD HOLDER",
-            "balance": "BALANCE"
+        "name": {
+          "title": "What's your name?",
+          "subtitle": "Let's start with the basics",
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "firstNamePlaceholder": "Enter your first name",
+          "lastNamePlaceholder": "Enter your last name"
         },
-        "actions": {
-            "view": "View",
-            "edit": "Edit",
-            "delete": "Delete",
-            "credit": "Credit",
-            "debit": "Debit"
+        "age": {
+          "title": "How old are you?",
+          "subtitle": "This helps us personalize your experience",
+          "age": "Age",
+          "agePlaceholder": "Enter your age"
         },
-        "emptyState": {
-            "noWallets": "No wallets found",
-            "noWalletsSearch": "No wallets match your search criteria.",
-            "noWalletsDescription": "Get started by creating your first wallet."
+        "credentials": {
+          "title": "Create your account",
+          "subtitle": "Set up your login credentials",
+          "email": "Email Address",
+          "emailPlaceholder": "Enter your email",
+          "password": "Password",
+          "passwordPlaceholder": "Create a strong password",
+          "phoneNumber": "Phone Number",
+          "phonePlaceholder": "Enter your phone number"
         },
-        "transactions": {
-            "title": "Wallet Transactions",
-            "subtitle": "Manage credits, debits, and transfers between wallets",
-            "allTransactions": "All Transactions",
-            "creditTransactions": "Credit Transactions",
-            "debitTransactions": "Debit Transactions",
-            "transferTransactions": "Transfer Transactions",
-            "addCredit": "Add Credit",
-            "addDebit": "Add Debit",
-            "addTransfer": "Add Transfer",
-            "transactionHistory": "Transaction History",
-            "noTransactions": "No transactions yet",
-            "noTransactionsType": "No {type} transactions yet",
-            "startFirstTransaction": "Start by creating your first transaction.",
-            "startFirstTransactionType": "Start by creating your first {type} transaction.",
-            "status": {
-                "completed": "completed",
-                "pending": "pending",
-                "failed": "failed"
-            }
+        "business": {
+          "title": "Tell us about your business",
+          "subtitle": "Help us understand what you do",
+          "businessName": "Business Name",
+          "businessNamePlaceholder": "Enter your business name",
+          "niche": "Business Type",
+          "selectNiche": "Select your business type",
+          "other": "Other",
+          "customNiche": "Please specify",
+          "customNichePlaceholder": "Describe your business type"
         },
-        "form": {
-            "addTitle": "Add New Wallet",
-            "editTitle": "Edit Wallet",
-            "walletName": "Wallet Name",
-            "walletNamePlaceholder": "Enter wallet name",
-            "initialBalance": "Initial Balance",
-            "balancePlaceholder": "0.00",
-            "type": "Type",
-            "currency": "Currency",
-            "colorTheme": "Color Theme",
-            "liveCardPreview": "Live Card Preview",
-            "cancel": "Cancel",
-            "create": "Create",
-            "update": "Update",
-            "creating": "Creating...",
-            "updating": "Updating..."
+        "plan": {
+          "title": "Choose your plan",
+          "subtitle": "Select the plan that fits your needs",
+          "monthly": "Monthly",
+          "yearly": "Yearly",
+          "save": "Save",
+          "mostPopular": "Most Popular",
+          "trialDays": "days free trial",
+          "perMonth": "per month",
+          "perYear": "per year"
         },
-        "transactionForm": {
-            "creditTitle": "Credit Wallet",
-            "debitTitle": "Debit Wallet",
-            "transferTitle": "Transfer Between Wallets",
-            "fromWallet": "From Wallet",
-            "toWallet": "To Wallet",
-            "amount": "Amount",
-            "amountPlaceholder": "0.00",
-            "description": "Description",
-            "descriptionPlaceholder": "Enter transaction description",
-            "category": "Category",
-            "categoryPlaceholder": "Enter category (optional)",
-            "countAsRevenue": "Count as Revenue",
-            "countAsRevenueDescription": "This transaction will be added to your revenues section",
-            "countAsCost": "Count as Cost",
-            "countAsCostDescription": "This transaction will be added to your costs section",
-            "processTransaction": "Process Transaction",
-            "continue": "Continue",
-            "processing": "Processing..."
+        "review": {
+          "title": "Review your information",
+          "subtitle": "Please verify everything looks correct",
+          "personalInfo": "Personal Information",
+          "businessInfo": "Business Information",
+          "planInfo": "Selected Plan",
+          "edit": "Edit"
         },
-        "confirmation": {
-            "title": "Confirm Transaction",
-            "description": "Are you sure you want to proceed with this transaction?",
-            "type": "Type:",
-            "amount": "Amount:",
-            "description": "Description:",
-            "category": "Category:",
-            "confirm": "Confirm",
-            "cancel": "Cancel"
+        "verification": {
+          "title": "Verify your email",
+          "subtitle": "We've sent a verification code to your email",
+          "enterCode": "Enter verification code",
+          "codePlaceholder": "Enter 6-digit code",
+          "resendCode": "Resend code",
+          "didntReceive": "Didn't receive the code?"
         },
         "success": {
-            "title": "Transaction Successful!",
-            "description": "Your transaction has been processed successfully.",
-            "done": "Done"
-        },
-        "delete": {
-            "title": "Delete Wallet",
-            "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
-            "delete": "Delete",
-            "deleting": "Deleting..."
-        },
-        "details": {
-            "title": "Wallet Details",
-            "cardView": "Card View",
-            "currentBalance": "Current Balance",
-            "created": "Created",
-            "status": "Status",
-            "active": "Active",
-            "empty": "Empty",
-            "recentTransactions": "Recent Transactions"
-        },
-        "messages": {
-            "walletCreated": "Wallet created successfully",
-            "walletUpdated": "Wallet updated successfully",
-            "walletDeleted": "Wallet deleted successfully",
-            "transactionCompleted": "Transaction completed successfully",
-            "failedToLoad": "Failed to load wallets",
-            "failedToSave": "Failed to save wallet",
-            "failedToDelete": "Failed to delete wallet",
-            "failedToProcess": "Failed to process transaction",
-            "insufficientBalance": "Insufficient balance. Available: {amount}",
-            "validAmount": "Please enter a valid amount greater than 0",
-            "walletNameRequired": "Wallet name is required",
-            "validBalance": "Please enter a valid balance (0 or greater)",
-            "transactionCompletedButFailedRevenue": "Transaction completed but failed to add to revenues",
-            "transactionCompletedButFailedCost": "Transaction completed but failed to add to costs"
+          "title": "Welcome to Masareefy!",
+          "subtitle": "Your account has been created successfully",
+          "getStarted": "Get Started",
+          "dashboard": "Go to Dashboard"
         }
-    },
-    "transfers": {
-        "title": "Transfers",
-        "subtitle": "Manage inventory and customer transfers",
-        "addTransfer": "Add Transfer",
-        "export": "Export",
-        "retry": "Retry",
-        "loading": "Loading transfers...",
-        "failedToLoad": "Failed to load transfers",
-        "metrics": {
-            "totalTransfers": "Total Transfers",
-            "monthlyTransfers": "Monthly Transfers",
-            "activeTransfers": "Active Transfers",
-            "allTimeTransfers": "All time transfers",
-            "thisMonth": "This month",
-            "pendingTransfers": "Pending transfers"
-        },
-        "filters": {
-            "title": "Filters",
-            "showFilters": "Show Filters",
-            "hideFilters": "Hide Filters",
-            "searchPlaceholder": "Search transfers...",
-            "fromDate": "From Date",
-            "toDate": "To Date",
-            "clearAllFilters": "Clear All Filters",
-            "showing": "Showing",
-            "to": "to",
-            "of": "of",
-            "transfers": "transfers"
-        },
-        "tabs": {
-            "allTransfers": "All Transfers",
-            "customerTransfers": "Customer Transfers",
-            "inventoryTransfers": "Inventory Transfers"
-        },
-        "emptyState": {
-            "noTransfers": "No transfers found",
-            "noTransfersSearch": "No transfers match your search criteria.",
-            "noTransfersDescription": "Get started by creating your first transfer."
-        },
-        "transferCard": {
-            "customer": "Customer",
-            "inventory": "Inventory",
-            "from": "From:",
-            "to": "To:",
-            "quantity": "Quantity:",
-            "item": "Item:",
-            "description": "Description:",
-            "stockDeducted": "Stock Deducted",
-            "createdBy": "Created by",
-            "unknownItem": "Unknown Item"
-        },
-        "pagination": {
-            "rowsPerPage": "Rows per page:",
-            "previous": "Previous",
-            "next": "Next"
-        },
-        "form": {
-            "addTitle": "Add Transfer",
-            "editTitle": "Edit Transfer",
-            "transferType": "Transfer Type",
-            "customerTransfer": "Customer Transfer",
-            "inventoryTransfer": "Inventory Transfer",
-            "inventoryItem": "Inventory Item",
-            "selectInventoryItem": "Select inventory item",
-            "quantity": "Quantity",
-            "quantityPlaceholder": "Enter quantity",
-            "fromLocation": "From Location",
-            "fromLocationPlaceholder": "Enter source location",
-            "toLocation": "To Location",
-            "toLocationPlaceholder": "Enter destination location",
-            "transferDate": "Transfer Date",
-            "description": "Description (Optional)",
-            "descriptionPlaceholder": "Enter transfer description",
-            "deductFromStock": "Deduct transferred quantity from current stock",
-            "deductFromStockDescription": "When enabled, the transferred quantity will be automatically deducted from the selected inventory item's current stock.",
-            "cancel": "Cancel",
-            "createTransfer": "Create Transfer",
-            "updateTransfer": "Update Transfer"
-        },
-        "messages": {
-            "transferCreated": "Transfer created successfully",
-            "transferUpdated": "Transfer updated successfully",
-            "transferDeleted": "Transfer deleted successfully",
-            "failedToCreate": "Failed to create transfer",
-            "failedToUpdate": "Failed to update transfer",
-            "failedToDelete": "Failed to delete transfer",
-            "deleteConfirm": "Are you sure you want to delete this transfer?"
-        }
-    },
-    "receivablesPayables": {
-        "title": "Receivables & Payables",
-        "subtitle": "Manage money owed to and by your business",
-        "addReceivable": "Add Receivable",
-        "addPayable": "Add Payable",
-        "export": "Export",
-        "retry": "Retry",
-        "loading": "Loading receivables and payables...",
-        "failedToLoad": "Failed to load receivables and payables",
-        "metrics": {
-            "totalReceivables": "Total Receivables",
-            "totalPayables": "Total Payables",
-            "overdueReceivables": "Overdue Receivables",
-            "overduePayables": "Overdue Payables"
-        },
-        "filters": {
-            "title": "Filters",
-            "showFilters": "Show Filters",
-            "hideFilters": "Hide Filters",
-            "searchPlaceholder": "Search receivables/payables...",
-            "status": "Status",
-            "allStatuses": "All Statuses",
-            "fromDate": "From Date",
-            "toDate": "To Date",
-            "clearAllFilters": "Clear All Filters",
-            "showing": "Showing",
-            "to": "to",
-            "of": "of",
-            "items": "items"
-        },
-        "tabs": {
-            "all": "All",
-            "receivables": "Receivables",
-            "payables": "Payables"
-        },
-        "status": {
-            "current": "Current",
-            "overdue": "Overdue",
-            "critical": "Critical",
-            "paid": "Paid",
-            "allStatus": "All Status"
-        },
-        "emptyState": {
-            "noItems": "No receivables or payables found",
-            "noReceivables": "No receivables found",
-            "noPayables": "No payables found",
-            "noItemsDescription": "Get started by adding your first receivable or payable.",
-            "noReceivablesDescription": "Get started by adding your first receivable.",
-            "noPayablesDescription": "Get started by adding your first payable."
-        },
-        "itemCard": {
-            "receivable": "Receivable",
-            "payable": "Payable",
-            "due": "Due:",
-            "invoice": "Invoice:",
-            "overdue": "overdue"
-        },
-        "pagination": {
-            "rowsPerPage": "Rows per page:",
-            "previous": "Previous",
-            "next": "Next"
-        },
-        "form": {
-            "addReceivable": "Add Receivable",
-            "editReceivable": "Edit Receivable",
-            "addPayable": "Add Payable",
-            "editPayable": "Edit Payable",
-            "customerVendorName": "Customer/Vendor Name",
-            "vendorName": "Vendor Name",
-            "namePlaceholder": "Enter name",
-            "amount": "Amount",
-            "amountPlaceholder": "0.00",
-            "dueDate": "Due Date",
-            "invoiceNumber": "Invoice Number",
-            "invoicePlaceholder": "INV-001",
-            "description": "Description",
-            "descriptionPlaceholder": "Enter description",
-            "receiptUrl": "Receipt URL (Optional)",
-            "receiptPlaceholder": "https://example.com/receipt.pdf",
-            "autoConvertToRevenue": "Automatically convert to Revenue",
-            "autoConvertToRevenueDescription": "This receivable will be automatically converted to a revenue entry when the due date arrives.",
-            "autoConvertToCost": "Automatically convert to Cost",
-            "autoConvertToCostDescription": "This payable will be automatically converted to a cost entry when the due date arrives.",
-            "cancel": "Cancel",
-            "create": "Create",
-            "update": "Update"
-        },
-        "viewModal": {
-            "viewReceivable": "View Receivable",
-            "viewPayable": "View Payable",
-            "entityName": "Entity Name",
-            "amount": "Amount",
-            "dueDate": "Due Date",
-            "status": "Status",
-            "invoiceNumber": "Invoice Number",
-            "createdBy": "Created By",
-            "description": "Description",
-            "receipt": "Receipt",
-            "viewReceipt": "View Receipt",
-            "close": "Close",
-            "edit": "Edit"
-        },
-        "messages": {
-            "receivableCreated": "Receivable created successfully",
-            "receivableUpdated": "Receivable updated successfully",
-            "receivableDeleted": "Receivable deleted successfully",
-            "payableCreated": "Payable created successfully",
-            "payableUpdated": "Payable updated successfully",
-            "payableDeleted": "Payable deleted successfully",
-            "failedToCreateReceivable": "Failed to create receivable",
-            "failedToUpdateReceivable": "Failed to update receivable",
-            "failedToDeleteReceivable": "Failed to delete receivable",
-            "failedToCreatePayable": "Failed to create payable",
-            "failedToUpdatePayable": "Failed to update payable",
-            "failedToDeletePayable": "Failed to delete payable",
-            "failedToSave": "Failed to save item",
-            "deleteConfirm": "Are you sure you want to delete this item?",
-            "autoConversionNote": "Please refresh the page after 1 minute to see the automatic conversion to revenue/cost.",
-            "cannotDeleteConverted": "Cannot delete converted items. They have already been processed into revenue/cost entries."
-        }
-    },
-    "inventory": {
-        "title": "Inventory",
-        "subtitle": "Manage your brand's inventory items",
-        "addItem": "Add Item",
-        "import": "Import",
-        "export": "Export",
-        "retry": "Retry",
-        "loading": "Loading inventory...",
-        "failedToLoad": "Failed to load inventory",
-        "metrics": {
-            "totalItems": "Total Items",
-            "totalValue": "Total Value",
-            "currentInventoryValue": "Current Inventory Value",
-            "lowStock": "Low Stock",
-            "outOfStock": "Out of Stock",
-            "inventoryCost": "Inventory Cost",
-            "remaining": "remaining",
-            "items": "items",
-            "value": "value",
-            "stock": "stock",
-            "available": "available",
-            "unavailable": "unavailable",
-            "inStock": "In Stock",
-            "lowStockItems": "Low Stock Items",
-            "outOfStockItems": "Out of Stock Items",
-            "totalStockValue": "Total Stock Value",
-            "averageItemValue": "Average Item Value",
-            "stockTurnover": "Stock Turnover",
-            "reorderLevel": "Reorder Level",
-            "safetyStock": "Safety Stock",
-            "totalCostBasis": "Total cost basis",
-            "itemsNeedReorder": "Items need reorder",
-            "itemsUnavailable": "Items unavailable"
-        },
-        "filters": {
-            "searchPlaceholder": "Search inventory...",
-            "category": "Category",
-            "supplier": "Supplier",
-            "location": "Location",
-            "all": "All",
-            "fromDate": "From Date",
-            "toDate": "To Date",
-            "clearFilters": "Clear Filters"
-        },
-        "table": {
-            "productName": "Product Name",
-            "sku": "SKU",
-            "category": "Category",
-            "stock": "Stock",
-            "reorderLevel": "Reorder Level",
-            "unitCost": "Unit Cost",
-            "sellingPrice": "Selling Price",
-            "supplier": "Supplier",
-            "location": "Location",
-            "actions": "Actions",
-            "selectAll": "Select All",
-            "selected": "selected"
-        },
-        "emptyState": {
-            "noItems": "No inventory items found",
-            "noItemsSearch": "No items match your search criteria.",
-            "noItemsDescription": "Get started by adding your first inventory item."
-        },
-        "pagination": {
-            "rowsPerPage": "Rows per page:",
-            "previous": "Previous",
-            "next": "Next",
-            "showing": "Showing",
-            "to": "to",
-            "of": "of",
-            "items": "items"
-        },
-        "form": {
-            "addTitle": "Add Inventory Item",
-            "editTitle": "Edit Inventory Item",
-            "productName": "Product Name",
-            "productNamePlaceholder": "Enter product name",
-            "baseSku": "Base SKU",
-            "baseSkuPlaceholder": "Enter base SKU",
-            "category": "Category",
-            "categoryPlaceholder": "Select category",
-            "currentStock": "Current Stock",
-            "currentStockPlaceholder": "Enter current stock",
-            "reorderLevel": "Reorder Level",
-            "reorderLevelPlaceholder": "Enter reorder level",
-            "unitCost": "Unit Cost",
-            "unitCostPlaceholder": "Enter unit cost",
-            "sellingPrice": "Selling Price",
-            "sellingPricePlaceholder": "Enter selling price",
-            "supplier": "Supplier",
-            "supplierPlaceholder": "Enter supplier",
-            "location": "Location",
-            "locationPlaceholder": "Enter location",
-            "description": "Description",
-            "descriptionPlaceholder": "Enter description",
-            "sizes": "Sizes",
-            "sizesPlaceholder": "Enter sizes (comma separated)",
-            "colors": "Colors",
-            "colorsPlaceholder": "Enter colors (comma separated)",
-            "cancel": "Cancel",
-            "create": "Create",
-            "update": "Update",
-            "creating": "Creating...",
-            "updating": "Updating..."
-        },
-        "import": {
-            "importType": "Import Type",
-            "bulkImportOptions": "Bulk Import Options",
-            "chooseImportMethod": "Choose your import method to bulk import inventory data",
-            "normalImport": "Normal Import",
-            "normalImportDescription": "Import inventory items from Excel/CSV file",
-            "bostaImport": "Bosta Import",
-            "bostaImportDescription": "Import inventory data from Bosta with SKU validation and product tracking",
-            "shopifyImport": "Shopify Import",
-            "shopifyImportDescription": "Import products from Shopify with automatic variant mapping and inventory sync",
-            "systemTemplate": "System Template",
-            "systemTemplateDescription": "Download our template and import your data with custom mapping",
-            "variantMapping": "Variant Mapping",
-            "productImport": "Product Import",
-            "inventorySync": "Inventory Sync",
-            "productTracking": "Product Tracking",
-            "skuValidation": "SKU Validation",
-            "flexibleMapping": "Flexible Mapping",
-            "customTemplate": "Custom Template",
-            "dataValidation": "Data Validation",
-            "getStarted": "Get Started",
-            "selectFile": "Select File",
-            "dragDropFile": "Drag and drop your file here, or click to select",
-            "supportedFormats": "Supported formats: Excel (.xlsx, .xls) and CSV (.csv)",
-            "processing": "Processing...",
-            "importing": "Importing...",
-            "importSuccess": "Items imported successfully",
-            "importFailed": "Failed to import items",
-            "invalidFileType": "Invalid file type. Please select an Excel or CSV file.",
-            "fileRequired": "Please select a file to import",
-            "emptyFile": "File appears to be empty or has no data rows",
-            "requiredColumns": "Required columns not found: Tracking Number, Delivery State, COD Amount",
-            "bostaStats": "Bosta Import Statistics",
-            "totalOrders": "Total Orders",
-            "expectedCash": "Expected Cash",
-            "delivered": "Delivered",
-            "returned": "Returned",
-            "returnRate": "Return Rate",
-            "deliveryRate": "Delivery Rate",
-            "validSkus": "Valid SKUs",
-            "newSkus": "New SKUs",
-            "unknownSkus": "Unknown SKUs",
-            "addMissingSkus": "Add Missing SKUs",
-            "addMissingSkusDescription": "Automatically create inventory items for unknown SKUs",
-            "createRevenue": "Create Revenue Entries",
-            "createRevenueDescription": "Create revenue entries for delivered orders",
-            "confirmImport": "Confirm Import",
-            "processingImport": "Processing Import...",
-            "shopifyComingSoon": "Shopify import functionality will be available soon",
-            "limitExceeded": {
-                "title": "Import Limit Exceeded",
-                "description": "You have selected {{selected}} items, but your plan only allows {{limit}} products total. You currently have {{current}} products and can only import {{remaining}} more.",
-                "warning": "Your import would exceed your plan limit",
-                "selectRemaining": "Select Only {{count}} Remaining",
-                "selectNone": "Select None",
-                "autoSelected": "Auto-Selected Items",
-                "autoSelectedDesc": "Automatically selected {{count}} items that fit within your limit"
-            }
-        },
-        "bulkActions": {
-            "bulkDelete": "Bulk Delete",
-            "deleteSelected": "Delete Selected",
-            "deleteConfirm": "Are you sure you want to delete the selected items?",
-            "deleting": "Deleting...",
-            "itemsDeleted": "Items deleted successfully"
-        },
-        "messages": {
-            "itemCreated": "Item added successfully",
-            "itemUpdated": "Item updated successfully",
-            "itemDeleted": "Item deleted successfully",
-            "itemsDeleted": "Items deleted successfully",
-            "failedToCreate": "Failed to save item",
-            "failedToUpdate": "Failed to update item",
-            "failedToDelete": "Failed to delete item",
-            "failedToDeleteItems": "Failed to delete items",
-            "deleteConfirm": "Are you sure you want to delete this item?",
-            "limitReached": "Inventory limit reached. Please upgrade your plan.",
-            "invalidData": "Please check your input data"
-        }
-    },
-    "orders": {
-        "title": "Orders",
-        "subtitle": "Manage and track your orders",
-        "import": "Import Orders",
-        "export": "Export Orders",
-        "retry": "Retry",
-        "loading": "Loading orders...",
-        "failedToLoad": "Failed to load orders",
-        "metrics": {
-            "totalOrders": "Total Orders",
-            "totalRevenue": "Total Revenue",
-            "totalTax": "Total Tax",
-            "totalShipping": "Total Shipping",
-            "totalDiscount": "Total Discount",
-            "paidOrders": "Paid Orders",
-            "pendingOrders": "Pending Orders",
-            "cancelledOrders": "Cancelled Orders",
-            "fulfilledOrders": "Fulfilled Orders",
-            "unfulfilledOrders": "Unfulfilled Orders",
-            "averageOrderValue": "Average Order Value",
-            "uniqueCustomers": "Unique Customers"
-        },
-        "filters": {
-            "searchPlaceholder": "Search orders...",
-            "status": "Status",
-            "financialStatus": "Financial Status",
-            "fulfillmentStatus": "Fulfillment Status",
-            "all": "All",
-            "fromDate": "From Date",
-            "toDate": "To Date",
-            "clearFilters": "Clear Filters"
-        },
-        "table": {
-            "orderName": "Order Name",
-            "email": "Email",
-            "financialStatus": "Financial Status",
-            "fulfillmentStatus": "Fulfillment Status",
-            "currency": "Currency",
-            "subtotal": "Subtotal",
-            "shipping": "Shipping",
-            "tax": "Tax",
-            "total": "Total",
-            "discountCode": "Discount Code",
-            "discountAmount": "Discount Amount",
-            "createdAt": "Created At",
-            "actions": "Actions"
-        },
-        "emptyState": {
-            "noOrders": "No orders found",
-            "noOrdersSearch": "No orders match your search criteria.",
-            "noOrdersDescription": "Get started by importing your first orders."
-        },
-        "pagination": {
-            "rowsPerPage": "Rows per page:",
-            "previous": "Previous",
-            "next": "Next",
-            "showing": "Showing",
-            "to": "to",
-            "of": "of",
-            "orders": "orders"
-        },
-        "import": {
-            "shopifyOrdersImport": "Shopify Orders Import",
-            "shopifyOrdersDescription": "Import your Shopify orders export to sync with your revenue",
-            "uploadShopifyOrders": "Upload Shopify Orders Export",
-            "dragDropOrders": "Drag and drop your Shopify orders CSV file here, or click to select",
-            "selectFile": "Select File",
-            "processing": "Processing...",
-            "importOrders": "Import Orders",
-            "confirmImport": "Confirm Shopify Orders Import",
-            "reviewData": "Review the parsed orders data and choose your import options",
-            "importSuccess": "Orders imported successfully",
-            "importFailed": "Failed to import orders",
-            "invalidFileType": "Please upload a CSV file (.csv)",
-            "fileRequired": "Please select a file to import",
-            "emptyFile": "File appears to be empty or has no data rows",
-            "requiredColumns": "Required columns not found: Name, Email, Financial Status, Fulfillment Status",
-            "orderStats": "Order Statistics",
-            "createRevenueEntries": "Create Revenue Entries",
-            "createRevenueDescription": "Create revenue entries for paid orders",
-            "cancel": "Cancel",
-            "processingImport": "Processing Import..."
-        },
-        "status": {
-            "paid": "Paid",
-            "pending": "Pending",
-            "cancelled": "Cancelled",
-            "fulfilled": "Fulfilled",
-            "unfulfilled": "Unfulfilled",
-            "unknown": "Unknown"
-        },
-        "messages": {
-            "ordersImported": "Successfully imported orders to revenue!",
-            "failedToImport": "Failed to process orders import",
-            "failedToLoadOrders": "Failed to load orders",
-            "errorParsingFile": "Error parsing file"
-        }
-    },
-    "tasks": {
-        "title": "Tasks",
-        "subtitle": "Manage your tasks and deadlines",
-        "newTask": "New Task",
-        "addTask": "Add Task",
-        "editTask": "Edit Task",
-        "createTask": "Create Task",
-        "updateTask": "Update Task",
-        "deleteTask": "Delete Task",
-        "taskDetails": "Task Details",
-        "retry": "Retry",
-        "retrying": "Retrying...",
-        "loading": "Loading tasks...",
-        "failedToLoad": "Failed to load tasks",
-        "today": "Today",
-        "calendar": "Calendar",
-        "list": "List",
-        "month": "Month",
-        "week": "Week",
-        "day": "Day",
-        "more": "more",
-        "searchPlaceholder": "Search tasks by title, description, or assignee...",
-        "filters": {
-            "priority": "Priority",
-            "status": "Status",
-            "category": "Category",
-            "allPriorities": "All Priorities",
-            "allStatus": "All Status",
-            "allCategories": "All Categories"
-        },
-        "priorities": {
-            "low": "Low",
-            "medium": "Medium",
-            "high": "High"
-        },
-        "statuses": {
-            "pending": "Pending",
-            "inProgress": "In Progress",
-            "completed": "Completed"
-        },
-        "categories": {
-            "finance": "Finance",
-            "meeting": "Meeting",
-            "presentation": "Presentation",
-            "operations": "Operations",
-            "marketing": "Marketing",
-            "development": "Development",
-            "sales": "Sales"
-        },
-        "form": {
-            "title": "Title",
-            "titlePlaceholder": "Enter task title",
-            "description": "Description",
-            "descriptionPlaceholder": "Enter task description",
-            "priority": "Priority",
-            "category": "Category",
-            "categoryPlaceholder": "Select category",
-            "dueDate": "Due Date",
-            "assignedTo": "Assigned To",
-            "assignedToPlaceholder": "Select assignee...",
-            "searchAssignees": "Search assignees...",
-            "noAssigneeFound": "No assignee found.",
-            "cancel": "Cancel",
-            "creating": "Creating...",
-            "updating": "Updating..."
-        },
-        "details": {
-            "due": "Due:",
-            "noDueDate": "No due date",
-            "assignedTo": "Assigned to:",
-            "category": "Category:",
-            "priority": "Priority:",
-            "created": "Created:",
-            "edit": "Edit",
-            "delete": "Delete"
-        },
-        "emptyState": {
-            "noTasks": "No tasks found",
-            "noTasksSearch": "No tasks match your search criteria.",
-            "noTasksDescription": "Get started by creating your first task."
-        },
-        "messages": {
-            "taskCreated": "Task created successfully",
-            "taskUpdated": "Task updated successfully",
-            "taskDeleted": "Task deleted successfully",
-            "failedToCreate": "Failed to create task",
-            "failedToUpdate": "Failed to update task",
-            "failedToDelete": "Failed to delete task",
-            "failedToSave": "Failed to save task"
-        }
-    },
-    "support": {
-        "title": "Support Chat",
-        "subtitle": "We're here to help you",
-        "welcomeMessage": "👋 Hi! I'm here to help you with any questions or issues. Please fill out the form below and I'll get back to you as soon as possible.",
-        "personalInfo": "Personal Information",
-        "whatCanIHelp": "What can I help you with?",
-        "attachFiles": "Attach Files (Optional)",
-        "form": {
-            "fullName": "Full Name",
-            "fullNamePlaceholder": "Your full name",
-            "email": "Email",
-            "emailPlaceholder": "your@email.com",
-            "category": "Category",
-            "categoryPlaceholder": "Select a category",
-            "subject": "Subject",
-            "subjectPlaceholder": "Brief description of your issue",
-            "description": "Description",
-            "descriptionPlaceholder": "Please provide detailed information about your issue...",
-            "clickToUpload": "Click to upload files",
-            "fileRestrictions": "Images and PDFs only, max 5MB each",
-            "sendMessage": "Send Message",
-            "sending": "Sending..."
-        },
-        "categories": {
-            "billing": "Billing",
-            "technicalIssue": "Technical Issue",
-            "featureRequest": "Feature Request",
-            "account": "Account",
-            "other": "Other",
-            "Billing": "Billing",
-            "Technical Issue": "Technical Issue",
-            "Feature Request": "Feature Request",
-            "Account": "Account",
-            "Other": "Other"
-        },
-        "validation": {
-            "fullNameRequired": "Full name is required",
-            "emailRequired": "Email is required",
-            "categoryRequired": "Category is required",
-            "subjectRequired": "Subject is required",
-            "descriptionRequired": "Description is required"
-        },
-        "fileUpload": {
-            "someFilesRejected": "Some files were rejected. Only images and PDFs under 5MB are allowed.",
-            "fileSize": {
-                "bytes": "Bytes",
-                "kb": "KB",
-                "mb": "MB",
-                "gb": "GB"
-            }
-        },
-        "consent": {
-            "title": "Privacy Notice",
-            "message": "By submitting this support request, you acknowledge that your information will be used to help you.",
-            "privacyNote": "We respect your privacy and will never share your information.",
-            "cancel": "Cancel",
-            "sendMessage": "Send Message"
-        },
-        "confirmation": {
-            "title": "Message Sent!",
-            "message": "Your support request has been sent successfully.",
-            "ticketId": "Ticket ID:",
-            "saveId": "Save this ID for your records",
-            "whatHappensNext": "What happens next?",
-            "steps": {
-                "review": "Our support will review your request",
-                "updates": "You'll receive updates on your ticket status",
-                "viewTickets": "You can view your tickets in \"My Tickets\""
-            },
-            "close": "Close",
-            "viewMyTickets": "View My Tickets"
-        },
-        "messages": {
-            "failedToCreate": "Failed to create ticket",
-            "failedToCreateGeneric": "Failed to create ticket. Please try again."
-        }
-    },
-    "supportTickets": {
-        "title": "My Support Chats",
-        "conversations": "conversation",
-        "conversationsPlural": "conversations",
-        "noConversations": "No conversations yet",
-        "noConversationsDescription": "You haven't started any support conversations yet. Start a new chat to get help with your questions.",
-        "startNewChat": "Start New Chat",
-        "ticketId": "Ticket ID:",
-        "messages": "message",
-        "messagesPlural": "messages",
-        "typeMessage": "Type a message...",
-        "sending": "Sending...",
-        "messageSent": "Message sent successfully",
-        "failedToSend": "Failed to send message",
-        "statuses": {
-            "open": "Open",
-            "inProgress": "In Progress",
-            "resolved": "Resolved",
-            "closed": "Closed"
-        },
-        "priorities": {
-            "urgent": "Urgent",
-            "high": "High",
-            "medium": "Medium",
-            "low": "Low"
-        },
-        "fileSize": {
-            "bytes": "Bytes",
-            "kb": "KB",
-            "mb": "MB",
-            "gb": "GB"
-        }
-    },
-    "tickets": {
-        "title": "Support Tickets",
-        "subtitle": "Manage your support requests and tickets",
-        "createTicket": "Create Ticket",
-        "myTickets": "My Tickets",
-        "allTickets": "All Tickets",
-        "openTickets": "Open Tickets",
-        "closedTickets": "Closed Tickets",
-        "mySupportChats": "My Support Chats",
-        "conversations": "conversation",
-        "conversationsPlural": "conversations",
-        "noConversationsYet": "No conversations yet",
-        "noConversationsDescription": "You haven't started any support conversations yet. Start a new chat to get help with your questions.",
-        "startNewChat": "Start New Chat",
-        "typeMessage": "Type a message...",
-        "message": "message",
-        "messages": "messages",
-        "priority": "Priority",
-        "status": "Status",
-        "category": "Category",
-        "assignedTo": "Assigned To",
-        "createdAt": "Created At",
-        "updatedAt": "Updated At",
-        "noTickets": "No tickets found",
-        "noTicketsDescription": "You don't have any support tickets yet.",
-        "form": {
-            "createTitle": "Create Support Ticket",
-            "editTitle": "Edit Ticket",
-            "subject": "Subject",
-            "subjectPlaceholder": "Enter ticket subject",
-            "description": "Description",
-            "descriptionPlaceholder": "Describe your issue or request",
-            "category": "Category",
-            "priority": "Priority",
-            "attachments": "Attachments",
-            "addAttachment": "Add Attachment"
-        },
-        "categories": {
-            "technical": "Technical Issue",
-            "billing": "Billing Question",
-            "feature": "Feature Request",
-            "bug": "Bug Report",
-            "general": "General Inquiry"
-        },
-        "priorities": {
-            "low": "Low",
-            "medium": "Medium",
-            "high": "High",
-            "urgent": "Urgent"
-        },
-        "statuses": {
-            "open": "Open",
-            "inProgress": "In Progress",
-            "pending": "Pending",
-            "resolved": "Resolved",
-            "closed": "Closed"
-        },
-        "messages": {
-            "ticketCreated": "Ticket created successfully",
-            "ticketUpdated": "Ticket updated successfully",
-            "ticketDeleted": "Ticket deleted successfully",
-            "failedToCreate": "Failed to create ticket",
-            "failedToUpdate": "Failed to update ticket",
-            "failedToDelete": "Failed to delete ticket"
-        }
-    },
-    "settings": {
-        "title": "Settings",
-        "subtitle": "Manage your account, preferences, and security settings",
-        "tabs": {
-            "profile": "Profile",
-            "notifications": "Notifications",
-            "security": "Security",
-            "brand": "Brand",
-            "subscription": "Subscription"
-        },
-        "account": "Account Settings",
-        "profile": "Profile",
-        "security": "Security",
-        "notifications": "Notifications",
-        "preferences": "Preferences",
-        "billing": "Billing",
-        "integrations": "Integrations",
-        "privacy": "Privacy",
-        "about": "About",
-        "profileSettings": {
-            "title": "Profile Settings",
-            "personalInfo": "Personal Information",
-            "firstName": "First Name",
-            "lastName": "Last Name",
-            "email": "Email Address",
-            "phone": "Phone Number",
-            "company": "Company Name",
-            "position": "Position",
-            "bio": "Bio",
-            "avatar": "Profile Picture",
-            "updateProfile": "Update Profile"
-        },
-        "securitySettings": {
-            "title": "Security Settings",
-            "changePassword": "Change Password",
-            "currentPassword": "Current Password",
-            "newPassword": "New Password",
-            "confirmPassword": "Confirm Password",
-            "twoFactorAuth": "Two-Factor Authentication",
-            "enable2FA": "Enable 2FA",
-            "disable2FA": "Disable 2FA",
-            "loginHistory": "Login History",
-            "activeSessions": "Active Sessions",
-            "revokeAllSessions": "Revoke All Sessions"
-        },
-        "notificationSettings": {
-            "title": "Notification Settings",
-            "emailNotifications": "Email Notifications",
-            "pushNotifications": "Push Notifications",
-            "smsNotifications": "SMS Notifications",
-            "marketingEmails": "Marketing Emails",
-            "systemUpdates": "System Updates",
-            "securityAlerts": "Security Alerts",
-            "billingAlerts": "Billing Alerts"
-        },
-        "brandSettings": {
-            "title": "Brand Settings",
-            "subtitle": "Customize your brand appearance and report settings",
-            "brandName": "Brand Name",
-            "logo": "Brand Logo",
-            "reportHeader": "Report Header Text",
-            "reportFooter": "Report Footer Text",
-            "uploadLogo": "Upload Logo",
-            "changeLogo": "Change Logo",
-            "saveSettings": "Save Brand Settings",
-            "success": "Brand settings updated successfully",
-            "error": "Failed to update brand settings"
-        },
-        "preferenceSettings": {
-            "title": "Preferences",
-            "language": "Language",
-            "timezone": "Timezone",
-            "dateFormat": "Date Format",
-            "timeFormat": "Time Format",
-            "currency": "Currency",
-            "theme": "Theme",
-            "darkMode": "Dark Mode",
-            "lightMode": "Light Mode",
-            "autoMode": "Auto Mode"
-        },
-        "messages": {
-            "profileUpdated": "Profile updated successfully",
-            "passwordChanged": "Password changed successfully",
-            "settingsSaved": "Settings saved successfully",
-            "failedToUpdate": "Failed to update settings",
-            "invalidCurrentPassword": "Current password is incorrect",
-            "passwordsDoNotMatch": "Passwords do not match"
-        }
-    },
-    "reports": {
-        "title": "Reports & Analytics",
-        "subtitle": "Comprehensive business insights and performance metrics",
-        "loading": "Loading reports...",
-        "retry": "Retry",
-        "brandSettings": "Brand Settings",
-        "exportAll": "Export All",
-        "exportAllDescription": "Exporting all reports with current brand settings...",
-        "dateRangeFilter": "Date Range Filter",
-        "startDate": "Start Date",
-        "endDate": "End Date",
-        "last30Days": "Last 30 Days",
-        "smartInsights": "Smart Business Insights",
-        "smartInsightsNotAvailable": "Smart Insights Not Available",
-        "smartInsightsDescription": "Upgrade to Professional plan to unlock advanced business insights and analytics.",
-        "upgradeToProfessional": "Upgrade to Professional",
-        "backToReports": "Back to Reports",
-        "clickToView": "Click to view",
-        "pdf": "PDF",
-        "excel": "Excel",
-        "csv": "CSV",
-        "generateReport": "Generate Report",
-        "generating": "Generating...",
-        "success": "Success",
+      },
+      "authChoice": {
+        "title": "Welcome to Masareefy",
+        "subtitle": "Choose how you'd like to get started",
+        "emailSignUp": "Continue with Email",
+        "hasAccount": "Already have an account?",
+        "signIn": "Sign in here"
+      },
+      "name": {
+        "title": "What's your name?",
+        "subtitle": "This will be used to personalize your experience",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "firstNamePlaceholder": "Enter your first name",
+        "lastNamePlaceholder": "Enter your last name"
+      },
+      "age": {
+        "title": "How old are you?",
+        "subtitle": "This helps us provide age-appropriate features",
+        "agePlaceholder": "Enter your age"
+      },
+      "credentials": {
+        "title": "Create your account",
+        "subtitle": "Set up your login credentials",
+        "email": "Email Address",
+        "emailPlaceholder": "Enter your email address",
+        "password": "Password",
+        "passwordPlaceholder": "Create a strong password",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Confirm your password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
+      },
+      "business": {
+        "title": "Tell us about your business",
+        "subtitle": "Help us customize your experience",
+        "businessName": "Business Name",
+        "businessNamePlaceholder": "Enter your business name",
+        "phoneNumber": "Phone Number",
+        "phoneNumberPlaceholder": "Enter your phone number",
+        "niche": "Business Type",
+        "nichePlaceholder": "Select your business type",
+        "customNiche": "Custom Business Type",
+        "customNichePlaceholder": "Describe your business type"
+      },
+      "plan": {
+        "title": "Choose your plan",
+        "subtitle": "Select the plan that best fits your needs",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "save": "Save 20%",
+        "selectPlan": "Select Plan",
+        "popular": "Most Popular"
+      },
+      "review": {
+        "title": "Review your information",
+        "subtitle": "Please review and confirm your details",
+        "edit": "Edit",
+        "confirm": "Confirm & Continue"
+      },
+      "verification": {
+        "title": "Verify your email",
+        "subtitle": "We've sent a verification link to your email",
+        "checkEmail": "Check your email",
+        "resendEmail": "Resend verification email",
+        "emailSent": "Verification email sent!"
+      },
+      "success": {
+        "title": "Welcome to Masareefy!",
+        "subtitle": "Your account has been created successfully",
+        "getStarted": "Get Started",
+        "redirecting": "Redirecting to your dashboard..."
+      },
+      "common": {
+        "next": "Next",
+        "previous": "Previous",
+        "skip": "Skip",
+        "continue": "Continue",
+        "back": "Back",
+        "loading": "Loading...",
         "error": "Error",
-        "comingSoon": "Coming Soon",
-        "exportComingSoon": "export will be available in the next update. PDF export is ready!",
-        "brandSettingsUpdated": "Brand settings updated successfully!",
-        "reportGenerated": "Branded {title} PDF generated and downloaded successfully!",
-        "failedToGenerate": "Failed to generate report",
-        "insights": {
-            "revenueGrowth": "Revenue Growth",
-            "revenueGrowthDescription": "Your revenue has grown by 15.2% this month compared to last month. This indicates strong business performance and market demand.",
-            "positiveTrend": "Positive Trend",
-            "costOptimization": "Cost Optimization",
-            "costOptimizationDescription": "Your operational costs are 8% below industry average. Consider investing in growth initiatives with the saved capital.",
-            "efficientOperations": "Efficient Operations",
-            "cashFlowAlert": "Cash Flow Alert",
-            "cashFlowAlertDescription": "You have 3 outstanding receivables totaling EGP 45,000. Follow up on these payments to improve cash flow.",
-            "actionRequired": "Action Required",
-            "profitability": "Profitability",
-            "profitabilityDescription": "Your gross profit margin is 32%, which is above the industry average of 25%. This indicates strong pricing and cost control.",
-            "aboveAverage": "Above Average",
-            "inventoryHealth": "Inventory Health",
-            "inventoryHealthDescription": "5 items are below reorder level. Consider restocking to avoid stockouts and maintain customer satisfaction.",
-            "restockNeeded": "Restock Needed",
-            "growthOpportunity": "Growth Opportunity",
-            "growthOpportunityDescription": "Your top-performing product category has 40% growth potential. Consider expanding this product line.",
-            "highPotential": "High Potential"
-        },
-        "types": {
-            "pl": {
-                "title": "Profit & Loss Report",
-                "description": "Comprehensive P&L analysis with revenue, costs, and profit margins"
-            },
-            "revenue": {
-                "title": "Revenue Report",
-                "description": "Detailed revenue analysis, sources, and growth trends"
-            },
-            "costs": {
-                "title": "Costs Report",
-                "description": "Cost breakdown, categories, and expense analysis"
-            },
-            "products": {
-                "title": "Product Reports",
-                "description": "Product performance, inventory, and sales analysis"
-            },
-            "cashflow": {
-                "title": "Cash Flow Report",
-                "description": "Cash flow analysis, receivables, and payables"
-            },
-            "balancesheet": {
-                "title": "Balance Sheet",
-                "description": "Assets, liabilities, and equity overview"
-            }
-        },
-        "metrics": {
-            "totalRevenue": "Total Revenue",
-            "totalCosts": "Total Costs",
-            "grossProfit": "Gross Profit",
-            "grossProfitMargin": "Gross Profit Margin",
-            "netProfit": "Net Profit",
-            "netProfitMargin": "Net Profit Margin",
-            "operatingExpenses": "Operating Expenses",
-            "operatingIncome": "Operating Income",
-            "revenueGrowth": "Revenue Growth",
-            "costGrowth": "Cost Growth",
-            "profitGrowth": "Profit Growth",
-            "topRevenueSources": "Top Revenue Sources",
-            "topCostCategories": "Top Cost Categories",
-            "monthlyTrends": "Monthly Trends",
-            "profitByCategory": "Profit by Category",
-            "revenueBySource": "Revenue by Source",
-            "revenueByCategory": "Revenue by Category",
-            "costBreakdown": "Cost Breakdown",
-            "expenseAnalysis": "Expense Analysis",
-            "cashFlowAnalysis": "Cash Flow Analysis",
-            "receivables": "Receivables",
-            "payables": "Payables",
-            "assets": "Assets",
-            "liabilities": "Liabilities",
-            "equity": "Equity"
-        },
-        "sources": {
-            "productSales": "Product Sales",
-            "serviceRevenue": "Service Revenue",
-            "otherIncome": "Other Income"
-        },
-        "categories": {
-            "materials": "Materials",
-            "labor": "Labor",
-            "overhead": "Overhead",
-            "marketing": "Marketing",
-            "other": "Other"
-        },
-        "months": {
-            "january": "January",
-            "february": "February",
-            "march": "March",
-            "april": "April",
-            "may": "May",
-            "june": "June",
-            "july": "July",
-            "august": "August",
-            "september": "September",
-            "october": "October",
-            "november": "November",
-            "december": "December"
-        }
-    },
-    "language": {
-        "switch": "Switch Language",
-        "english": "English",
-        "arabic": "العربية"
+        "success": "Success"
+      },
+      "sessionRestore": {
+        "title": "Welcome Back!",
+        "subtitle": "We found your previous registration progress. Would you like to continue where you left off?",
+        "progress": "Your progress:",
+        "continue": "Continue Where I Left Off",
+        "startFresh": "Start Fresh"
+      },
+      "navigation": {
+        "switchToLogin": "Switch to Login",
+        "goHome": "Go Home",
+        "saveProgress": "Save Progress",
+        "clearProgress": "Clear Progress"
+      },
+      "validation": {
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "firstNameMinLength": "First name must be at least 2 characters",
+        "lastNameMinLength": "Last name must be at least 2 characters",
+        "ageRequired": "Age is required",
+        "ageRange": "Age must be between 16 and 100",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Please enter a valid email",
+        "passwordRequired": "Password is required",
+        "passwordMinLength": "Password must be at least 8 characters",
+        "passwordLetter": "Password must contain at least one letter",
+        "passwordNumber": "Password must contain at least one number",
+        "phoneRequired": "Phone number is required",
+        "phoneInvalid": "Please enter a valid Egyptian phone number",
+        "businessNameRequired": "Business name is required",
+        "nicheRequired": "Please select a niche",
+        "customNicheRequired": "Please specify your niche",
+        "planRequired": "Please select a plan",
+        "plansLoading": "Plans are still loading"
+      },
+      "errors": {
+        "loadPlans": "Failed to load subscription plans",
+        "checkEmail": "Failed to check email availability",
+        "register": "Registration failed. Please try again.",
+        "verifyEmail": "Failed to verify email. Please try again."
+      },
+      "loading": {
+        "plans": "Please wait while we load the available plans",
+        "title": "Loading"
+      },
+      "messages": {
+        "planRequired": "Please select a plan to continue",
+        "planRequiredTitle": "Plan Required"
+      }
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome back! Here's your brand overview",
+    "loading": "Loading dashboard...",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "dateRange": {
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "loading": "Loading..."
+    },
+    "metrics": {
+      "totalRevenue": "Total Revenue",
+      "totalCosts": "Total Costs",
+      "netProfit": "Net Profit",
+      "walletBalance": "Wallet Balance",
+      "breakEvenPoint": "Break-Even Point",
+      "profitMargin": "Profit Margin",
+      "vsLastMonth": "vs last month",
+      "revenueNeeded": "Revenue needed",
+      "breakEvenAchieved": "Break-even achieved",
+      "profitGenerated": "Profit generated",
+      "costsPercentage": "costs",
+      "exceededBy": "Exceeded by",
+      "stillNotReached": "Still not reached",
+      "left": "left",
+      "youBrokeEven": "You broke even"
+    },
+    "tooltips": {
+      "totalRevenue": "Total income from all revenue sources in the selected period",
+      "totalCosts": "Total expenses and costs incurred in the selected period",
+      "netProfit": "Total revenue minus total costs. Positive means profit, negative means loss",
+      "walletBalance": "Current available balance in your wallet for transactions",
+      "breakEvenPoint": "The point where revenue equals costs. Shows if you're profitable or need more revenue",
+      "profitMargin": "Percentage of revenue that becomes profit after covering all costs"
+    },
+    "charts": {
+      "costsByCategory": "Costs by Category",
+      "revenueProfitTrend": "Revenue & Profit Trend",
+      "updatingChart": "Updating chart...",
+      "cost": "Cost",
+      "amount": "Amount"
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "noActivity": "No recent activity"
+    }
+  },
+  "sidebar": {
+    "groups": {
+      "overview": "OVERVIEW",
+      "financial": "FINANCIAL",
+      "operations": "OPERATIONS",
+      "integrations": "INTEGRATIONS",
+      "management": "MANAGEMENT",
+      "analysis": "ANALYSIS",
+      "settings": "SETTINGS"
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "revenues": "Revenues",
+      "costs": "Costs",
+      "wallet": "Wallet",
+      "transfers": "Transfers",
+      "receivablesPayables": "Receivables/Payables",
+      "inventory": "Inventory",
+      "orders": "Orders",
+      "tasks": "Tasks",
+      "support": "Support",
+      "supportCenter": "Support Center",
+      "supportRequests": "Support Requests",
+      "myTickets": "My Tickets",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "user": {
+      "signOut": "Sign Out"
+    }
+  },
+  "revenue": {
+    "title": "Revenues",
+    "subtitle": "Track and manage your business income",
+    "addRevenue": "Add Revenue",
+    "manageCategories": "Manage Categories",
+    "metrics": {
+      "totalRevenue": "Total Revenue",
+      "monthlyRevenue": "Monthly Revenue",
+      "totalEntries": "Total Entries"
+    },
+    "filters": {
+      "title": "Filters",
+      "allCategories": "All Categories",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "clearFilters": "Clear Filters",
+      "searchPlaceholder": "Search revenues..."
+    },
+    "table": {
+      "noRevenues": "No revenues found",
+      "noRevenuesDescription": "Get started by adding your first revenue entry.",
+      "amount": "Amount:",
+      "source": "Source:",
+      "date": "Date:",
+      "created": "Created:",
+      "viewReceipt": "View Receipt",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "results": "results",
+      "perPage": "per page",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "form": {
+      "addTitle": "Add Revenue",
+      "editTitle": "Edit Revenue",
+      "revenueName": "Revenue Name",
+      "revenueNamePlaceholder": "Enter revenue name",
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "category": "Category",
+      "categoryPlaceholder": "Select or type a category",
+      "categorySearchPlaceholder": "Type to search or add new category",
+      "date": "Date",
+      "source": "Source",
+      "sourcePlaceholder": "e.g., E-commerce, Direct Contract",
+      "receipt": "Receipt (Optional)",
+      "receiptDragText": "Drag and drop a receipt here, or",
+      "receiptBrowse": "browse",
+      "receiptSupport": "Supports JPG, PNG, PDF (max 10MB)",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update"
+    },
+    "categories": {
+      "title": "Manage Categories",
+      "addNew": "Add New Category",
+      "addNewPlaceholder": "Enter category name",
+      "add": "Add",
+      "existing": "Existing Categories"
+    },
+    "messages": {
+      "loading": "Loading...",
+      "categoryAdded": "Category added successfully",
+      "categoryUpdated": "Category updated successfully",
+      "categoryDeleted": "Category deleted successfully",
+      "categoryDeleteConfirm": "Are you sure you want to delete this category?",
+      "revenueCreated": "Revenue created successfully",
+      "revenueUpdated": "Revenue updated successfully",
+      "revenueDeleted": "Revenue deleted successfully",
+      "revenueDeleteConfirm": "Are you sure you want to delete this revenue?",
+      "receiptUploaded": "Receipt uploaded successfully",
+      "invalidFileType": "Please upload an image or PDF file",
+      "failedToLoad": "Failed to load data",
+      "failedToAddCategory": "Failed to add category",
+      "failedToUpdateCategory": "Failed to update category",
+      "failedToDeleteCategory": "Failed to delete category",
+      "failedToSaveRevenue": "Failed to save revenue",
+      "failedToDeleteRevenue": "Failed to delete revenue"
+    }
+  },
+  "cost": {
+    "title": "Costs",
+    "subtitle": "Track and manage your business expenses",
+    "addCost": "Add Cost",
+    "manageCategories": "Manage Categories",
+    "metrics": {
+      "totalCosts": "Total Costs",
+      "monthlyCosts": "Monthly Costs",
+      "totalEntries": "Total Entries"
+    },
+    "filters": {
+      "title": "Filters",
+      "allCategories": "All Categories",
+      "allCostTypes": "All Cost Types",
+      "fixedCost": "Fixed Cost",
+      "variableCost": "Variable Cost",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "clearFilters": "Clear Filters",
+      "searchPlaceholder": "Search costs..."
+    },
+    "table": {
+      "noCosts": "No costs found",
+      "noCostsDescription": "Get started by adding your first cost entry.",
+      "amount": "Amount:",
+      "vendor": "Vendor:",
+      "date": "Date:",
+      "created": "Created:",
+      "viewReceipt": "View Receipt",
+      "fixed": "Fixed",
+      "variable": "Variable",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "results": "results",
+      "perPage": "per page",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "form": {
+      "addTitle": "Add Cost",
+      "editTitle": "Edit Cost",
+      "costName": "Cost Name",
+      "costNamePlaceholder": "Enter cost name",
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "category": "Category",
+      "categoryPlaceholder": "Select or type a category",
+      "categorySearchPlaceholder": "Type to search or add new category",
+      "costType": "Cost Type",
+      "costTypePlaceholder": "Select cost type",
+      "date": "Date",
+      "vendor": "Vendor",
+      "vendorPlaceholder": "e.g., Supplier name, Service provider",
+      "receipt": "Receipt (Optional)",
+      "receiptDragText": "Drag and drop a receipt here, or",
+      "receiptBrowse": "browse",
+      "receiptSupport": "Supports JPG, PNG, PDF (max 10MB)",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update"
+    },
+    "categories": {
+      "title": "Manage Categories",
+      "addNew": "Add New Category",
+      "addNewPlaceholder": "Enter category name",
+      "add": "Add",
+      "existing": "Existing Categories"
+    },
+    "messages": {
+      "loading": "Loading...",
+      "categoryAdded": "Category added successfully",
+      "categoryUpdated": "Category updated successfully",
+      "categoryDeleted": "Category deleted successfully",
+      "categoryDeleteConfirm": "Are you sure you want to delete this category?",
+      "costCreated": "Cost created successfully",
+      "costUpdated": "Cost updated successfully",
+      "costDeleted": "Cost deleted successfully",
+      "costDeleteConfirm": "Are you sure you want to delete this cost?",
+      "receiptUploaded": "Receipt uploaded successfully",
+      "invalidFileType": "Please upload an image or PDF file",
+      "failedToLoad": "Failed to load data",
+      "failedToAddCategory": "Failed to add category",
+      "failedToUpdateCategory": "Failed to update category",
+      "failedToDeleteCategory": "Failed to delete category",
+      "failedToSaveCost": "Failed to save cost",
+      "failedToDeleteCost": "Failed to delete cost"
+    }
+  },
+  "wallet": {
+    "title": "Wallet Management",
+    "subtitle": "Manage your wallets and track transactions",
+    "addWallet": "Add Wallet",
+    "export": "Export",
+    "retry": "Retry",
+    "loading": "Loading wallets...",
+    "metrics": {
+      "totalBalance": "Total Balance",
+      "totalWallets": "Total Wallets",
+      "activeWallets": "Active Wallets",
+      "recentTransactions": "Recent Transactions",
+      "remaining": "remaining",
+      "vsLastMonth": "vs last month"
+    },
+    "tabs": {
+      "wallets": "Wallets",
+      "transactions": "Wallet Transactions"
+    },
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "empty": "Empty",
+      "searchPlaceholder": "Search wallets..."
+    },
+    "walletTypes": {
+      "business": "Business",
+      "personal": "Personal",
+      "savings": "Savings",
+      "custom": "Custom"
+    },
+    "cardLabels": {
+      "cardHolder": "CARD HOLDER",
+      "balance": "BALANCE"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "credit": "Credit",
+      "debit": "Debit"
+    },
+    "emptyState": {
+      "noWallets": "No wallets found",
+      "noWalletsSearch": "No wallets match your search criteria.",
+      "noWalletsDescription": "Get started by creating your first wallet."
+    },
+    "transactions": {
+      "title": "Wallet Transactions",
+      "subtitle": "Manage credits, debits, and transfers between wallets",
+      "allTransactions": "All Transactions",
+      "creditTransactions": "Credit Transactions",
+      "debitTransactions": "Debit Transactions",
+      "transferTransactions": "Transfer Transactions",
+      "addCredit": "Add Credit",
+      "addDebit": "Add Debit",
+      "addTransfer": "Add Transfer",
+      "transactionHistory": "Transaction History",
+      "noTransactions": "No transactions yet",
+      "noTransactionsType": "No {type} transactions yet",
+      "startFirstTransaction": "Start by creating your first transaction.",
+      "startFirstTransactionType": "Start by creating your first {type} transaction.",
+      "status": {
+        "completed": "completed",
+        "pending": "pending",
+        "failed": "failed"
+      }
+    },
+    "form": {
+      "addTitle": "Add New Wallet",
+      "editTitle": "Edit Wallet",
+      "walletName": "Wallet Name",
+      "walletNamePlaceholder": "Enter wallet name",
+      "initialBalance": "Initial Balance",
+      "balancePlaceholder": "0.00",
+      "type": "Type",
+      "currency": "Currency",
+      "colorTheme": "Color Theme",
+      "liveCardPreview": "Live Card Preview",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update",
+      "creating": "Creating...",
+      "updating": "Updating..."
+    },
+    "transactionForm": {
+      "creditTitle": "Credit Wallet",
+      "debitTitle": "Debit Wallet",
+      "transferTitle": "Transfer Between Wallets",
+      "fromWallet": "From Wallet",
+      "toWallet": "To Wallet",
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter transaction description",
+      "category": "Category",
+      "categoryPlaceholder": "Enter category (optional)",
+      "countAsRevenue": "Count as Revenue",
+      "countAsRevenueDescription": "This transaction will be added to your revenues section",
+      "countAsCost": "Count as Cost",
+      "countAsCostDescription": "This transaction will be added to your costs section",
+      "processTransaction": "Process Transaction",
+      "continue": "Continue",
+      "processing": "Processing..."
+    },
+    "confirmation": {
+      "title": "Confirm Transaction",
+      "description": "Are you sure you want to proceed with this transaction?",
+      "type": "Type:",
+      "amount": "Amount:",
+      "description": "Description:",
+      "category": "Category:",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "success": {
+      "title": "Transaction Successful!",
+      "description": "Your transaction has been processed successfully.",
+      "done": "Done"
+    },
+    "delete": {
+      "title": "Delete Wallet",
+      "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "delete": "Delete",
+      "deleting": "Deleting..."
+    },
+    "details": {
+      "title": "Wallet Details",
+      "cardView": "Card View",
+      "currentBalance": "Current Balance",
+      "created": "Created",
+      "status": "Status",
+      "active": "Active",
+      "empty": "Empty",
+      "recentTransactions": "Recent Transactions"
+    },
+    "messages": {
+      "walletCreated": "Wallet created successfully",
+      "walletUpdated": "Wallet updated successfully",
+      "walletDeleted": "Wallet deleted successfully",
+      "transactionCompleted": "Transaction completed successfully",
+      "failedToLoad": "Failed to load wallets",
+      "failedToSave": "Failed to save wallet",
+      "failedToDelete": "Failed to delete wallet",
+      "failedToProcess": "Failed to process transaction",
+      "insufficientBalance": "Insufficient balance. Available: {amount}",
+      "validAmount": "Please enter a valid amount greater than 0",
+      "walletNameRequired": "Wallet name is required",
+      "validBalance": "Please enter a valid balance (0 or greater)",
+      "transactionCompletedButFailedRevenue": "Transaction completed but failed to add to revenues",
+      "transactionCompletedButFailedCost": "Transaction completed but failed to add to costs"
+    }
+  },
+  "transfers": {
+    "title": "Transfers",
+    "subtitle": "Manage inventory and customer transfers",
+    "addTransfer": "Add Transfer",
+    "export": "Export",
+    "retry": "Retry",
+    "loading": "Loading transfers...",
+    "failedToLoad": "Failed to load transfers",
+    "metrics": {
+      "totalTransfers": "Total Transfers",
+      "monthlyTransfers": "Monthly Transfers",
+      "activeTransfers": "Active Transfers",
+      "allTimeTransfers": "All time transfers",
+      "thisMonth": "This month",
+      "pendingTransfers": "Pending transfers"
+    },
+    "filters": {
+      "title": "Filters",
+      "showFilters": "Show Filters",
+      "hideFilters": "Hide Filters",
+      "searchPlaceholder": "Search transfers...",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "clearAllFilters": "Clear All Filters",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "transfers": "transfers"
+    },
+    "tabs": {
+      "allTransfers": "All Transfers",
+      "customerTransfers": "Customer Transfers",
+      "inventoryTransfers": "Inventory Transfers"
+    },
+    "emptyState": {
+      "noTransfers": "No transfers found",
+      "noTransfersSearch": "No transfers match your search criteria.",
+      "noTransfersDescription": "Get started by creating your first transfer."
+    },
+    "transferCard": {
+      "customer": "Customer",
+      "inventory": "Inventory",
+      "from": "From:",
+      "to": "To:",
+      "quantity": "Quantity:",
+      "item": "Item:",
+      "description": "Description:",
+      "stockDeducted": "Stock Deducted",
+      "createdBy": "Created by",
+      "unknownItem": "Unknown Item"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "form": {
+      "addTitle": "Add Transfer",
+      "editTitle": "Edit Transfer",
+      "transferType": "Transfer Type",
+      "customerTransfer": "Customer Transfer",
+      "inventoryTransfer": "Inventory Transfer",
+      "inventoryItem": "Inventory Item",
+      "selectInventoryItem": "Select inventory item",
+      "quantity": "Quantity",
+      "quantityPlaceholder": "Enter quantity",
+      "fromLocation": "From Location",
+      "fromLocationPlaceholder": "Enter source location",
+      "toLocation": "To Location",
+      "toLocationPlaceholder": "Enter destination location",
+      "transferDate": "Transfer Date",
+      "description": "Description (Optional)",
+      "descriptionPlaceholder": "Enter transfer description",
+      "deductFromStock": "Deduct transferred quantity from current stock",
+      "deductFromStockDescription": "When enabled, the transferred quantity will be automatically deducted from the selected inventory item's current stock.",
+      "cancel": "Cancel",
+      "createTransfer": "Create Transfer",
+      "updateTransfer": "Update Transfer"
+    },
+    "messages": {
+      "transferCreated": "Transfer created successfully",
+      "transferUpdated": "Transfer updated successfully",
+      "transferDeleted": "Transfer deleted successfully",
+      "failedToCreate": "Failed to create transfer",
+      "failedToUpdate": "Failed to update transfer",
+      "failedToDelete": "Failed to delete transfer",
+      "deleteConfirm": "Are you sure you want to delete this transfer?"
+    }
+  },
+  "receivablesPayables": {
+    "title": "Receivables & Payables",
+    "subtitle": "Manage money owed to and by your business",
+    "addReceivable": "Add Receivable",
+    "addPayable": "Add Payable",
+    "export": "Export",
+    "retry": "Retry",
+    "loading": "Loading receivables and payables...",
+    "failedToLoad": "Failed to load receivables and payables",
+    "metrics": {
+      "totalReceivables": "Total Receivables",
+      "totalPayables": "Total Payables",
+      "overdueReceivables": "Overdue Receivables",
+      "overduePayables": "Overdue Payables"
+    },
+    "filters": {
+      "title": "Filters",
+      "showFilters": "Show Filters",
+      "hideFilters": "Hide Filters",
+      "searchPlaceholder": "Search receivables/payables...",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "clearAllFilters": "Clear All Filters",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "items": "items"
+    },
+    "tabs": {
+      "all": "All",
+      "receivables": "Receivables",
+      "payables": "Payables"
+    },
+    "status": {
+      "current": "Current",
+      "overdue": "Overdue",
+      "critical": "Critical",
+      "paid": "Paid",
+      "allStatus": "All Status"
+    },
+    "emptyState": {
+      "noItems": "No receivables or payables found",
+      "noReceivables": "No receivables found",
+      "noPayables": "No payables found",
+      "noItemsDescription": "Get started by adding your first receivable or payable.",
+      "noReceivablesDescription": "Get started by adding your first receivable.",
+      "noPayablesDescription": "Get started by adding your first payable."
+    },
+    "itemCard": {
+      "receivable": "Receivable",
+      "payable": "Payable",
+      "due": "Due:",
+      "invoice": "Invoice:",
+      "overdue": "overdue"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "form": {
+      "addReceivable": "Add Receivable",
+      "editReceivable": "Edit Receivable",
+      "addPayable": "Add Payable",
+      "editPayable": "Edit Payable",
+      "customerVendorName": "Customer/Vendor Name",
+      "vendorName": "Vendor Name",
+      "namePlaceholder": "Enter name",
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "dueDate": "Due Date",
+      "invoiceNumber": "Invoice Number",
+      "invoicePlaceholder": "INV-001",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "receiptUrl": "Receipt URL (Optional)",
+      "receiptPlaceholder": "https://example.com/receipt.pdf",
+      "autoConvertToRevenue": "Automatically convert to Revenue",
+      "autoConvertToRevenueDescription": "This receivable will be automatically converted to a revenue entry when the due date arrives.",
+      "autoConvertToCost": "Automatically convert to Cost",
+      "autoConvertToCostDescription": "This payable will be automatically converted to a cost entry when the due date arrives.",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update"
+    },
+    "viewModal": {
+      "viewReceivable": "View Receivable",
+      "viewPayable": "View Payable",
+      "entityName": "Entity Name",
+      "amount": "Amount",
+      "dueDate": "Due Date",
+      "status": "Status",
+      "invoiceNumber": "Invoice Number",
+      "createdBy": "Created By",
+      "description": "Description",
+      "receipt": "Receipt",
+      "viewReceipt": "View Receipt",
+      "close": "Close",
+      "edit": "Edit"
+    },
+    "messages": {
+      "receivableCreated": "Receivable created successfully",
+      "receivableUpdated": "Receivable updated successfully",
+      "receivableDeleted": "Receivable deleted successfully",
+      "payableCreated": "Payable created successfully",
+      "payableUpdated": "Payable updated successfully",
+      "payableDeleted": "Payable deleted successfully",
+      "failedToCreateReceivable": "Failed to create receivable",
+      "failedToUpdateReceivable": "Failed to update receivable",
+      "failedToDeleteReceivable": "Failed to delete receivable",
+      "failedToCreatePayable": "Failed to create payable",
+      "failedToUpdatePayable": "Failed to update payable",
+      "failedToDeletePayable": "Failed to delete payable",
+      "failedToSave": "Failed to save item",
+      "deleteConfirm": "Are you sure you want to delete this item?",
+      "autoConversionNote": "Please refresh the page after 1 minute to see the automatic conversion to revenue/cost.",
+      "cannotDeleteConverted": "Cannot delete converted items. They have already been processed into revenue/cost entries."
+    }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "subtitle": "Manage your brand's inventory items",
+    "addItem": "Add Item",
+    "import": "Import",
+    "export": "Export",
+    "retry": "Retry",
+    "loading": "Loading inventory...",
+    "failedToLoad": "Failed to load inventory",
+    "metrics": {
+      "totalItems": "Total Items",
+      "totalValue": "Total Value",
+      "currentInventoryValue": "Current Inventory Value",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "inventoryCost": "Inventory Cost",
+      "remaining": "remaining",
+      "items": "items",
+      "value": "value",
+      "stock": "stock",
+      "available": "available",
+      "unavailable": "unavailable",
+      "inStock": "In Stock",
+      "lowStockItems": "Low Stock Items",
+      "outOfStockItems": "Out of Stock Items",
+      "totalStockValue": "Total Stock Value",
+      "averageItemValue": "Average Item Value",
+      "stockTurnover": "Stock Turnover",
+      "reorderLevel": "Reorder Level",
+      "safetyStock": "Safety Stock",
+      "totalCostBasis": "Total cost basis",
+      "itemsNeedReorder": "Items need reorder",
+      "itemsUnavailable": "Items unavailable"
+    },
+    "filters": {
+      "searchPlaceholder": "Search inventory...",
+      "category": "Category",
+      "supplier": "Supplier",
+      "location": "Location",
+      "all": "All",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "clearFilters": "Clear Filters"
+    },
+    "table": {
+      "productName": "Product Name",
+      "sku": "SKU",
+      "category": "Category",
+      "stock": "Stock",
+      "reorderLevel": "Reorder Level",
+      "unitCost": "Unit Cost",
+      "sellingPrice": "Selling Price",
+      "supplier": "Supplier",
+      "location": "Location",
+      "actions": "Actions",
+      "selectAll": "Select All",
+      "selected": "selected"
+    },
+    "emptyState": {
+      "noItems": "No inventory items found",
+      "noItemsSearch": "No items match your search criteria.",
+      "noItemsDescription": "Get started by adding your first inventory item."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "items": "items"
+    },
+    "form": {
+      "addTitle": "Add Inventory Item",
+      "editTitle": "Edit Inventory Item",
+      "productName": "Product Name",
+      "productNamePlaceholder": "Enter product name",
+      "baseSku": "Base SKU",
+      "baseSkuPlaceholder": "Enter base SKU",
+      "category": "Category",
+      "categoryPlaceholder": "Select category",
+      "currentStock": "Current Stock",
+      "currentStockPlaceholder": "Enter current stock",
+      "reorderLevel": "Reorder Level",
+      "reorderLevelPlaceholder": "Enter reorder level",
+      "unitCost": "Unit Cost",
+      "unitCostPlaceholder": "Enter unit cost",
+      "sellingPrice": "Selling Price",
+      "sellingPricePlaceholder": "Enter selling price",
+      "supplier": "Supplier",
+      "supplierPlaceholder": "Enter supplier",
+      "location": "Location",
+      "locationPlaceholder": "Enter location",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "sizes": "Sizes",
+      "sizesPlaceholder": "Enter sizes (comma separated)",
+      "colors": "Colors",
+      "colorsPlaceholder": "Enter colors (comma separated)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update",
+      "creating": "Creating...",
+      "updating": "Updating..."
+    },
+    "import": {
+      "importType": "Import Type",
+      "bulkImportOptions": "Bulk Import Options",
+      "chooseImportMethod": "Choose your import method to bulk import inventory data",
+      "normalImport": "Normal Import",
+      "normalImportDescription": "Import inventory items from Excel/CSV file",
+      "bostaImport": "Bosta Import",
+      "bostaImportDescription": "Import inventory data from Bosta with SKU validation and product tracking",
+      "shopifyImport": "Shopify Import",
+      "shopifyImportDescription": "Import products from Shopify with automatic variant mapping and inventory sync",
+      "systemTemplate": "System Template",
+      "systemTemplateDescription": "Download our template and import your data with custom mapping",
+      "variantMapping": "Variant Mapping",
+      "productImport": "Product Import",
+      "inventorySync": "Inventory Sync",
+      "productTracking": "Product Tracking",
+      "skuValidation": "SKU Validation",
+      "flexibleMapping": "Flexible Mapping",
+      "customTemplate": "Custom Template",
+      "dataValidation": "Data Validation",
+      "getStarted": "Get Started",
+      "selectFile": "Select File",
+      "dragDropFile": "Drag and drop your file here, or click to select",
+      "supportedFormats": "Supported formats: Excel (.xlsx, .xls) and CSV (.csv)",
+      "processing": "Processing...",
+      "importing": "Importing...",
+      "importSuccess": "Items imported successfully",
+      "importFailed": "Failed to import items",
+      "invalidFileType": "Invalid file type. Please select an Excel or CSV file.",
+      "fileRequired": "Please select a file to import",
+      "emptyFile": "File appears to be empty or has no data rows",
+      "requiredColumns": "Required columns not found: Tracking Number, Delivery State, COD Amount",
+      "bostaStats": "Bosta Import Statistics",
+      "totalOrders": "Total Orders",
+      "expectedCash": "Expected Cash",
+      "delivered": "Delivered",
+      "returned": "Returned",
+      "returnRate": "Return Rate",
+      "deliveryRate": "Delivery Rate",
+      "validSkus": "Valid SKUs",
+      "newSkus": "New SKUs",
+      "unknownSkus": "Unknown SKUs",
+      "addMissingSkus": "Add Missing SKUs",
+      "addMissingSkusDescription": "Automatically create inventory items for unknown SKUs",
+      "createRevenue": "Create Revenue Entries",
+      "createRevenueDescription": "Create revenue entries for delivered orders",
+      "confirmImport": "Confirm Import",
+      "processingImport": "Processing Import...",
+      "shopifyComingSoon": "Shopify import functionality will be available soon",
+      "limitExceeded": {
+        "title": "Import Limit Exceeded",
+        "description": "You have selected {{selected}} items, but your plan only allows {{limit}} products total. You currently have {{current}} products and can only import {{remaining}} more.",
+        "warning": "Your import would exceed your plan limit",
+        "selectRemaining": "Select Only {{count}} Remaining",
+        "selectNone": "Select None",
+        "autoSelected": "Auto-Selected Items",
+        "autoSelectedDesc": "Automatically selected {{count}} items that fit within your limit"
+      }
+    },
+    "bulkActions": {
+      "bulkDelete": "Bulk Delete",
+      "deleteSelected": "Delete Selected",
+      "deleteConfirm": "Are you sure you want to delete the selected items?",
+      "deleting": "Deleting...",
+      "itemsDeleted": "Items deleted successfully"
+    },
+    "messages": {
+      "itemCreated": "Item added successfully",
+      "itemUpdated": "Item updated successfully",
+      "itemDeleted": "Item deleted successfully",
+      "itemsDeleted": "Items deleted successfully",
+      "failedToCreate": "Failed to save item",
+      "failedToUpdate": "Failed to update item",
+      "failedToDelete": "Failed to delete item",
+      "failedToDeleteItems": "Failed to delete items",
+      "deleteConfirm": "Are you sure you want to delete this item?",
+      "limitReached": "Inventory limit reached. Please upgrade your plan.",
+      "invalidData": "Please check your input data"
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "Manage and track your orders",
+    "import": "Import Orders",
+    "export": "Export Orders",
+    "retry": "Retry",
+    "loading": "Loading orders...",
+    "failedToLoad": "Failed to load orders",
+    "metrics": {
+      "totalOrders": "Total Orders",
+      "totalRevenue": "Total Revenue",
+      "totalTax": "Total Tax",
+      "totalShipping": "Total Shipping",
+      "totalDiscount": "Total Discount",
+      "paidOrders": "Paid Orders",
+      "pendingOrders": "Pending Orders",
+      "cancelledOrders": "Cancelled Orders",
+      "fulfilledOrders": "Fulfilled Orders",
+      "unfulfilledOrders": "Unfulfilled Orders",
+      "averageOrderValue": "Average Order Value",
+      "uniqueCustomers": "Unique Customers"
+    },
+    "filters": {
+      "searchPlaceholder": "Search orders...",
+      "status": "Status",
+      "financialStatus": "Financial Status",
+      "fulfillmentStatus": "Fulfillment Status",
+      "all": "All",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "clearFilters": "Clear Filters"
+    },
+    "table": {
+      "orderName": "Order Name",
+      "email": "Email",
+      "financialStatus": "Financial Status",
+      "fulfillmentStatus": "Fulfillment Status",
+      "currency": "Currency",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "tax": "Tax",
+      "total": "Total",
+      "discountCode": "Discount Code",
+      "discountAmount": "Discount Amount",
+      "createdAt": "Created At",
+      "actions": "Actions"
+    },
+    "emptyState": {
+      "noOrders": "No orders found",
+      "noOrdersSearch": "No orders match your search criteria.",
+      "noOrdersDescription": "Get started by importing your first orders."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "orders": "orders"
+    },
+    "import": {
+      "shopifyOrdersImport": "Shopify Orders Import",
+      "shopifyOrdersDescription": "Import your Shopify orders export to sync with your revenue",
+      "uploadShopifyOrders": "Upload Shopify Orders Export",
+      "dragDropOrders": "Drag and drop your Shopify orders CSV file here, or click to select",
+      "selectFile": "Select File",
+      "processing": "Processing...",
+      "importOrders": "Import Orders",
+      "confirmImport": "Confirm Shopify Orders Import",
+      "reviewData": "Review the parsed orders data and choose your import options",
+      "importSuccess": "Orders imported successfully",
+      "importFailed": "Failed to import orders",
+      "invalidFileType": "Please upload a CSV file (.csv)",
+      "fileRequired": "Please select a file to import",
+      "emptyFile": "File appears to be empty or has no data rows",
+      "requiredColumns": "Required columns not found: Name, Email, Financial Status, Fulfillment Status",
+      "orderStats": "Order Statistics",
+      "createRevenueEntries": "Create Revenue Entries",
+      "createRevenueDescription": "Create revenue entries for paid orders",
+      "cancel": "Cancel",
+      "processingImport": "Processing Import..."
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "cancelled": "Cancelled",
+      "fulfilled": "Fulfilled",
+      "unfulfilled": "Unfulfilled",
+      "unknown": "Unknown"
+    },
+    "messages": {
+      "ordersImported": "Successfully imported orders to revenue!",
+      "failedToImport": "Failed to process orders import",
+      "failedToLoadOrders": "Failed to load orders",
+      "errorParsingFile": "Error parsing file"
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "subtitle": "Manage your tasks and deadlines",
+    "newTask": "New Task",
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "createTask": "Create Task",
+    "updateTask": "Update Task",
+    "deleteTask": "Delete Task",
+    "taskDetails": "Task Details",
+    "retry": "Retry",
+    "retrying": "Retrying...",
+    "loading": "Loading tasks...",
+    "failedToLoad": "Failed to load tasks",
+    "today": "Today",
+    "calendar": "Calendar",
+    "list": "List",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "more": "more",
+    "searchPlaceholder": "Search tasks by title, description, or assignee...",
+    "filters": {
+      "priority": "Priority",
+      "status": "Status",
+      "category": "Category",
+      "allPriorities": "All Priorities",
+      "allStatus": "All Status",
+      "allCategories": "All Categories"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "categories": {
+      "finance": "Finance",
+      "meeting": "Meeting",
+      "presentation": "Presentation",
+      "operations": "Operations",
+      "marketing": "Marketing",
+      "development": "Development",
+      "sales": "Sales"
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "Enter task title",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter task description",
+      "priority": "Priority",
+      "category": "Category",
+      "categoryPlaceholder": "Select category",
+      "dueDate": "Due Date",
+      "assignedTo": "Assigned To",
+      "assignedToPlaceholder": "Select assignee...",
+      "searchAssignees": "Search assignees...",
+      "noAssigneeFound": "No assignee found.",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "updating": "Updating..."
+    },
+    "details": {
+      "due": "Due:",
+      "noDueDate": "No due date",
+      "assignedTo": "Assigned to:",
+      "category": "Category:",
+      "priority": "Priority:",
+      "created": "Created:",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "emptyState": {
+      "noTasks": "No tasks found",
+      "noTasksSearch": "No tasks match your search criteria.",
+      "noTasksDescription": "Get started by creating your first task."
+    },
+    "messages": {
+      "taskCreated": "Task created successfully",
+      "taskUpdated": "Task updated successfully",
+      "taskDeleted": "Task deleted successfully",
+      "failedToCreate": "Failed to create task",
+      "failedToUpdate": "Failed to update task",
+      "failedToDelete": "Failed to delete task",
+      "failedToSave": "Failed to save task"
+    }
+  },
+  "support": {
+    "title": "Support Chat",
+    "subtitle": "We're here to help you",
+    "welcomeMessage": "👋 Hi! I'm here to help you with any questions or issues. Please fill out the form below and I'll get back to you as soon as possible.",
+    "personalInfo": "Personal Information",
+    "whatCanIHelp": "What can I help you with?",
+    "attachFiles": "Attach Files (Optional)",
+    "form": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Your full name",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "subject": "Subject",
+      "subjectPlaceholder": "Brief description of your issue",
+      "description": "Description",
+      "descriptionPlaceholder": "Please provide detailed information about your issue...",
+      "clickToUpload": "Click to upload files",
+      "fileRestrictions": "Images and PDFs only, max 5MB each",
+      "sendMessage": "Send Message",
+      "sending": "Sending..."
+    },
+    "categories": {
+      "billing": "Billing",
+      "technicalIssue": "Technical Issue",
+      "featureRequest": "Feature Request",
+      "account": "Account",
+      "other": "Other",
+      "Billing": "Billing",
+      "Technical Issue": "Technical Issue",
+      "Feature Request": "Feature Request",
+      "Account": "Account",
+      "Other": "Other"
+    },
+    "validation": {
+      "fullNameRequired": "Full name is required",
+      "emailRequired": "Email is required",
+      "categoryRequired": "Category is required",
+      "subjectRequired": "Subject is required",
+      "descriptionRequired": "Description is required"
+    },
+    "fileUpload": {
+      "someFilesRejected": "Some files were rejected. Only images and PDFs under 5MB are allowed.",
+      "fileSize": {
+        "bytes": "Bytes",
+        "kb": "KB",
+        "mb": "MB",
+        "gb": "GB"
+      }
+    },
+    "consent": {
+      "title": "Privacy Notice",
+      "message": "By submitting this support request, you acknowledge that your information will be used to help you.",
+      "privacyNote": "We respect your privacy and will never share your information.",
+      "cancel": "Cancel",
+      "sendMessage": "Send Message"
+    },
+    "confirmation": {
+      "title": "Message Sent!",
+      "message": "Your support request has been sent successfully.",
+      "ticketId": "Ticket ID:",
+      "saveId": "Save this ID for your records",
+      "whatHappensNext": "What happens next?",
+      "steps": {
+        "review": "Our support will review your request",
+        "updates": "You'll receive updates on your ticket status",
+        "viewTickets": "You can view your tickets in \"My Tickets\""
+      },
+      "close": "Close",
+      "viewMyTickets": "View My Tickets"
+    },
+    "messages": {
+      "failedToCreate": "Failed to create ticket",
+      "failedToCreateGeneric": "Failed to create ticket. Please try again."
+    }
+  },
+  "supportTickets": {
+    "title": "My Support Chats",
+    "conversations": "conversation",
+    "conversationsPlural": "conversations",
+    "noConversations": "No conversations yet",
+    "noConversationsDescription": "You haven't started any support conversations yet. Start a new chat to get help with your questions.",
+    "startNewChat": "Start New Chat",
+    "ticketId": "Ticket ID:",
+    "messages": "message",
+    "messagesPlural": "messages",
+    "typeMessage": "Type a message...",
+    "sending": "Sending...",
+    "messageSent": "Message sent successfully",
+    "failedToSend": "Failed to send message",
+    "statuses": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priorities": {
+      "urgent": "Urgent",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "fileSize": {
+      "bytes": "Bytes",
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    }
+  },
+  "tickets": {
+    "title": "Support Tickets",
+    "subtitle": "Manage your support requests and tickets",
+    "createTicket": "Create Ticket",
+    "myTickets": "My Tickets",
+    "allTickets": "All Tickets",
+    "openTickets": "Open Tickets",
+    "closedTickets": "Closed Tickets",
+    "mySupportChats": "My Support Chats",
+    "conversations": "conversation",
+    "conversationsPlural": "conversations",
+    "noConversationsYet": "No conversations yet",
+    "noConversationsDescription": "You haven't started any support conversations yet. Start a new chat to get help with your questions.",
+    "startNewChat": "Start New Chat",
+    "typeMessage": "Type a message...",
+    "message": "message",
+    "messages": "messages",
+    "priority": "Priority",
+    "status": "Status",
+    "category": "Category",
+    "assignedTo": "Assigned To",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "noTickets": "No tickets found",
+    "noTicketsDescription": "You don't have any support tickets yet.",
+    "form": {
+      "createTitle": "Create Support Ticket",
+      "editTitle": "Edit Ticket",
+      "subject": "Subject",
+      "subjectPlaceholder": "Enter ticket subject",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe your issue or request",
+      "category": "Category",
+      "priority": "Priority",
+      "attachments": "Attachments",
+      "addAttachment": "Add Attachment"
+    },
+    "categories": {
+      "technical": "Technical Issue",
+      "billing": "Billing Question",
+      "feature": "Feature Request",
+      "bug": "Bug Report",
+      "general": "General Inquiry"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "statuses": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "pending": "Pending",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "messages": {
+      "ticketCreated": "Ticket created successfully",
+      "ticketUpdated": "Ticket updated successfully",
+      "ticketDeleted": "Ticket deleted successfully",
+      "failedToCreate": "Failed to create ticket",
+      "failedToUpdate": "Failed to update ticket",
+      "failedToDelete": "Failed to delete ticket"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account, preferences, and security settings",
+    "tabs": {
+      "profile": "Profile",
+      "notifications": "Notifications",
+      "security": "Security",
+      "brand": "Brand",
+      "subscription": "Subscription"
+    },
+    "account": "Account Settings",
+    "profile": "Profile",
+    "security": "Security",
+    "notifications": "Notifications",
+    "preferences": "Preferences",
+    "billing": "Billing",
+    "integrations": "Integrations",
+    "privacy": "Privacy",
+    "about": "About",
+    "profileSettings": {
+      "title": "Profile Settings",
+      "personalInfo": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "company": "Company Name",
+      "position": "Position",
+      "bio": "Bio",
+      "avatar": "Profile Picture",
+      "updateProfile": "Update Profile"
+    },
+    "securitySettings": {
+      "title": "Security Settings",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "twoFactorAuth": "Two-Factor Authentication",
+      "enable2FA": "Enable 2FA",
+      "disable2FA": "Disable 2FA",
+      "loginHistory": "Login History",
+      "activeSessions": "Active Sessions",
+      "revokeAllSessions": "Revoke All Sessions"
+    },
+    "notificationSettings": {
+      "title": "Notification Settings",
+      "emailNotifications": "Email Notifications",
+      "pushNotifications": "Push Notifications",
+      "smsNotifications": "SMS Notifications",
+      "marketingEmails": "Marketing Emails",
+      "systemUpdates": "System Updates",
+      "securityAlerts": "Security Alerts",
+      "billingAlerts": "Billing Alerts"
+    },
+    "brandSettings": {
+      "title": "Brand Settings",
+      "subtitle": "Customize your brand appearance and report settings",
+      "brandName": "Brand Name",
+      "logo": "Brand Logo",
+      "reportHeader": "Report Header Text",
+      "reportFooter": "Report Footer Text",
+      "uploadLogo": "Upload Logo",
+      "changeLogo": "Change Logo",
+      "saveSettings": "Save Brand Settings",
+      "success": "Brand settings updated successfully",
+      "error": "Failed to update brand settings"
+    },
+    "preferenceSettings": {
+      "title": "Preferences",
+      "language": "Language",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "currency": "Currency",
+      "theme": "Theme",
+      "darkMode": "Dark Mode",
+      "lightMode": "Light Mode",
+      "autoMode": "Auto Mode"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully",
+      "passwordChanged": "Password changed successfully",
+      "settingsSaved": "Settings saved successfully",
+      "failedToUpdate": "Failed to update settings",
+      "invalidCurrentPassword": "Current password is incorrect",
+      "passwordsDoNotMatch": "Passwords do not match"
+    }
+  },
+  "reports": {
+    "title": "Reports & Analytics",
+    "subtitle": "Comprehensive business insights and performance metrics",
+    "loading": "Loading reports...",
+    "retry": "Retry",
+    "brandSettings": "Brand Settings",
+    "exportAll": "Export All",
+    "exportAllDescription": "Exporting all reports with current brand settings...",
+    "dateRangeFilter": "Date Range Filter",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "last30Days": "Last 30 Days",
+    "smartInsights": "Smart Business Insights",
+    "smartInsightsNotAvailable": "Smart Insights Not Available",
+    "smartInsightsDescription": "Upgrade to Professional plan to unlock advanced business insights and analytics.",
+    "upgradeToProfessional": "Upgrade to Professional",
+    "backToReports": "Back to Reports",
+    "clickToView": "Click to view",
+    "pdf": "PDF",
+    "excel": "Excel",
+    "csv": "CSV",
+    "generateReport": "Generate Report",
+    "generating": "Generating...",
+    "success": "Success",
+    "error": "Error",
+    "comingSoon": "Coming Soon",
+    "exportComingSoon": "export will be available in the next update. PDF export is ready!",
+    "brandSettingsUpdated": "Brand settings updated successfully!",
+    "reportGenerated": "Branded {title} PDF generated and downloaded successfully!",
+    "failedToGenerate": "Failed to generate report",
+    "insights": {
+      "revenueGrowth": "Revenue Growth",
+      "revenueGrowthDescription": "Your revenue has grown by 15.2% this month compared to last month. This indicates strong business performance and market demand.",
+      "positiveTrend": "Positive Trend",
+      "costOptimization": "Cost Optimization",
+      "costOptimizationDescription": "Your operational costs are 8% below industry average. Consider investing in growth initiatives with the saved capital.",
+      "efficientOperations": "Efficient Operations",
+      "cashFlowAlert": "Cash Flow Alert",
+      "cashFlowAlertDescription": "You have 3 outstanding receivables totaling EGP 45,000. Follow up on these payments to improve cash flow.",
+      "actionRequired": "Action Required",
+      "profitability": "Profitability",
+      "profitabilityDescription": "Your gross profit margin is 32%, which is above the industry average of 25%. This indicates strong pricing and cost control.",
+      "aboveAverage": "Above Average",
+      "inventoryHealth": "Inventory Health",
+      "inventoryHealthDescription": "5 items are below reorder level. Consider restocking to avoid stockouts and maintain customer satisfaction.",
+      "restockNeeded": "Restock Needed",
+      "growthOpportunity": "Growth Opportunity",
+      "growthOpportunityDescription": "Your top-performing product category has 40% growth potential. Consider expanding this product line.",
+      "highPotential": "High Potential"
+    },
+    "types": {
+      "pl": {
+        "title": "Profit & Loss Report",
+        "description": "Comprehensive P&L analysis with revenue, costs, and profit margins"
+      },
+      "revenue": {
+        "title": "Revenue Report",
+        "description": "Detailed revenue analysis, sources, and growth trends"
+      },
+      "costs": {
+        "title": "Costs Report",
+        "description": "Cost breakdown, categories, and expense analysis"
+      },
+      "products": {
+        "title": "Product Reports",
+        "description": "Product performance, inventory, and sales analysis"
+      },
+      "cashflow": {
+        "title": "Cash Flow Report",
+        "description": "Cash flow analysis, receivables, and payables"
+      },
+      "balancesheet": {
+        "title": "Balance Sheet",
+        "description": "Assets, liabilities, and equity overview"
+      }
+    },
+    "metrics": {
+      "totalRevenue": "Total Revenue",
+      "totalCosts": "Total Costs",
+      "grossProfit": "Gross Profit",
+      "grossProfitMargin": "Gross Profit Margin",
+      "netProfit": "Net Profit",
+      "netProfitMargin": "Net Profit Margin",
+      "operatingExpenses": "Operating Expenses",
+      "operatingIncome": "Operating Income",
+      "revenueGrowth": "Revenue Growth",
+      "costGrowth": "Cost Growth",
+      "profitGrowth": "Profit Growth",
+      "topRevenueSources": "Top Revenue Sources",
+      "topCostCategories": "Top Cost Categories",
+      "monthlyTrends": "Monthly Trends",
+      "profitByCategory": "Profit by Category",
+      "revenueBySource": "Revenue by Source",
+      "revenueByCategory": "Revenue by Category",
+      "costBreakdown": "Cost Breakdown",
+      "expenseAnalysis": "Expense Analysis",
+      "cashFlowAnalysis": "Cash Flow Analysis",
+      "receivables": "Receivables",
+      "payables": "Payables",
+      "assets": "Assets",
+      "liabilities": "Liabilities",
+      "equity": "Equity"
+    },
+    "sources": {
+      "productSales": "Product Sales",
+      "serviceRevenue": "Service Revenue",
+      "otherIncome": "Other Income"
+    },
+    "categories": {
+      "materials": "Materials",
+      "labor": "Labor",
+      "overhead": "Overhead",
+      "marketing": "Marketing",
+      "other": "Other"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    }
+  },
+  "language": {
+    "switch": "Switch Language",
+    "english": "English",
+    "arabic": "العربية"
+  }
 }

@@ -70,8 +70,8 @@ const LoginPage: React.FC = () => {
         errorTitle = t("auth.login.invalidCredentials");
         errorDescription = t("auth.login.invalidCredentialsMessage");
       } else if (error.message?.includes("No password set")) {
-        errorTitle = t("auth.login.googleAccount");
-        errorDescription = t("auth.login.googleAccountMessage");
+        errorTitle = t("auth.login.accountError");
+        errorDescription = t("auth.login.accountErrorMessage");
       } else if (error.message?.includes("No brand found")) {
         errorTitle = t("auth.login.noBrand");
         errorDescription = t("auth.login.noBrandMessage");

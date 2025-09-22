@@ -2,7 +2,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { SafeAuthProvider } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { AdminProvider } from "./contexts/AdminContext";
@@ -60,126 +59,118 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <GoogleOAuthProvider clientId="548796205497-e6dqns0631sc7rffjrbhf7eg9ms5jne7.apps.googleusercontent.com">
-        <LanguageProvider>
-          <SafeAuthProvider>
-            <SubscriptionProvider>
-              <TrialProvider>
-                <AdminProvider>
-                  <TooltipProvider>
-                    <BrowserRouter>
-                      <Routes>
-                        {/* Regular user routes */}
-                        <Route path="/" element={<Landing />} />
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/register" element={<RegisterPage />} />
+      <LanguageProvider>
+        <SafeAuthProvider>
+          <SubscriptionProvider>
+            <TrialProvider>
+              <AdminProvider>
+                <TooltipProvider>
+                  <BrowserRouter>
+                    <Routes>
+                      {/* Regular user routes */}
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route path="/register" element={<RegisterPage />} />
+                      <Route path="/onboarding" element={<OnboardingPage />} />
+                      <Route path="/success" element={<SuccessPage />} />
+                      <Route path="/support" element={<Support />} />
+                      <Route
+                        path="/brand/:brandId"
+                        element={
+                          <ProtectedRoute>
+                            <BrandLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route index element={<Dashboard />} />
+                        <Route path="revenues" element={<Revenues />} />
+                        <Route path="costs" element={<Costs />} />
                         <Route
-                          path="/onboarding"
-                          element={<OnboardingPage />}
+                          path="wallet"
+                          element={
+                            <ProtectedSection sectionKey="wallet">
+                              <WalletPage />
+                            </ProtectedSection>
+                          }
                         />
-                        <Route path="/success" element={<SuccessPage />} />
-                        <Route path="/support" element={<Support />} />
+                        <Route path="transfers" element={<TransfersPage />} />
                         <Route
-                          path="/brand/:brandId"
-                          element={
-                            <ProtectedRoute>
-                              <BrandLayout />
-                            </ProtectedRoute>
-                          }
-                        >
-                          <Route index element={<Dashboard />} />
-                          <Route path="revenues" element={<Revenues />} />
-                          <Route path="costs" element={<Costs />} />
-                          <Route
-                            path="wallet"
-                            element={
-                              <ProtectedSection sectionKey="wallet">
-                                <WalletPage />
-                              </ProtectedSection>
-                            }
-                          />
-                          <Route path="transfers" element={<TransfersPage />} />
-                          <Route
-                            path="receivables-payables"
-                            element={<ReceivablesPayablesPage />}
-                          />
-                          <Route
-                            path="inventory"
-                            element={
-                              <ProtectedSection sectionKey="inventory">
-                                <InventoryPage />
-                              </ProtectedSection>
-                            }
-                          />
-                          <Route
-                            path="best-sellers"
-                            element={<BestSellersPage />}
-                          />
-                          <Route path="orders" element={<OrdersPage />} />
-                          <Route path="tasks" element={<TasksPage />} />
-                          <Route
-                            path="support"
-                            element={
-                              <ProtectedSection sectionKey="support">
-                                <Support />
-                              </ProtectedSection>
-                            }
-                          />
-                          <Route
-                            path="my-tickets"
-                            element={
-                              <ProtectedSection sectionKey="my-tickets">
-                                <UserTickets />
-                              </ProtectedSection>
-                            }
-                          />
-                          <Route path="reports" element={<ReportsPage />} />
-                          <Route path="settings" element={<SettingsPage />} />
-                          <Route
-                            path="subscription"
-                            element={<SubscriptionPage />}
-                          />
-                        </Route>
-
-                        {/* Admin routes */}
-                        <Route path="/admin" element={<AdminLogin />} />
+                          path="receivables-payables"
+                          element={<ReceivablesPayablesPage />}
+                        />
                         <Route
-                          path="/admin/dashboard"
+                          path="inventory"
                           element={
-                            <AdminProtectedRoute>
-                              <AdminLayout />
-                            </AdminProtectedRoute>
+                            <ProtectedSection sectionKey="inventory">
+                              <InventoryPage />
+                            </ProtectedSection>
                           }
-                        >
-                          <Route index element={<AdminDashboard />} />
-                          <Route path="users" element={<AdminUsers />} />
-                          <Route path="brands" element={<AdminBrands />} />
-                          <Route
-                            path="subscriptions"
-                            element={<AdminSubscriptions />}
-                          />
-                          <Route
-                            path="analytics"
-                            element={<AdminAnalytics />}
-                          />
-                          <Route
-                            path="system-health"
-                            element={<AdminSystemHealth />}
-                          />
-                          <Route path="security" element={<AdminSecurity />} />
-                          <Route path="tickets" element={<AdminTickets />} />
-                        </Route>
+                        />
+                        <Route
+                          path="best-sellers"
+                          element={<BestSellersPage />}
+                        />
+                        <Route path="orders" element={<OrdersPage />} />
+                        <Route path="tasks" element={<TasksPage />} />
+                        <Route
+                          path="support"
+                          element={
+                            <ProtectedSection sectionKey="support">
+                              <Support />
+                            </ProtectedSection>
+                          }
+                        />
+                        <Route
+                          path="my-tickets"
+                          element={
+                            <ProtectedSection sectionKey="my-tickets">
+                              <UserTickets />
+                            </ProtectedSection>
+                          }
+                        />
+                        <Route path="reports" element={<ReportsPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route
+                          path="subscription"
+                          element={<SubscriptionPage />}
+                        />
+                      </Route>
 
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </AdminProvider>
-              </TrialProvider>
-            </SubscriptionProvider>
-          </SafeAuthProvider>
-        </LanguageProvider>
-      </GoogleOAuthProvider>
+                      {/* Admin routes */}
+                      <Route path="/admin" element={<AdminLogin />} />
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <AdminProtectedRoute>
+                            <AdminLayout />
+                          </AdminProtectedRoute>
+                        }
+                      >
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="users" element={<AdminUsers />} />
+                        <Route path="brands" element={<AdminBrands />} />
+                        <Route
+                          path="subscriptions"
+                          element={<AdminSubscriptions />}
+                        />
+                        <Route path="analytics" element={<AdminAnalytics />} />
+                        <Route
+                          path="system-health"
+                          element={<AdminSystemHealth />}
+                        />
+                        <Route path="security" element={<AdminSecurity />} />
+                        <Route path="tickets" element={<AdminTickets />} />
+                      </Route>
+
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </AdminProvider>
+            </TrialProvider>
+          </SubscriptionProvider>
+        </SafeAuthProvider>
+      </LanguageProvider>
       <Toaster />
     </QueryClientProvider>
   </ErrorBoundary>

@@ -1,10 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "@/services/AuthService";
 import { AuthenticatedRequest, ApiResponse } from "@/types";
-import { OAuth2Client } from "google-auth-library";
 import Joi from "joi";
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Validation schemas
 const registerSchema = Joi.object({
@@ -284,49 +281,5 @@ export class AuthController {
       message: "Auth service is running",
       timestamp: new Date().toISOString(),
     });
-  }
-
-  // Google OAuth Login
-  static async googleLogin(req: Request, res: Response): Promise<void> {
-    try {
-      const { idToken } = req.body;
-
-      if (!idToken) {
-        res.status(400).json({
-          success: false,
-          error: "Google ID token is required",
-        });
-        return;
-      }
-
-      // Verify Google token
-      const ticket = await client.verifyIdToken({
-        idToken,
-        // Don't specify audience to allow any valid Google token
-      });
-
-      const payload = ticket.getPayload();
-      if (!payload) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid Google token",
-        });
-        return;
-      }
-
-      // Call service to handle Google login
-      const result = await AuthService.googleLogin(payload.email!);
-
-      res.status(200).json({
-        success: true,
-        data: result,
-        message: "Google login successful",
-      });
-    } catch (error) {
-      res.status(401).json({
-        success: false,
-        error: error instanceof Error ? error.message : "Google login failed",
-      });
-    }
   }
 }
