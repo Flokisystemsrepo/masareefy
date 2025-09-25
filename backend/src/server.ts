@@ -1,3 +1,18 @@
+import moduleAlias from "module-alias";
+import path from "path";
+
+// Configure module aliases
+moduleAlias.addAliases({
+  "@": path.join(__dirname, "."),
+  "@/config": path.join(__dirname, "./config"),
+  "@/controllers": path.join(__dirname, "./controllers"),
+  "@/services": path.join(__dirname, "./services"),
+  "@/middleware": path.join(__dirname, "./middleware"),
+  "@/routes": path.join(__dirname, "./routes"),
+  "@/utils": path.join(__dirname, "./utils"),
+  "@/types": path.join(__dirname, "./types"),
+});
+
 import app from "./app";
 import { config } from "@/config/environment";
 import { prisma } from "@/config/database";

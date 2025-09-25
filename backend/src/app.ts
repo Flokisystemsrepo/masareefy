@@ -4,6 +4,7 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import path from "path";
 import { config } from "@/config/environment";
 
 // Import routes
@@ -94,6 +95,10 @@ if (config.nodeEnv === "development") {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Serve static files from the frontend build
+const frontendBuildPath = path.join(__dirname, "../../dist");
+app.use(express.static(frontendBuildPath));
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -143,13 +148,19 @@ app.use("/api/inventory", authenticateToken, (req, res) => {
   });
 });
 
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: "Route not found",
-    path: req.originalUrl,
-  });
+// SPA fallback - serve React app for non-API routes
+app.get("*", (req, res) => {
+  // If it's an API route that doesn't exist, return 404
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({
+      success: false,
+      error: "API route not found",
+      path: req.originalUrl,
+    });
+  }
+
+  // For all other routes, serve the React app
+  return res.sendFile(path.join(frontendBuildPath, "index.html"));
 });
 
 // Global error handler
