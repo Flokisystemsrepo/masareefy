@@ -28,7 +28,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { brandSettingsAPI, subscriptionAPI, authAPI } from "@/services/api";
+import {
+  brandSettingsAPI,
+  subscriptionAPI,
+  authAPI,
+  paymentAPI,
+} from "@/services/api";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -74,6 +79,10 @@ const Settings: React.FC = () => {
     confirm: false,
   });
 
+  // Billing state
+  const [billingData, setBillingData] = useState<any>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+
   // Notifications state
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -107,11 +116,27 @@ const Settings: React.FC = () => {
     { id: "profile", label: t("settings.tabs.profile"), icon: User },
     { id: "security", label: t("settings.tabs.security"), icon: Shield },
     { id: "subscription", label: t("settings.tabs.subscription"), icon: Crown },
+    { id: "billing", label: t("settings.tabs.billing"), icon: CreditCard },
   ];
 
   useEffect(() => {
     loadPlans();
+    loadBillingData();
   }, []);
+
+  const loadBillingData = async () => {
+    try {
+      setBillingLoading(true);
+      const response = await paymentAPI.getPaymentHistory();
+      if (response.success) {
+        setBillingData(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load billing data:", error);
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   const handlePasswordChange = async () => {
     try {
@@ -201,53 +226,50 @@ const Settings: React.FC = () => {
     return "Change Plan";
   };
 
-  const handlePlanChange = async (planId: string) => {
-    try {
-      setLoading(true);
+  const handlePlanChange = async (plan: any) => {
+    // Direct payment link redirection based on plan name
+    let paymentLink = "";
 
-      if (
-        subscription &&
-        subscription.id !== "fallback" &&
-        subscription.status === "active"
-      ) {
-        const response = await subscriptionAPI.updateSubscription(
-          subscription.id,
-          { planId: planId }
-        );
-
-        if (response.success) {
-          toast({
-            title: "Success",
-            description: "Plan updated successfully!",
-          });
-          await forceRefresh();
-        } else {
-          throw new Error(response.error || "Failed to update plan");
-        }
-      } else {
-        const response = await subscriptionAPI.createSubscription({
-          planId: planId,
-          paymentMethod: "mock",
-        });
-
-        if (response.success) {
-          toast({
-            title: "Success",
-            description: "Plan activated successfully!",
-          });
-          await forceRefresh();
-        } else {
-          throw new Error(response.error || "Failed to activate plan");
-        }
-      }
-    } catch (error: any) {
+    if (plan.name.toLowerCase() === "growth") {
+      paymentLink =
+        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353202,test";
+    } else if (plan.name.toLowerCase() === "scale") {
+      paymentLink =
+        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
+    } else {
       toast({
         title: "Error",
-        description: error.message || "Failed to change plan",
+        description: "Invalid plan selected",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      return;
+    }
+
+    console.log(`Redirecting to payment link for ${plan.name}:`, paymentLink);
+
+    // Store the selected plan in localStorage for callback handling
+    localStorage.setItem(
+      "pendingUpgrade",
+      JSON.stringify({
+        planId: plan.id,
+        planName: plan.name,
+        timestamp: Date.now(),
+      })
+    );
+
+    // Try to open payment page
+    const newWindow = window.open(paymentLink, "_blank");
+
+    if (
+      !newWindow ||
+      newWindow.closed ||
+      typeof newWindow.closed == "undefined"
+    ) {
+      // Popup was blocked, redirect in the same window
+      console.log("Popup blocked, redirecting in same window");
+      window.location.href = paymentLink;
+    } else {
+      console.log("Payment page opened in new tab");
     }
   };
 
@@ -912,7 +934,7 @@ const Settings: React.FC = () => {
 
                   {/* Action Button */}
                   <Button
-                    onClick={() => handlePlanChange(plan.id)}
+                    onClick={() => handlePlanChange(plan)}
                     disabled={loading || subscription?.plan.id === plan.id}
                     className="w-full h-12 text-base font-medium"
                     variant={
@@ -1048,6 +1070,191 @@ const Settings: React.FC = () => {
     </div>
   );
 
+  const renderBillingTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Payment History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {billingLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">
+                Loading payment history...
+              </span>
+            </div>
+          ) : billingData?.payments?.length > 0 ? (
+            <div className="space-y-4">
+              {billingData.payments.map((payment: any, index: number) => (
+                <div
+                  key={payment.id || index}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {payment.currency} {payment.amount}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(payment.processedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-100 text-green-800">
+                      {payment.status}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Download invoice logic
+                        const invoiceContent = `
+                          INVOICE
+                          =======
+                          
+                          Invoice ID: ${payment.id}
+                          Amount: ${payment.currency} ${payment.amount}
+                          Date: ${new Date(
+                            payment.processedAt
+                          ).toLocaleDateString()}
+                          Status: ${payment.status}
+                          Payment Method: ${payment.paymentMethod}
+                          
+                          Thank you for your payment!
+                        `;
+
+                        const blob = new Blob([invoiceContent], {
+                          type: "text/plain",
+                        });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `invoice-${payment.id}.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Payment History
+              </h3>
+              <p className="text-gray-500">
+                You haven't made any payments yet. Upgrade your plan to see
+                payment history here.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {billingData?.invoices?.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Invoices
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {billingData.invoices.map((invoice: any, index: number) => (
+                <div
+                  key={invoice.id || index}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Invoice #{invoice.invoiceNumber}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {invoice.currency} {invoice.amount} -{" "}
+                      {new Date(invoice.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={
+                        invoice.status === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }
+                    >
+                      {invoice.status}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Download invoice logic
+                        const invoiceContent = `
+                          INVOICE
+                          =======
+                          
+                          Invoice Number: ${invoice.invoiceNumber}
+                          Amount: ${invoice.currency} ${invoice.amount}
+                          Date: ${new Date(
+                            invoice.createdAt
+                          ).toLocaleDateString()}
+                          Status: ${invoice.status}
+                          Due Date: ${new Date(
+                            invoice.dueDate
+                          ).toLocaleDateString()}
+                          ${
+                            invoice.paidAt
+                              ? `Paid Date: ${new Date(
+                                  invoice.paidAt
+                                ).toLocaleDateString()}`
+                              : ""
+                          }
+                          
+                          Thank you for your business!
+                        `;
+
+                        const blob = new Blob([invoiceContent], {
+                          type: "text/plain",
+                        });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `invoice-${invoice.invoiceNumber}.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
   return (
     <div className="p-8">
       <div className="max-w-4xl mx-auto">
@@ -1089,6 +1296,7 @@ const Settings: React.FC = () => {
           {activeTab === "profile" && renderProfileTab()}
           {activeTab === "security" && renderSecurityTab()}
           {activeTab === "subscription" && renderSubscriptionTab()}
+          {activeTab === "billing" && renderBillingTab()}
         </motion.div>
       </div>
     </div>

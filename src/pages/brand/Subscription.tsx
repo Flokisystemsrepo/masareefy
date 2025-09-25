@@ -162,65 +162,46 @@ const SubscriptionPage: React.FC = () => {
     return "Change Plan";
   };
 
-  const handleUpgrade = async (planId: string) => {
-    try {
-      setUpgrading(true);
+  const handleUpgrade = (plan: any) => {
+    // Direct payment link redirection based on plan name
+    let paymentLink = "";
 
-      let response;
+    if (plan.name.toLowerCase() === "growth") {
+      paymentLink =
+        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353202,test";
+    } else if (plan.name.toLowerCase() === "scale") {
+      paymentLink =
+        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
+    } else {
+      toast.error("Invalid plan selected");
+      return;
+    }
 
-      // If user already has an active subscription, use update instead of create
-      if (
-        subscription &&
-        subscription.id !== "fallback" &&
-        subscription.status === "active"
-      ) {
-        console.log(
-          "User has active subscription, updating with subscription ID:",
-          subscription.id
-        );
-        response = await subscriptionAPI.updateSubscription(subscription.id, {
-          planId: planId,
-        });
+    console.log(`Redirecting to payment link for ${plan.name}:`, paymentLink);
 
-        console.log("Update subscription response:", response);
+    // Store the selected plan in localStorage for callback handling
+    localStorage.setItem(
+      "pendingUpgrade",
+      JSON.stringify({
+        planId: plan.id,
+        planName: plan.name,
+        timestamp: Date.now(),
+      })
+    );
 
-        if (response.success) {
-          toast.success("Upgrade successful!");
-          await forceRefresh();
-        } else {
-          console.error("Update subscription failed:", response);
-          toast.error(
-            response.error || "Upgrade failed. Please contact support."
-          );
-        }
-      } else {
-        // Try to create a new subscription for new users
-        console.log(
-          "Attempting to create new subscription with planId:",
-          planId
-        );
-        response = await subscriptionAPI.createSubscription({
-          planId: planId,
-          paymentMethod: "mock",
-        });
+    // Try to open payment page
+    const newWindow = window.open(paymentLink, "_blank");
 
-        console.log("Create subscription response:", response);
-
-        if (response.success) {
-          toast.success("Upgrade successful!");
-          await forceRefresh();
-        } else {
-          console.error("Create subscription failed:", response);
-          toast.error(
-            response.error || "Upgrade failed. Please contact support."
-          );
-        }
-      }
-    } catch (error: any) {
-      console.error("Upgrade error:", error);
-      toast.error(error.message || "Upgrade failed. Please try again.");
-    } finally {
-      setUpgrading(false);
+    if (
+      !newWindow ||
+      newWindow.closed ||
+      typeof newWindow.closed == "undefined"
+    ) {
+      // Popup was blocked, redirect in the same window
+      console.log("Popup blocked, redirecting in same window");
+      window.location.href = paymentLink;
+    } else {
+      console.log("Payment page opened in new tab");
     }
   };
 
@@ -358,7 +339,7 @@ const SubscriptionPage: React.FC = () => {
                     </ul>
 
                     <Button
-                      onClick={() => handleUpgrade(plan.id)}
+                      onClick={() => handleUpgrade(plan)}
                       disabled={upgrading || subscription?.plan.id === plan.id}
                       className={`w-full ${
                         plan.popular

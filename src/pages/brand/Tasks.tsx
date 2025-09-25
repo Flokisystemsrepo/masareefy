@@ -138,6 +138,9 @@ const TasksPage: React.FC = () => {
     "month"
   );
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "completed">(
+    "all"
+  );
   const [assignedToOpen, setAssignedToOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -265,6 +268,33 @@ const TasksPage: React.FC = () => {
     },
   });
 
+  const toggleTaskStatusMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: "completed" | "pending" | "in-progress";
+    }) => tasksAPI.update(id, { status }),
+    onSuccess: (data) => {
+      console.log("Task status updated successfully:", data);
+      toast({
+        title: "Success",
+        description: t("tasks.messages.taskStatusUpdated"),
+      });
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error: any) => {
+      console.error("Error updating task status:", error);
+      toast({
+        title: "Error",
+        description: error.message || t("tasks.messages.failedToUpdateStatus"),
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -330,6 +360,57 @@ const TasksPage: React.FC = () => {
     setShowEventModal(true);
   };
 
+  const handleToggleTaskStatus = (task: Task) => {
+    const newStatus = task.status === "completed" ? "pending" : "completed";
+    toggleTaskStatusMutation.mutate({ id: task.id, status: newStatus });
+  };
+
+  // Filter tasks based on active tab and other filters
+  const filteredTasks = useMemo(() => {
+    let filtered = tasks;
+
+    // Apply tab filter first
+    if (activeTab === "pending") {
+      filtered = filtered.filter((task) => task.status !== "completed");
+    } else if (activeTab === "completed") {
+      filtered = filtered.filter((task) => task.status === "completed");
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (task) =>
+          task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (task.description &&
+            task.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Apply priority filter
+    if (filterPriority !== "all") {
+      filtered = filtered.filter((task) => task.priority === filterPriority);
+    }
+
+    // Apply status filter
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((task) => task.status === filterStatus);
+    }
+
+    // Apply category filter
+    if (filterCategory !== "all") {
+      filtered = filtered.filter((task) => task.category === filterCategory);
+    }
+
+    return filtered;
+  }, [
+    tasks,
+    activeTab,
+    searchTerm,
+    filterPriority,
+    filterStatus,
+    filterCategory,
+  ]);
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -372,7 +453,7 @@ const TasksPage: React.FC = () => {
     const map = new Map<string, Task[]>();
     calendarDays.forEach((date) => {
       const dateString = date.toDateString();
-      const dayTasks = tasks.filter((task) => {
+      const dayTasks = filteredTasks.filter((task) => {
         // Show tasks on their creation date OR due date
         const taskCreatedDate = new Date(task.createdAt);
         const taskDueDate = task.dueDate ? new Date(task.dueDate) : null;
@@ -385,7 +466,7 @@ const TasksPage: React.FC = () => {
       map.set(dateString, dayTasks);
     });
     return map;
-  }, [tasks, calendarDays]);
+  }, [filteredTasks, calendarDays]);
 
   const getTasksForDate = (date: Date) => {
     const dateString = date.toDateString();
@@ -443,33 +524,6 @@ const TasksPage: React.FC = () => {
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentDate.getMonth();
   };
-
-  // Filtered tasks for list view - memoized to prevent unnecessary recalculations
-  const filteredTasks = useMemo(() => {
-    if (!tasks.length) return [];
-
-    return tasks.filter((task) => {
-      const matchesSearch =
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (task.description &&
-          task.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (task.assignedTo &&
-          task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      const matchesPriority =
-        filterPriority === "all" || task.priority === filterPriority;
-
-      const matchesStatus =
-        filterStatus === "all" || task.status === filterStatus;
-
-      const matchesCategory =
-        filterCategory === "all" || task.category === filterCategory;
-
-      return (
-        matchesSearch && matchesPriority && matchesStatus && matchesCategory
-      );
-    });
-  }, [tasks, searchTerm, filterPriority, filterStatus, filterCategory]);
 
   if (loading) {
     return (
@@ -562,6 +616,62 @@ const TasksPage: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* Task Status Tabs */}
+      <motion.div
+        className={`flex items-center space-x-2 ${
+          createTaskMutation.isPending ||
+          updateTaskMutation.isPending ||
+          deleteTaskMutation.isPending
+            ? "opacity-75"
+            : ""
+        }`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+      >
+        <Button
+          variant={activeTab === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("all")}
+          disabled={
+            createTaskMutation.isPending ||
+            updateTaskMutation.isPending ||
+            deleteTaskMutation.isPending
+          }
+        >
+          <List className="h-4 w-4 mr-2" />
+          {t("tasks.tabs.all")} ({tasks.length})
+        </Button>
+        <Button
+          variant={activeTab === "pending" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("pending")}
+          disabled={
+            createTaskMutation.isPending ||
+            updateTaskMutation.isPending ||
+            deleteTaskMutation.isPending
+          }
+        >
+          <Clock className="h-4 w-4 mr-2" />
+          {t("tasks.tabs.pending")} (
+          {tasks.filter((task) => task.status !== "completed").length})
+        </Button>
+        <Button
+          variant={activeTab === "completed" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("completed")}
+          disabled={
+            createTaskMutation.isPending ||
+            updateTaskMutation.isPending ||
+            deleteTaskMutation.isPending
+          }
+        >
+          <CheckCircle className="h-4 w-4 mr-2" />
+          {t("tasks.tabs.completed")} (
+          {tasks.filter((task) => task.status === "completed").length})
+        </Button>
+      </motion.div>
+
       {/* View Toggle */}
       <motion.div
         className={`flex items-center justify-between ${
@@ -573,7 +683,7 @@ const TasksPage: React.FC = () => {
         }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
       >
         <div className="flex items-center space-x-2">
           <Button
@@ -1482,6 +1592,25 @@ const TasksPage: React.FC = () => {
               </div>
 
               <div className="flex space-x-3 pt-4">
+                <Button
+                  variant={
+                    selectedTask.status === "completed" ? "default" : "outline"
+                  }
+                  onClick={() => handleToggleTaskStatus(selectedTask)}
+                  className="flex-1"
+                  disabled={toggleTaskStatusMutation.isPending}
+                >
+                  {toggleTaskStatusMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : selectedTask.status === "completed" ? (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Circle className="h-4 w-4 mr-2" />
+                  )}
+                  {selectedTask.status === "completed"
+                    ? t("tasks.details.markPending")
+                    : t("tasks.details.markCompleted")}
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => {

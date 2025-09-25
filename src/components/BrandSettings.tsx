@@ -172,57 +172,50 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
   };
 
   // Handle plan change
-  const handlePlanChange = async (planId: string) => {
-    try {
-      setLoading(true);
+  const handlePlanChange = async (plan: any) => {
+    // Direct payment link redirection based on plan name
+    let paymentLink = "";
 
-      if (
-        subscription &&
-        subscription.id !== "fallback" &&
-        subscription.status === "active"
-      ) {
-        // Update existing subscription
-        const response = await subscriptionAPI.updateSubscription(
-          subscription.id,
-          {
-            planId: planId,
-          }
-        );
-
-        if (response.success) {
-          toast({
-            title: "Success",
-            description: "Plan updated successfully!",
-          });
-          await forceRefresh();
-        } else {
-          throw new Error(response.error || "Failed to update plan");
-        }
-      } else {
-        // Create new subscription
-        const response = await subscriptionAPI.createSubscription({
-          planId: planId,
-          paymentMethod: "mock",
-        });
-
-        if (response.success) {
-          toast({
-            title: "Success",
-            description: "Plan activated successfully!",
-          });
-          await forceRefresh();
-        } else {
-          throw new Error(response.error || "Failed to activate plan");
-        }
-      }
-    } catch (error: any) {
+    if (plan.name.toLowerCase() === "growth") {
+      paymentLink =
+        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353202,test";
+    } else if (plan.name.toLowerCase() === "scale") {
+      paymentLink =
+        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
+    } else {
       toast({
         title: "Error",
-        description: error.message || "Failed to change plan",
+        description: "Invalid plan selected",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      return;
+    }
+
+    console.log(`Redirecting to payment link for ${plan.name}:`, paymentLink);
+
+    // Store the selected plan in localStorage for callback handling
+    localStorage.setItem(
+      "pendingUpgrade",
+      JSON.stringify({
+        planId: plan.id,
+        planName: plan.name,
+        timestamp: Date.now(),
+      })
+    );
+
+    // Try to open payment page
+    const newWindow = window.open(paymentLink, "_blank");
+
+    if (
+      !newWindow ||
+      newWindow.closed ||
+      typeof newWindow.closed == "undefined"
+    ) {
+      // Popup was blocked, redirect in the same window
+      console.log("Popup blocked, redirecting in same window");
+      window.location.href = paymentLink;
+    } else {
+      console.log("Payment page opened in new tab");
     }
   };
 
@@ -314,7 +307,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                           </span>
                         </div>
                         <p className="text-lg font-semibold text-gray-900">
-                          {subscription.billingCycle || "Monthly"}
+                          Monthly
                         </p>
                         <p className="text-xs text-gray-500">
                           Renews automatically
@@ -329,17 +322,17 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                           </span>
                         </div>
                         <p className="text-lg font-semibold text-gray-900">
-                          {subscription.nextBillingDate
+                          {subscription.currentPeriodEnd
                             ? new Date(
-                                subscription.nextBillingDate
+                                subscription.currentPeriodEnd
                               ).toLocaleDateString()
                             : "N/A"}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {subscription.nextBillingDate
+                          {subscription.currentPeriodEnd
                             ? `${Math.ceil(
                                 (new Date(
-                                  subscription.nextBillingDate
+                                  subscription.currentPeriodEnd
                                 ).getTime() -
                                   new Date().getTime()) /
                                   (1000 * 60 * 60 * 24)
@@ -356,42 +349,26 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                       </h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-green-600">
-                            {subscription.usage?.inventory || 0}
-                          </p>
+                          <p className="text-2xl font-bold text-green-600">0</p>
                           <p className="text-xs text-green-700">Products</p>
-                          <p className="text-xs text-green-600">
-                            / {subscription.plan.limits?.inventory || "∞"}
-                          </p>
+                          <p className="text-xs text-green-600">/ ∞</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-green-600">
-                            {subscription.usage?.revenue || 0}
-                          </p>
+                          <p className="text-2xl font-bold text-green-600">0</p>
                           <p className="text-xs text-green-700">
                             Revenue Entries
                           </p>
-                          <p className="text-xs text-green-600">
-                            / {subscription.plan.limits?.revenue || "∞"}
-                          </p>
+                          <p className="text-xs text-green-600">/ ∞</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-green-600">
-                            {subscription.usage?.costs || 0}
-                          </p>
+                          <p className="text-2xl font-bold text-green-600">0</p>
                           <p className="text-xs text-green-700">Cost Entries</p>
-                          <p className="text-xs text-green-600">
-                            / {subscription.plan.limits?.costs || "∞"}
-                          </p>
+                          <p className="text-xs text-green-600">/ ∞</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-green-600">
-                            {subscription.usage?.reports || 0}
-                          </p>
+                          <p className="text-2xl font-bold text-green-600">0</p>
                           <p className="text-xs text-green-700">Reports</p>
-                          <p className="text-xs text-green-600">
-                            / {subscription.plan.limits?.reports || "∞"}
-                          </p>
+                          <p className="text-xs text-green-600">/ ∞</p>
                         </div>
                       </div>
                     </div>
@@ -402,18 +379,21 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                         Plan Features
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {(
-                          subscription.plan.features?.features ||
-                          subscription.plan.features ||
-                          []
-                        ).map((feature: string, index: number) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <span className="text-sm text-blue-800">
-                              {feature}
-                            </span>
-                          </div>
-                        ))}
+                        {Array.isArray(subscription.plan.features?.features)
+                          ? subscription.plan.features.features.map(
+                              (feature: string, index: number) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                  <span className="text-sm text-blue-800">
+                                    {feature}
+                                  </span>
+                                </div>
+                              )
+                            )
+                          : []}
                       </div>
                     </div>
                   </div>
@@ -494,7 +474,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                         </div>
 
                         <Button
-                          onClick={() => handlePlanChange(plan.id)}
+                          onClick={() => handlePlanChange(plan)}
                           disabled={
                             loading || subscription?.plan.id === plan.id
                           }
@@ -543,9 +523,9 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                             Upcoming Invoice
                           </h4>
                           <p className="text-sm text-blue-700">
-                            {subscription?.nextBillingDate
+                            {subscription?.currentPeriodEnd
                               ? new Date(
-                                  subscription.nextBillingDate
+                                  subscription.currentPeriodEnd
                                 ).toLocaleDateString()
                               : "No upcoming billing"}
                           </p>

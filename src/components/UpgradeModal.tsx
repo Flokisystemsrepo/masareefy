@@ -120,48 +120,71 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
   };
 
   const handleUpgrade = async () => {
-    if (!selectedPlan) return;
+    if (!selectedPlan) {
+      toast({
+        title: "No Plan Selected",
+        description: "Please select a plan before upgrading.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setUpgrading(true);
 
-      let response;
+      // Get the selected plan details
+      const plan = availablePlans.find((p) => p.id === selectedPlan);
+      if (!plan) {
+        throw new Error("Plan not found");
+      }
 
-      if (currentSubscription) {
-        // User has existing subscription, update it
-        console.log("Updating existing subscription:", currentSubscription.id);
-        response = await subscriptionAPI.updateSubscription(
-          currentSubscription.id,
-          {
-            planId: selectedPlan,
-          }
-        );
+      console.log("Selected plan:", plan);
+      console.log("Plan name:", plan.name);
+      console.log("Plan name lowercase:", plan.name.toLowerCase());
+
+      // Determine the payment link based on plan
+      let paymentLink = "";
+      if (plan.name.toLowerCase() === "growth") {
+        paymentLink =
+          "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353202,test";
+      } else if (plan.name.toLowerCase() === "scale") {
+        paymentLink =
+          "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
       } else {
-        // User doesn't have subscription, create new one
-        console.log("Creating new subscription");
-        response = await subscriptionAPI.createSubscription({
+        throw new Error(`Invalid plan selected: ${plan.name}`);
+      }
+
+      console.log("Payment link:", paymentLink);
+
+      // Store the selected plan in localStorage for callback handling
+      localStorage.setItem(
+        "pendingUpgrade",
+        JSON.stringify({
           planId: selectedPlan,
-          paymentMethod: "mock",
-        });
-      }
+          planName: plan.name,
+          timestamp: Date.now(),
+        })
+      );
 
-      if (response.success) {
-        toast({
-          title: "Upgrade Successful!",
-          description: `You've been upgraded to ${
-            availablePlans.find((p) => p.id === selectedPlan)?.name
-          } plan.`,
-        });
+      // Try to open payment page
+      const newWindow = window.open(paymentLink, "_blank");
 
-        // Small delay to ensure backend has processed the subscription
-        setTimeout(() => {
-          onUpgradeSuccess();
-          onClose();
-        }, 500);
+      if (
+        !newWindow ||
+        newWindow.closed ||
+        typeof newWindow.closed == "undefined"
+      ) {
+        // Popup was blocked, redirect in the same window
+        console.log("Popup blocked, redirecting in same window");
+        window.location.href = paymentLink;
       } else {
-        throw new Error(response.error || "Upgrade failed");
+        console.log("Payment page opened in new tab");
       }
+
+      // Close the modal
+      onClose();
     } catch (error: any) {
+      console.error("Upgrade error:", error);
       toast({
         title: "Upgrade Failed",
         description: error.message || "Something went wrong. Please try again.",
@@ -309,7 +332,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
           <Button
             onClick={handleUpgrade}
             disabled={!selectedPlan || upgrading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {upgrading ? (
               <>
@@ -320,6 +343,11 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
                   <Crown className="h-4 w-4 mr-2" />
                 </motion.div>
                 Upgrading...
+              </>
+            ) : !selectedPlan ? (
+              <>
+                <Crown className="h-4 w-4 mr-2" />
+                Select a Plan First
               </>
             ) : (
               <>

@@ -614,6 +614,34 @@ export const subscriptionAPI = {
   },
 };
 
+// ===== PAYMENT API =====
+export const paymentAPI = {
+  // Confirm payment (called by frontend after payment)
+  confirmPayment: async (data: {
+    paymentId: string;
+    planId: string;
+    userId: string;
+    amount?: number;
+    currency?: string;
+    status?: string;
+  }) => {
+    return apiCall("/payment/confirm", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Get payment history
+  getPaymentHistory: async () => {
+    return apiCall("/payment/history");
+  },
+
+  // Get specific invoice
+  getInvoice: async (invoiceId: string) => {
+    return apiCall(`/payment/invoice/${invoiceId}`);
+  },
+};
+
 // ===== RECEIVABLES API =====
 export const receivablesAPI = {
   // Get all receivables

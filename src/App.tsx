@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProtectedSection from "./components/ProtectedSection";
 import { AdminProtectedRoute } from "./components/AdminProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PaymentCallbackHandler from "./components/PaymentCallbackHandler";
 import "./utils/clearAuthState"; // Import to make emergency function available
 import Landing from "./pages/Landing";
 import LoginPage from "./pages/Login";
@@ -164,6 +165,7 @@ const App = () => (
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    <PaymentCallbackHandler />
                   </BrowserRouter>
                 </TooltipProvider>
               </AdminProvider>

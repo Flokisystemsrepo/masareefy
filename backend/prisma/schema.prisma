@@ -90,11 +90,28 @@ model Subscription {
   isTrialActive         Boolean   @default(false)
   trialDays             Int       @default(0)
   trialNotificationSent Boolean   @default(false)
+  payments              Payment[]
   invoices              Invoice[]
   plan                  Plan      @relation(fields: [planId], references: [id])
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
+}
+
+model Payment {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  amount         Float
+  currency        String       @default("EGP")
+  status         String
+  paymentMethod  String       @default("kashier")
+  paymentId      String?      @unique
+  processedAt    DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
 
 model Invoice {
