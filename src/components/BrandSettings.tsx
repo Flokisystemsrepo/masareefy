@@ -143,8 +143,12 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
     try {
       setPlansLoading(true);
       const response = await subscriptionAPI.getPlans();
+      console.log("BrandSettings - Fetched plans:", response);
+
       if (response && Array.isArray(response)) {
         setAvailablePlans(response);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        setAvailablePlans(response.data);
       }
     } catch (error) {
       console.error("Failed to load plans:", error);
@@ -159,8 +163,12 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
     const currentPlanName = subscription.plan.name.toLowerCase();
     const targetPlanName = targetPlan.name.toLowerCase();
 
-    // Define plan hierarchy (higher index = higher tier)
-    const planHierarchy = ["free", "growth", "scale"];
+    // Get plan hierarchy from available plans (sorted by price)
+    const sortedPlans = [...availablePlans].sort(
+      (a, b) => a.priceMonthly - b.priceMonthly
+    );
+    const planHierarchy = sortedPlans.map((plan) => plan.name.toLowerCase());
+
     const currentIndex = planHierarchy.indexOf(currentPlanName);
     const targetIndex = planHierarchy.indexOf(targetPlanName);
 
@@ -182,6 +190,12 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
     } else if (plan.name.toLowerCase() === "scale") {
       paymentLink =
         "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
+    } else if (plan.name.toLowerCase() === "free") {
+      toast({
+        title: "Info",
+        description: "You're already on the Free plan!",
+      });
+      return;
     } else {
       toast({
         title: "Error",
@@ -268,7 +282,10 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                             {subscription.plan.name}
                           </h3>
                           <p className="text-blue-700 font-medium">
-                            ${subscription.plan.priceMonthly}/month
+                            {subscription.plan.priceMonthly === 0
+                              ? "Free"
+                              : `${subscription.plan.priceMonthly} EGP`}
+                            /month
                           </p>
                         </div>
                       </div>
@@ -532,7 +549,9 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-blue-900">
-                            ${subscription?.plan?.priceMonthly || 0}
+                            {subscription?.plan?.priceMonthly === 0
+                              ? "Free"
+                              : `${subscription?.plan?.priceMonthly || 0} EGP`}
                           </p>
                           <p className="text-xs text-blue-600">Monthly Plan</p>
                         </div>
@@ -557,7 +576,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-gray-900">$29.99</p>
+                            <p className="font-medium text-gray-900">299 EGP</p>
                             <Badge variant="default" className="text-xs">
                               Paid
                             </Badge>
@@ -576,7 +595,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-gray-900">$29.99</p>
+                            <p className="font-medium text-gray-900">299 EGP</p>
                             <Badge variant="default" className="text-xs">
                               Paid
                             </Badge>
@@ -595,7 +614,7 @@ const BrandSettings: React.FC<BrandSettingsProps> = ({
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-gray-900">$29.99</p>
+                            <p className="font-medium text-gray-900">299 EGP</p>
                             <Badge variant="default" className="text-xs">
                               Paid
                             </Badge>

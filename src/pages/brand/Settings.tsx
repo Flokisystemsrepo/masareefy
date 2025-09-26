@@ -198,8 +198,12 @@ const Settings: React.FC = () => {
     try {
       setPlansLoading(true);
       const response = await subscriptionAPI.getPlans();
+      console.log("Settings - Fetched plans:", response);
+
       if (response && Array.isArray(response)) {
         setAvailablePlans(response);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        setAvailablePlans(response.data);
       }
     } catch (error) {
       console.error("Failed to load plans:", error);
@@ -214,8 +218,12 @@ const Settings: React.FC = () => {
     const currentPlanName = subscription.plan.name.toLowerCase();
     const targetPlanName = targetPlan.name.toLowerCase();
 
-    // Define plan hierarchy (higher index = higher tier)
-    const planHierarchy = ["free", "growth", "scale"];
+    // Get plan hierarchy from available plans (sorted by price)
+    const sortedPlans = [...availablePlans].sort(
+      (a, b) => a.priceMonthly - b.priceMonthly
+    );
+    const planHierarchy = sortedPlans.map((plan) => plan.name.toLowerCase());
+
     const currentIndex = planHierarchy.indexOf(currentPlanName);
     const targetIndex = planHierarchy.indexOf(targetPlanName);
 
@@ -236,6 +244,12 @@ const Settings: React.FC = () => {
     } else if (plan.name.toLowerCase() === "scale") {
       paymentLink =
         "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
+    } else if (plan.name.toLowerCase() === "free") {
+      toast({
+        title: "Info",
+        description: "You're already on the Free plan!",
+      });
+      return;
     } else {
       toast({
         title: "Error",
