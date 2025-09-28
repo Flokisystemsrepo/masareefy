@@ -125,8 +125,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
       return;
     }
 
-    // Rate limiting: don't check more than once every 30 seconds
-    if (now - lastSubscriptionCheck.current < 30000) {
+    // Rate limiting: don't check more than once every 5 seconds
+    if (now - lastSubscriptionCheck.current < 5000) {
       console.log("Subscription check rate limited, skipping");
       return;
     }
@@ -139,7 +139,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
       return;
     }
 
-    console.log("Refreshing subscription...");
+    console.log("Refreshing subscription...", new Date().toISOString());
 
     try {
       loadingRef.current = true;
@@ -151,6 +151,12 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
 
       if (data.success) {
         console.log("Setting new subscription:", data.data);
+        console.log(
+          "Subscription plan:",
+          data.data.plan?.name,
+          "Status:",
+          data.data.status
+        );
         setSubscription(data.data);
         setUseFallback(false);
         setHasInitialized(true);
@@ -272,6 +278,37 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({
 
     return () => clearInterval(tokenCheckInterval);
   }, [lastAuthToken]);
+
+  // Monitor for completed payments and force refresh subscription
+  useEffect(() => {
+    const checkPendingUpgrade = () => {
+      const pendingUpgrade = localStorage.getItem("pendingUpgrade");
+      if (pendingUpgrade) {
+        try {
+          const upgradeData = JSON.parse(pendingUpgrade);
+          // If upgrade was initiated more than 2 minutes ago, check subscription status
+          if (Date.now() - upgradeData.timestamp > 2 * 60 * 1000) {
+            console.log("Checking for completed upgrade after payment timeout");
+            forceRefresh().then(() => {
+              // Remove the pending upgrade if refresh was successful
+              localStorage.removeItem("pendingUpgrade");
+            });
+          }
+        } catch (error) {
+          console.error("Error checking pending upgrade:", error);
+          localStorage.removeItem("pendingUpgrade");
+        }
+      }
+    };
+
+    // Check immediately
+    checkPendingUpgrade();
+
+    // Check every 30 seconds for pending upgrades
+    const pendingUpgradeInterval = setInterval(checkPendingUpgrade, 30000);
+
+    return () => clearInterval(pendingUpgradeInterval);
+  }, [forceRefresh]);
 
   // Initialize by fetching real subscription first, only fallback if that fails
   useEffect(() => {

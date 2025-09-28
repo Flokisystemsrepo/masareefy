@@ -124,21 +124,92 @@ export class SubscriptionService {
     data: UpdateSubscriptionDto
   ) {
     try {
+      // Get current subscription with plan details
+      const currentSubscription = await prisma.subscription.findUnique({
+        where: { id: subscriptionId },
+        include: { plan: true },
+      });
+
+      if (!currentSubscription) {
+        throw new Error("Subscription not found");
+      }
+
+      // If plan is being changed, get the new plan
+      let newPlan = null;
+      if (data.planId && data.planId !== currentSubscription.planId) {
+        newPlan = await prisma.plan.findUnique({
+          where: { id: data.planId },
+        });
+        if (!newPlan) {
+          throw new Error("New plan not found");
+        }
+      }
+
+      // Prepare update data
+      const updateData: any = {
+        ...(data.status && { status: data.status }),
+        ...(data.cancelAtPeriodEnd !== undefined && {
+          cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+        }),
+        ...(data.currentPeriodStart && { currentPeriodStart: new Date(data.currentPeriodStart) }),
+        ...(data.currentPeriodEnd && { currentPeriodEnd: new Date(data.currentPeriodEnd) }),
+        ...(data.paymentMethod && { paymentMethod: data.paymentMethod }),
+        ...(data.isTrialActive !== undefined && { isTrialActive: data.isTrialActive }),
+        ...(data.trialDays !== undefined && { trialDays: data.trialDays }),
+        ...(data.trialStart && { trialStart: new Date(data.trialStart) }),
+        ...(data.trialEnd && { trialEnd: new Date(data.trialEnd) }),
+      };
+
+      // If plan is being changed, handle the upgrade logic
+      if (data.planId && data.planId !== currentSubscription.planId) {
+        updateData.planId = data.planId;
+
+        // If upgrading to a paid plan, set proper dates and status
+        if (newPlan && newPlan.priceMonthly > 0) {
+          updateData.status = "active";
+          updateData.currentPeriodStart = new Date();
+          updateData.currentPeriodEnd = new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ); // 30 days
+          updateData.paymentMethod = "kashier";
+          updateData.trialEnd = null; // End any trial
+          updateData.isTrialActive = false;
+        } else if (newPlan && newPlan.priceMonthly === 0) {
+          // Downgrading to free plan
+          updateData.status = "active";
+          updateData.currentPeriodStart = new Date();
+          updateData.currentPeriodEnd = new Date(
+            Date.now() + 365 * 24 * 60 * 60 * 1000
+          ); // 1 year
+          updateData.paymentMethod = "free";
+          updateData.trialEnd = null;
+          updateData.isTrialActive = false;
+        }
+      }
+
+      console.log("🔄 Updating subscription with data:", updateData);
+
       const subscription = await prisma.subscription.update({
         where: { id: subscriptionId },
-        data: {
-          ...(data.planId && { planId: data.planId }),
-          ...(data.status && { status: data.status }),
-          ...(data.cancelAtPeriodEnd !== undefined && {
-            cancelAtPeriodEnd: data.cancelAtPeriodEnd,
-          }),
-        },
+        data: updateData,
         include: {
           plan: true,
         },
       });
+
+      console.log("✅ Subscription updated successfully:", {
+        id: subscription.id,
+        planId: subscription.planId,
+        planName: subscription.plan.name,
+        status: subscription.status,
+        isTrialActive: subscription.isTrialActive,
+        currentPeriodStart: subscription.currentPeriodStart,
+        currentPeriodEnd: subscription.currentPeriodEnd
+      });
+
       return subscription;
     } catch (error) {
+      console.error("Update subscription error:", error);
       throw new Error("Failed to update subscription");
     }
   }

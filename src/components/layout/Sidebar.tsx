@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useTrial } from "@/contexts/TrialContext";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -28,6 +29,7 @@ import {
   Edit2,
   Check,
   X,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -199,6 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t, isRTL } = useLanguage();
   const { hasSectionAccess, getSectionLockMessage, subscription } =
     useSubscription();
+  const { trialStatus } = useTrial();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -371,6 +374,39 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <span className="text-white font-semibold text-lg">
                       {user?.companyName || "Pulse"}
                     </span>
+                    {/* Trial Counter */}
+                    {trialStatus?.isTrialActive &&
+                      trialStatus.daysRemaining > 0 && (
+                        <div
+                          className={`rounded-full px-2 py-1 cursor-help ${
+                            trialStatus.daysRemaining <= 1
+                              ? "bg-red-500/20 border border-red-400/30"
+                              : "bg-orange-500/20 border border-orange-400/30"
+                          }`}
+                          title={`${trialStatus.plan.name} trial expires ${
+                            trialStatus.trialEnd
+                              ? new Date(
+                                  trialStatus.trialEnd
+                                ).toLocaleDateString()
+                              : "soon"
+                          }. Upgrade to continue using premium features.`}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <Clock className="h-3 w-3" />
+                            <span
+                              className={`text-xs font-medium ${
+                                trialStatus.daysRemaining <= 1
+                                  ? "text-red-300"
+                                  : "text-orange-300"
+                              }`}
+                            >
+                              {trialStatus.daysRemaining}{" "}
+                              {trialStatus.daysRemaining === 1 ? "day" : "days"}{" "}
+                              left
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     <AnimatePresence>
                       {isHoveringBrandName && (
                         <motion.div

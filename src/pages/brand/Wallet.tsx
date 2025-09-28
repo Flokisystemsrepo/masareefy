@@ -650,7 +650,7 @@ const WalletPage: React.FC = () => {
   return (
     <FeatureLock featureName="Wallet Management">
       <div
-        className={`p-6 space-y-6 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 min-h-screen ${
+        className={`p-6 space-y-6 bg-white min-h-screen ${
           isRTL ? "rtl" : "ltr"
         }`}
       >

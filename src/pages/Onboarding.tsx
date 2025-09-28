@@ -1235,7 +1235,7 @@ const Onboarding: React.FC = () => {
                 )}
               </div>
               <div className="flex justify-center">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl w-full">
                   {loadingPlans ? (
                     <div className="col-span-full text-center py-10">
                       <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
@@ -1249,7 +1249,7 @@ const Onboarding: React.FC = () => {
                     plans.map((plan) => (
                       <Card
                         key={plan.id}
-                        className={`cursor-pointer transition-all duration-300 h-96 ${
+                        className={`cursor-pointer transition-all duration-300 h-auto min-h-[400px] max-h-[600px] ${
                           data.plan === plan.id
                             ? "ring-4 ring-white/60 bg-white/25 backdrop-blur-md scale-105 shadow-2xl"
                             : "bg-white/10 backdrop-blur-md hover:bg-white/20 hover:scale-105"
@@ -1260,8 +1260,8 @@ const Onboarding: React.FC = () => {
                         }`}
                         onClick={() => setData({ ...data, plan: plan.id })}
                       >
-                        <CardContent className="p-6 h-full flex flex-col justify-between">
-                          <div className="text-center space-y-3 flex-1">
+                        <CardContent className="p-6 h-full flex flex-col min-h-[400px]">
+                          <div className="text-center space-y-3">
                             <h3 className="text-2xl font-bold text-white">
                               {plan.name}
                             </h3>
@@ -1296,12 +1296,22 @@ const Onboarding: React.FC = () => {
                             {plan.name === "Free" && (
                               <div className="bg-green-500/20 border border-green-400/30 rounded-full px-3 py-1 inline-block">
                                 <span className="text-green-400 text-xs font-semibold">
-                                  Perfect to start
+                                  {t(
+                                    "auth.onboarding.content.plan.perfectToStart"
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            {(plan.name === "Growth" ||
+                              plan.name === "Scale") && (
+                              <div className="bg-white/90 border border-white rounded-full px-3 py-1 inline-block shadow-lg">
+                                <span className="text-blue-600 text-xs font-semibold">
+                                  {t("auth.onboarding.content.plan.freeTrial")}
                                 </span>
                               </div>
                             )}
                           </div>
-                          <div className="space-y-2 mt-4 max-h-48 overflow-y-auto">
+                          <div className="space-y-2 mt-6">
                             {Array.isArray(plan.features.features) ? (
                               plan.features.features.map(
                                 (feature: string, index: number) => (

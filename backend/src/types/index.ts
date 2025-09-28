@@ -331,8 +331,15 @@ export interface CreateSubscriptionDto {
 
 export interface UpdateSubscriptionDto {
   planId?: string;
-  status?: "active" | "cancelled" | "past_due" | "unpaid";
+  status?: "active" | "cancelled" | "past_due" | "unpaid" | "trialing";
   cancelAtPeriodEnd?: boolean;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  paymentMethod?: string;
+  isTrialActive?: boolean;
+  trialDays?: number;
+  trialStart?: string;
+  trialEnd?: string;
 }
 
 export interface SubscriptionWithPlan extends Subscription {

@@ -43,7 +43,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   const verifyAdminToken = async (token: string) => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/admin/auth/verify",
+        "http://localhost:8080/api/admin/auth/verify",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,7 +75,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setLoading(true);
       const response = await fetch(
-        "http://localhost:3001/api/admin/auth/login",
+        "http://localhost:8080/api/admin/auth/login",
         {
           method: "POST",
           headers: {
@@ -113,7 +113,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = localStorage.getItem("adminToken");
     if (token) {
       // Call logout API
-      fetch("http://localhost:3001/api/admin/auth/logout", {
+      fetch("http://localhost:8080/api/admin/auth/logout", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

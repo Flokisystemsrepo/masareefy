@@ -78,12 +78,23 @@ export const TrialProvider: React.FC<TrialProviderProps> = ({ children }) => {
       if (response.data.success) {
         setTrialStatus(response.data.data);
 
-        // Show modal if trial is expiring soon (1 day or less)
+        // Show modal if trial is expiring soon (1 day or less) or has expired
         if (
           response.data.data?.isTrialActive &&
           response.data.data?.daysRemaining <= 1
         ) {
           setShowTrialExpirationModal(true);
+        }
+
+        // Also show modal if user was just downgraded (check notifications)
+        const notificationsResponse = await api.get("/trial/notifications");
+        if (notificationsResponse.data.success) {
+          const unreadNotifications = notificationsResponse.data.data.filter(
+            (n: any) => !n.isRead && n.type === "trial_expired"
+          );
+          if (unreadNotifications.length > 0) {
+            setShowTrialExpirationModal(true);
+          }
         }
       }
     } catch (err: any) {

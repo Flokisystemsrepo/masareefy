@@ -142,17 +142,27 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
       console.log("Plan name:", plan.name);
       console.log("Plan name lowercase:", plan.name.toLowerCase());
 
-      // Determine the payment link based on plan
-      let paymentLink = "";
-      if (plan.name.toLowerCase() === "growth") {
-        paymentLink =
-          "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353202,test";
-      } else if (plan.name.toLowerCase() === "scale") {
-        paymentLink =
-          "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
-      } else {
-        throw new Error(`Invalid plan selected: ${plan.name}`);
+      // Use our HPP flow instead of hardcoded URLs
+      const response = await fetch("/api/payments/hpp-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          planId: selectedPlan,
+          planName: plan.name,
+          amount: plan.priceMonthly,
+          currency: "EGP",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate payment URL");
       }
+
+      const data = await response.json();
+      const paymentLink = data.url;
 
       console.log("Payment link:", paymentLink);
 

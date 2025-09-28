@@ -170,4 +170,35 @@ router.get(
   adminController.getSubscriptionPlans.bind(adminController)
 );
 
+// User Subscription Management Routes
+router.get(
+  "/admin/subscriptions",
+  adminAuth,
+  requirePermission("subscriptions.read"),
+  adminController.getAllSubscriptions.bind(adminController)
+);
+router.get(
+  "/admin/invoices",
+  adminAuth,
+  requirePermission("subscriptions.read"),
+  adminController.getAllInvoices.bind(adminController)
+);
+router.get(
+  "/admin/test",
+  adminAuth,
+  adminController.testEndpoint.bind(adminController)
+);
+router.put(
+  "/admin/subscriptions/:userId",
+  adminAuth,
+  adminController.updateUserSubscription.bind(adminController)
+);
+
+// Test route for debugging
+router.put(
+  "/admin/test-subscription/:userId",
+  adminAuth,
+  adminController.testSubscriptionUpdate.bind(adminController)
+);
+
 export default router;

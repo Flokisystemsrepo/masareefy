@@ -242,14 +242,24 @@ export class AdminController {
             createdAt: true,
             subscriptions: {
               select: {
+                id: true,
                 status: true,
+                isTrialActive: true,
+                trialDays: true,
+                trialStart: true,
+                trialEnd: true,
+                currentPeriodStart: true,
+                currentPeriodEnd: true,
                 plan: {
                   select: {
+                    id: true,
                     name: true,
                     priceMonthly: true,
+                    priceYearly: true,
                   },
                 },
               },
+              orderBy: { createdAt: "desc" },
             },
             brands: {
               select: {
@@ -535,69 +545,6 @@ export class AdminController {
       });
     } catch (error) {
       console.error("Delete subscription error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Internal server error.",
-      });
-    }
-  }
-
-  async getAllSubscriptions(req: Request, res: Response): Promise<void> {
-    try {
-      const { page = 1, limit = 20, status } = req.query;
-      const skip = (Number(page) - 1) * Number(limit);
-
-      const where: any = {};
-
-      if (status) {
-        where.status = status;
-      }
-
-      const [subscriptions, total] = await Promise.all([
-        prisma.subscription.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            status: true,
-            currentPeriodStart: true,
-            currentPeriodEnd: true,
-            createdAt: true,
-            user: {
-              select: {
-                email: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-            plan: {
-              select: {
-                name: true,
-                priceMonthly: true,
-                priceYearly: true,
-              },
-            },
-          },
-        }),
-        prisma.subscription.count({ where }),
-      ]);
-
-      res.json({
-        success: true,
-        data: {
-          subscriptions,
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total,
-            pages: Math.ceil(total / Number(limit)),
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Get all subscriptions error:", error);
       res.status(500).json({
         success: false,
         error: "Internal server error.",
@@ -1525,6 +1472,498 @@ export class AdminController {
       res.status(500).json({
         success: false,
         error: error.message || "Internal server error.",
+      });
+    }
+  }
+
+  // Get all subscriptions
+  async getAllSubscriptions(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 20, search, status } = req.query;
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const where: any = {};
+
+      if (search) {
+        where.OR = [
+          {
+            user: {
+              email: { contains: search as string, mode: "insensitive" },
+            },
+          },
+          {
+            user: {
+              firstName: { contains: search as string, mode: "insensitive" },
+            },
+          },
+          {
+            user: {
+              lastName: { contains: search as string, mode: "insensitive" },
+            },
+          },
+          {
+            plan: { name: { contains: search as string, mode: "insensitive" } },
+          },
+        ];
+      }
+
+      if (status && status !== "all") {
+        where.status = status;
+      }
+
+      const [subscriptions, total] = await Promise.all([
+        prisma.subscription.findMany({
+          where,
+          skip,
+          take: Number(limit),
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+            plan: {
+              select: {
+                id: true,
+                name: true,
+                priceMonthly: true,
+                priceYearly: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.subscription.count({ where }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          subscriptions,
+          pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total,
+            pages: Math.ceil(total / Number(limit)),
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch subscriptions",
+      });
+    }
+  }
+
+  // Get all invoices
+  async getAllInvoices(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 20, search, status } = req.query;
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const where: any = {};
+
+      if (search) {
+        where.OR = [
+          {
+            user: {
+              email: { contains: search as string, mode: "insensitive" },
+            },
+          },
+          {
+            user: {
+              firstName: { contains: search as string, mode: "insensitive" },
+            },
+          },
+          {
+            user: {
+              lastName: { contains: search as string, mode: "insensitive" },
+            },
+          },
+          {
+            invoiceNumber: { contains: search as string, mode: "insensitive" },
+          },
+        ];
+      }
+
+      if (status && status !== "all") {
+        where.status = status;
+      }
+
+      const [invoices, total] = await Promise.all([
+        prisma.invoice.findMany({
+          where,
+          skip,
+          take: Number(limit),
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+            subscription: {
+              include: {
+                plan: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.invoice.count({ where }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          invoices,
+          pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total,
+            pages: Math.ceil(total / Number(limit)),
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch invoices",
+      });
+    }
+  }
+
+  // Test endpoint
+  async testEndpoint(req: Request, res: Response): Promise<void> {
+    console.log("🧪 Test endpoint called!");
+    res.json({
+      success: true,
+      message: "Test endpoint working!",
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Simple subscription test
+  async testSubscriptionUpdate(req: Request, res: Response): Promise<void> {
+    console.log("🧪 TEST SUBSCRIPTION UPDATE CALLED!");
+    res.json({
+      success: true,
+      message: "Subscription test endpoint working!",
+      userId: req.params.userId,
+      body: req.body,
+    });
+  }
+
+  // Update user subscription
+  async updateUserSubscription(req: Request, res: Response): Promise<void> {
+    console.log("🔥🔥🔥 SUBSCRIPTION UPDATE METHOD CALLED 🔥🔥🔥");
+    try {
+      const { userId } = req.params;
+      const { planId, status, isTrialActive, trialDays } = req.body;
+
+      // Validate required fields
+      if (!planId || !status) {
+        res.status(400).json({
+          success: false,
+          error: "planId and status are required",
+        });
+        return;
+      }
+
+      // Get user
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { subscriptions: { include: { plan: true } } },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          error: "User not found",
+        });
+        return;
+      }
+
+      // Check if plan exists
+      const plan = await prisma.plan.findUnique({
+        where: { id: planId },
+      });
+
+      if (!plan) {
+        res.status(404).json({
+          success: false,
+          error: "Plan not found",
+        });
+        return;
+      }
+
+      // Update or create subscription
+      let subscription;
+      if (user.subscriptions.length > 0) {
+        try {
+          subscription = await prisma.subscription.update({
+            where: { id: user.subscriptions[0].id },
+            data: {
+              planId,
+              status,
+              isTrialActive: isTrialActive || false,
+              trialDays: trialDays || 0,
+              updatedAt: new Date(),
+            },
+            include: { plan: true },
+          });
+        } catch (error) {
+          // If update fails, create new subscription
+          subscription = await prisma.subscription.create({
+            data: {
+              userId,
+              planId,
+              status,
+              isTrialActive: isTrialActive || false,
+              trialDays: trialDays || 0,
+              paymentMethod: "admin",
+            },
+            include: { plan: true },
+          });
+        }
+      } else {
+        subscription = await prisma.subscription.create({
+          data: {
+            userId,
+            planId,
+            status,
+            isTrialActive: isTrialActive || false,
+            trialDays: trialDays || 0,
+            paymentMethod: "admin",
+          },
+          include: { plan: true },
+        });
+      }
+
+      res.json({
+        success: true,
+        data: subscription,
+        message: "Subscription updated successfully",
+      });
+    } catch (error) {
+      console.error("Update subscription error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to update subscription",
+      });
+    }
+  }
+
+  // Original method - commented out for debugging
+  async updateUserSubscriptionOriginal(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    console.log("🚀🚀🚀 updateUserSubscription method called! 🚀🚀🚀");
+    console.log("🔥 METHOD ENTRY POINT REACHED 🔥");
+    console.log("📥 REQUEST DETAILS:");
+    console.log("  - Method:", req.method);
+    console.log("  - URL:", req.url);
+    console.log("  - Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("  - Body:", JSON.stringify(req.body, null, 2));
+    console.log("  - Params:", JSON.stringify(req.params, null, 2));
+
+    try {
+      const { userId } = req.params;
+      const {
+        planId,
+        status,
+        isTrialActive,
+        trialDays,
+        currentPeriodStart,
+        currentPeriodEnd,
+        trialStart,
+        trialEnd,
+      } = req.body;
+
+      console.log("🔄 UPDATING SUBSCRIPTION - DETAILED LOGS:");
+      console.log("  - User ID:", userId);
+      console.log("  - Plan ID:", planId);
+      console.log("  - Status:", status);
+      console.log("  - Is Trial Active:", isTrialActive);
+      console.log("  - Trial Days:", trialDays);
+      console.log("  - Current Period Start:", currentPeriodStart);
+      console.log("  - Current Period End:", currentPeriodEnd);
+      console.log("  - Trial Start:", trialStart);
+      console.log("  - Trial End:", trialEnd);
+
+      // Validate required fields
+      console.log("🔍 VALIDATING REQUIRED FIELDS...");
+      if (!planId || !status) {
+        console.log("❌ VALIDATION FAILED - Missing planId or status");
+        res.status(400).json({
+          success: false,
+          error: "planId and status are required",
+        });
+        return;
+      }
+      console.log("✅ VALIDATION PASSED");
+
+      // Get user's current subscription
+      console.log("🔍 FETCHING USER FROM DATABASE...");
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscriptions: {
+            include: { plan: true },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+
+      if (!user) {
+        console.log("❌ USER NOT FOUND");
+        res.status(404).json({
+          success: false,
+          error: "User not found",
+        });
+        return;
+      }
+
+      console.log("✅ USER FOUND:", user.email);
+      console.log("📊 USER SUBSCRIPTIONS:", user.subscriptions.length);
+
+      // Check if plan exists
+      console.log("🔍 FETCHING PLAN FROM DATABASE...");
+      const plan = await prisma.plan.findUnique({
+        where: { id: planId },
+      });
+
+      if (!plan) {
+        console.log("❌ PLAN NOT FOUND");
+        res.status(404).json({
+          success: false,
+          error: "Plan not found",
+        });
+        return;
+      }
+
+      console.log("✅ PLAN FOUND:", plan.name);
+
+      // Create or update subscription
+      let subscription;
+
+      if (user.subscriptions.length > 0) {
+        // Update existing subscription
+        console.log("📝 UPDATING EXISTING SUBSCRIPTION");
+        console.log("  - Existing subscription ID:", user.subscriptions[0].id);
+        console.log("  - Current plan:", user.subscriptions[0].plan.name);
+        console.log("  - Current status:", user.subscriptions[0].status);
+
+        try {
+          subscription = await prisma.subscription.update({
+            where: { id: user.subscriptions[0].id },
+            data: {
+              planId,
+              status,
+              isTrialActive: isTrialActive || false,
+              trialDays: trialDays || 0,
+              currentPeriodStart: currentPeriodStart
+                ? new Date(currentPeriodStart)
+                : new Date(),
+              currentPeriodEnd: currentPeriodEnd
+                ? new Date(currentPeriodEnd)
+                : null,
+              trialStart: trialStart ? new Date(trialStart) : null,
+              trialEnd: trialEnd ? new Date(trialEnd) : null,
+              updatedAt: new Date(),
+            },
+            include: { plan: true },
+          });
+          console.log("✅ SUBSCRIPTION UPDATED SUCCESSFULLY");
+        } catch (updateError) {
+          console.log("❌ UPDATE FAILED, CREATING NEW SUBSCRIPTION");
+          console.log("Update error:", updateError);
+          subscription = await prisma.subscription.create({
+            data: {
+              userId,
+              planId,
+              status,
+              isTrialActive: isTrialActive || false,
+              trialDays: trialDays || 0,
+              currentPeriodStart: currentPeriodStart
+                ? new Date(currentPeriodStart)
+                : new Date(),
+              currentPeriodEnd: currentPeriodEnd
+                ? new Date(currentPeriodEnd)
+                : null,
+              trialStart: trialStart ? new Date(trialStart) : null,
+              trialEnd: trialEnd ? new Date(trialEnd) : null,
+              paymentMethod: "admin",
+            },
+            include: { plan: true },
+          });
+          console.log("✅ NEW SUBSCRIPTION CREATED AFTER UPDATE FAILED");
+        }
+      } else {
+        // Create new subscription
+        console.log("📝 CREATING NEW SUBSCRIPTION");
+        subscription = await prisma.subscription.create({
+          data: {
+            userId,
+            planId,
+            status,
+            isTrialActive: isTrialActive || false,
+            trialDays: trialDays || 0,
+            currentPeriodStart: currentPeriodStart
+              ? new Date(currentPeriodStart)
+              : new Date(),
+            currentPeriodEnd: currentPeriodEnd
+              ? new Date(currentPeriodEnd)
+              : null,
+            trialStart: trialStart ? new Date(trialStart) : null,
+            trialEnd: trialEnd ? new Date(trialEnd) : null,
+            paymentMethod: "admin",
+          },
+          include: { plan: true },
+        });
+        console.log("✅ NEW SUBSCRIPTION CREATED");
+      }
+
+      console.log("🎉 SUBSCRIPTION PROCESS COMPLETED SUCCESSFULLY");
+      console.log("  - Subscription ID:", subscription.id);
+      console.log("  - Plan:", subscription.plan.name);
+      console.log("  - Status:", subscription.status);
+
+      res.json({
+        success: true,
+        data: subscription,
+        message: "Subscription updated successfully",
+      });
+    } catch (error) {
+      console.error("❌❌❌ CRITICAL ERROR in updateUserSubscription ❌❌❌");
+      console.error("Error type:", typeof error);
+      console.error(
+        "Error message:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      console.error(
+        "Error stack:",
+        error instanceof Error ? error.stack : "No stack trace"
+      );
+      console.error("Full error object:", JSON.stringify(error, null, 2));
+
+      res.status(500).json({
+        success: false,
+        error: "Failed to update user subscription",
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }

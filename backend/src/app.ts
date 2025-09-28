@@ -22,6 +22,7 @@ import testUpgradeRoutes from "@/routes/test-upgrade";
 import trialRoutes from "@/routes/trial";
 import otpRoutes from "@/routes/otp";
 import paymentRoutes from "@/routes/payment";
+import paymentsRoutes from "@/routes/payments";
 
 // Import middleware
 import { authenticateToken } from "@/middleware/auth";
@@ -128,6 +129,7 @@ app.use("/api/trial", trialRoutes);
 
 // Payment routes
 app.use("/api/payment", paymentRoutes);
+app.use("/api/payments", paymentsRoutes);
 
 app.use("/api/subscription", subscriptionLimiter, subscriptionRoutes);
 app.use("/api/test-upgrade", testUpgradeRoutes);

@@ -17,11 +17,9 @@ export const config = {
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || "12"),
 
-  // Stripe
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  stripePriceMonthly: process.env.STRIPE_PRICE_MONTHLY!,
-  stripePriceYearly: process.env.STRIPE_PRICE_YEARLY!,
+  // Kashier
+  kashierApiKey: process.env.KASHIER_API_KEY!,
+  kashierMerchantId: process.env.KASHIER_MERCHANT_ID!,
 
   // Email
   sendgridApiKey: process.env.SENDGRID_API_KEY!,
@@ -50,22 +48,28 @@ export const config = {
 };
 
 // Validate required environment variables
-const requiredEnvVars = [
-  "DATABASE_URL",
-  "JWT_SECRET",
-  "STRIPE_SECRET_KEY",
-  "STRIPE_WEBHOOK_SECRET",
-  "STRIPE_PRICE_MONTHLY",
-  "STRIPE_PRICE_YEARLY",
-  "SENDGRID_API_KEY",
-  "AWS_ACCESS_KEY_ID",
-  "AWS_SECRET_ACCESS_KEY",
-  "AWS_S3_BUCKET",
-];
+const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET"];
+
+// Optional environment variables (with defaults)
+const optionalEnvVars = {
+  SENDGRID_API_KEY: "test_sendgrid_key",
+  AWS_ACCESS_KEY_ID: "test_aws_key",
+  AWS_SECRET_ACCESS_KEY: "test_aws_secret",
+  AWS_S3_BUCKET: "test_bucket",
+  KASHIER_API_KEY: "test_key",
+  KASHIER_MERCHANT_ID: "test_merchant",
+};
 
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`Missing required environment variable: ${envVar}`);
+  }
+}
+
+// Set default values for optional environment variables
+for (const [key, defaultValue] of Object.entries(optionalEnvVars)) {
+  if (!process.env[key]) {
+    process.env[key] = defaultValue;
   }
 }
 

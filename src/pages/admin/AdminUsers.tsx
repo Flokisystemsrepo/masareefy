@@ -2,19 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Users,
-  UserPlus,
   Search,
-  Filter,
-  Mail,
-  Calendar,
-  Shield,
   Building2,
+  Calendar,
   MoreVertical,
-  Eye,
   Edit,
-  Trash2,
   CreditCard,
-  Settings,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,8 +54,13 @@ interface User {
   emailVerified: boolean;
   createdAt: string;
   subscriptions: Array<{
+    id: string;
     status: string;
+    isTrialActive: boolean;
+    trialDays: number;
+    trialEnd: string | null;
     plan: {
+      id: string;
       name: string;
       priceMonthly: number;
     };
@@ -69,7 +68,6 @@ interface User {
   brands: Array<{
     id: string;
     name: string;
-    settings?: any;
   }>;
 }
 
@@ -77,23 +75,6 @@ interface Plan {
   id: string;
   name: string;
   priceMonthly: number;
-  priceYearly: number;
-  maxBrands: number;
-  maxUsers: number;
-  trialDays: number;
-}
-
-interface UsersResponse {
-  success: boolean;
-  data: {
-    users: User[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  };
 }
 
 const AdminUsers: React.FC = () => {
@@ -101,7 +82,6 @@ const AdminUsers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -110,9 +90,6 @@ const AdminUsers: React.FC = () => {
     pages: 1,
   });
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -120,9 +97,9 @@ const AdminUsers: React.FC = () => {
   // Subscription management state
   const [subscriptionData, setSubscriptionData] = useState({
     planId: "",
-    subscription_status: "",
-    billing_start: "",
-    billing_end: "",
+    status: "",
+    isTrialActive: false,
+    trialDays: 0,
   });
 
   const fetchUsers = async () => {
@@ -135,11 +112,10 @@ const AdminUsers: React.FC = () => {
         page: currentPage.toString(),
         limit: "20",
         ...(searchTerm && { search: searchTerm }),
-        ...(statusFilter !== "all" && { status: statusFilter }),
       });
 
       const response = await fetch(
-        `http://localhost:3001/api/admin/users?${params}`,
+        `http://localhost:8080/api/admin/users?${params}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -152,7 +128,7 @@ const AdminUsers: React.FC = () => {
         throw new Error("Failed to fetch users");
       }
 
-      const data: UsersResponse = await response.json();
+      const data = await response.json();
 
       if (data.success) {
         setUsers(data.data.users);
@@ -168,15 +144,10 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    fetchPlans();
-  }, [currentPage, searchTerm, statusFilter]);
-
   const fetchPlans = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      const response = await fetch("http://localhost:3001/api/admin/plans", {
+      const response = await fetch("http://localhost:8080/api/admin/plans", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -193,6 +164,11 @@ const AdminUsers: React.FC = () => {
       console.error("Error fetching plans:", error);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+    fetchPlans();
+  }, [currentPage, searchTerm]);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -222,109 +198,26 @@ const AdminUsers: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setShowEditModal(true);
-  };
-
-  const handleDeleteUser = (user: User) => {
-    setSelectedUser(user);
-    setShowDeleteModal(true);
-  };
-
-  const handleAddUser = () => {
-    setShowAddModal(true);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!selectedUser) return;
-
-    try {
-      setActionLoading(true);
-      const token = localStorage.getItem("adminToken");
-
-      const response = await fetch(
-        `http://localhost:3001/api/admin/users/${selectedUser.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete user");
-      }
-
-      // Refresh the users list
-      await fetchUsers();
-      setShowDeleteModal(false);
-      setSelectedUser(null);
-      toast.success("User deleted successfully");
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to delete user"
-      );
-      toast.error("Failed to delete user");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Subscription Management Functions
   const handleManageSubscription = (user: User) => {
     setSelectedUser(user);
 
-    // Get the first brand's subscription data (users can have multiple brands)
-    const firstBrand = user.brands[0];
-    if (firstBrand) {
-      // Initialize with current subscription data from brand settings
-      let initialPlanId = "";
-      let initialStatus = "active";
-
-      if (firstBrand.settings) {
-        const settings = firstBrand.settings as any;
-        const subscriptionBundle = settings.subscription_bundle;
-        const subscriptionStatus = settings.subscription_status;
-
-        if (subscriptionBundle) {
-          // Find the plan by name
-          const matchingPlan = plans.find(
-            (plan) => plan.name === subscriptionBundle
-          );
-          initialPlanId = matchingPlan?.id || plans[0]?.id || "";
-        } else {
-          initialPlanId = plans[0]?.id || "";
-        }
-
-        initialStatus = subscriptionStatus || "active";
-      } else {
-        // Fallback to user subscriptions if no brand settings
-        const currentSubscription = user.subscriptions[0];
-        if (currentSubscription?.plan?.name) {
-          const matchingPlan = plans.find(
-            (plan) => plan.name === currentSubscription.plan.name
-          );
-          initialPlanId = matchingPlan?.id || plans[0]?.id || "";
-        } else {
-          initialPlanId = plans[0]?.id || "";
-        }
-        initialStatus = currentSubscription?.status || "active";
-      }
-
+    // Get current subscription data
+    const currentSubscription = user.subscriptions[0];
+    if (currentSubscription) {
       setSubscriptionData({
-        planId: initialPlanId,
-        subscription_status: initialStatus,
-        billing_start: "",
-        billing_end: "",
+        planId: currentSubscription.plan.id,
+        status: currentSubscription.status,
+        isTrialActive: currentSubscription.isTrialActive,
+        trialDays: currentSubscription.trialDays,
+      });
+    } else {
+      // Default to Free plan
+      const freePlan = plans.find((p) => p.name === "Free");
+      setSubscriptionData({
+        planId: freePlan?.id || "",
+        status: "active",
+        isTrialActive: false,
+        trialDays: 0,
       });
     }
 
@@ -332,32 +225,37 @@ const AdminUsers: React.FC = () => {
   };
 
   const handleUpdateSubscription = async () => {
-    if (!selectedUser || !selectedUser.brands[0]) return;
+    if (!selectedUser) return;
 
     try {
       setActionLoading(true);
       const token = localStorage.getItem("adminToken");
-      const brandId = selectedUser.brands[0].id;
 
-      // Find the selected plan to get its name
-      const selectedPlan = plans.find(
-        (plan) => plan.id === subscriptionData.planId
-      );
-      const subscriptionBundle = selectedPlan?.name || "";
+      // Ensure proper values for trial fields
+      const isTrialActive =
+        subscriptionData.status === "trialing" &&
+        subscriptionData.isTrialActive;
+      const trialDays = isTrialActive ? subscriptionData.trialDays || 7 : 0;
 
       const requestData = {
-        subscription_bundle: subscriptionBundle,
-        subscription_status: subscriptionData.subscription_status,
-        billing_start: subscriptionData.billing_start,
-        billing_end: subscriptionData.billing_end,
+        planId: subscriptionData.planId,
+        status: subscriptionData.status,
+        isTrialActive: isTrialActive,
+        trialDays: trialDays,
+        currentPeriodStart: new Date().toISOString(),
+        currentPeriodEnd: isTrialActive
+          ? new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString()
+          : null,
+        trialStart: isTrialActive ? new Date().toISOString() : null,
+        trialEnd: isTrialActive
+          ? new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString()
+          : null,
       };
 
       console.log("Sending subscription update:", requestData);
-      console.log("Selected plan:", selectedPlan);
-      console.log("Available plans:", plans);
 
       const response = await fetch(
-        `http://localhost:3001/api/admin/brands/${brandId}/subscription`,
+        `http://localhost:8080/api/admin/subscriptions/${selectedUser.id}`,
         {
           method: "PUT",
           headers: {
@@ -369,10 +267,16 @@ const AdminUsers: React.FC = () => {
       );
 
       if (response.ok) {
+        // Refresh the users list to show updated data
         await fetchUsers();
         setShowSubscriptionModal(false);
         setSelectedUser(null);
         toast.success("Subscription updated successfully");
+
+        // Force a small delay to ensure backend has processed the update
+        setTimeout(async () => {
+          await fetchUsers();
+        }, 1000);
       } else {
         const errorData = await response.json();
         console.error("Subscription update error:", errorData);
@@ -388,50 +292,18 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const handleEditSubmit = async (userData: Partial<User>) => {
-    if (!selectedUser) return;
+  const getCurrentPlan = (user: User) => {
+    const subscription = user.subscriptions[0];
+    if (!subscription) return { name: "No Plan", price: 0, status: "none" };
 
-    try {
-      setActionLoading(true);
-      const token = localStorage.getItem("adminToken");
-
-      console.log("Updating user with data:", userData);
-
-      const response = await fetch(
-        `http://localhost:3001/api/admin/users/${selectedUser.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(userData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Update user error:", errorData);
-        throw new Error(errorData.error || "Failed to update user");
-      }
-
-      const responseData = await response.json();
-      console.log("User update response:", responseData);
-
-      // Refresh the users list
-      await fetchUsers();
-      setShowEditModal(false);
-      setSelectedUser(null);
-      toast.success("User updated successfully");
-    } catch (error) {
-      console.error("Error updating user:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update user";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setActionLoading(false);
-    }
+    return {
+      name: subscription.plan.name,
+      price: subscription.plan.priceMonthly,
+      status: subscription.status,
+      isTrial: subscription.isTrialActive,
+      trialDays: subscription.trialDays,
+      trialEnd: subscription.trialEnd,
+    };
   };
 
   return (
@@ -444,27 +316,23 @@ const AdminUsers: React.FC = () => {
               User Management
             </h1>
             <p className="text-gray-600 mt-1">
-              Manage all users across your platform
+              View and manage user subscriptions
             </p>
           </div>
           <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={handleAddUser}
+            onClick={fetchUsers}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center space-x-2"
           >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add User
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </Button>
         </div>
 
-        {/* Filters */}
+        {/* Search */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Filter className="h-5 w-5" />
-              <span>Filters</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="flex items-center space-x-4">
               <div className="flex-1">
                 <div className="relative">
@@ -477,18 +345,6 @@ const AdminUsers: React.FC = () => {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={handleStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="trialing">Trialing</SelectItem>
-                  <SelectItem value="past_due">Past Due</SelectItem>
-                  <SelectItem value="canceled">Canceled</SelectItem>
-                </SelectContent>
-              </Select>
               <Button variant="outline" onClick={fetchUsers}>
                 Refresh
               </Button>
@@ -528,8 +384,8 @@ const AdminUsers: React.FC = () => {
                   No users found
                 </h3>
                 <p className="text-gray-500">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your search or filter criteria."
+                  {searchTerm
+                    ? "Try adjusting your search criteria."
                     : "No users have registered yet."}
                 </p>
               </div>
@@ -540,182 +396,105 @@ const AdminUsers: React.FC = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>User</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Subscription</TableHead>
+                        <TableHead>Current Plan</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Brands</TableHead>
                         <TableHead>Joined</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-sm font-medium text-gray-600">
-                                  {user.firstName.charAt(0)}
-                                  {user.lastName.charAt(0)}
-                                </span>
+                      {users.map((user) => {
+                        const planInfo = getCurrentPlan(user);
+                        return (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {user.firstName.charAt(0)}
+                                    {user.lastName.charAt(0)}
+                                  </span>
+                                </div>
+                                <div>
+                                  <div className="font-medium">
+                                    {user.firstName} {user.lastName}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {user.email}
+                                  </div>
+                                </div>
                               </div>
+                            </TableCell>
+                            <TableCell>
                               <div>
                                 <div className="font-medium">
-                                  {user.firstName} {user.lastName}
+                                  {planInfo.name}
                                 </div>
-                                <div className="text-sm text-gray-500 flex items-center">
-                                  <Mail className="h-3 w-3 mr-1" />
-                                  {user.emailVerified ? (
-                                    <span className="text-green-600">
-                                      Verified
-                                    </span>
-                                  ) : (
-                                    <span className="text-orange-600">
-                                      Unverified
-                                    </span>
-                                  )}
+                                <div className="text-sm text-gray-500">
+                                  {planInfo.price === 0
+                                    ? "Free"
+                                    : `${planInfo.price} EGP/month`}
                                 </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{user.email}</div>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              // Get subscription data from brand settings
-                              const firstBrand = user.brands[0];
-                              if (firstBrand?.settings) {
-                                const settings = firstBrand.settings as any;
-                                const subscriptionBundle =
-                                  settings.subscription_bundle;
-                                const subscriptionStatus =
-                                  settings.subscription_status;
-
-                                if (subscriptionBundle) {
-                                  // Find the plan by name to get the price
-                                  const plan = plans.find(
-                                    (p) => p.name === subscriptionBundle
-                                  );
-                                  return (
-                                    <div>
-                                      <div className="font-medium">
-                                        {subscriptionBundle}
-                                      </div>
-                                      <div className="text-sm text-gray-500">
-                                        {plan?.priceMonthly === 0
-                                          ? "Free"
-                                          : `${plan?.priceMonthly || 0} EGP`}
-                                        /month
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                              }
-
-                              // Fallback to user subscriptions if no brand settings
-                              if (user.subscriptions.length > 0) {
-                                return (
-                                  <div>
-                                    <div className="font-medium">
-                                      {user.subscriptions[0].plan.name}
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      ${user.subscriptions[0].plan.priceMonthly}
-                                      /month
-                                    </div>
+                                {planInfo.isTrial && planInfo.trialEnd && (
+                                  <div className="text-xs text-orange-600 mt-1">
+                                    Trial ends: {formatDate(planInfo.trialEnd)}
                                   </div>
-                                );
-                              }
-
-                              return (
-                                <span className="text-gray-400">
-                                  No subscription
-                                </span>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-1">
-                              <Building2 className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm">
-                                {user.brands.length} brand
-                                {user.brands.length !== 1 ? "s" : ""}
-                              </span>
-                            </div>
-                            {user.brands.length > 0 && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {user.brands
-                                  .map((brand) => brand.name)
-                                  .join(", ")}
+                                )}
                               </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-1 text-sm text-gray-500">
-                              <Calendar className="h-4 w-4" />
-                              <span>{formatDate(user.createdAt)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              // Get subscription status from brand settings
-                              const firstBrand = user.brands[0];
-                              if (firstBrand?.settings) {
-                                const settings = firstBrand.settings as any;
-                                const subscriptionStatus =
-                                  settings.subscription_status;
-
-                                if (subscriptionStatus) {
-                                  return (
-                                    <Badge
-                                      variant={getStatusBadgeVariant(
-                                        subscriptionStatus
-                                      )}
-                                    >
-                                      {subscriptionStatus}
-                                    </Badge>
-                                  );
-                                }
-                              }
-
-                              // Fallback to user subscriptions if no brand settings
-                              if (user.subscriptions.length > 0) {
-                                return (
-                                  <Badge
-                                    variant={getStatusBadgeVariant(
-                                      user.subscriptions[0].status
-                                    )}
-                                  >
-                                    {user.subscriptions[0].status}
-                                  </Badge>
-                                );
-                              }
-
-                              return (
-                                <Badge variant="outline">No subscription</Badge>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleEditUser(user)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <Badge
+                                  variant={getStatusBadgeVariant(
+                                    planInfo.status
+                                  )}
                                 >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit User
-                                </DropdownMenuItem>
-                                {user.brands.length > 0 && (
+                                  {planInfo.status}
+                                </Badge>
+                                {planInfo.isTrial && (
+                                  <div className="text-xs text-orange-600">
+                                    Trial Active
+                                  </div>
+                                )}
+                                {planInfo.status === "active" &&
+                                  planInfo.name === "Free" && (
+                                    <div className="text-xs text-gray-500">
+                                      Free Plan
+                                    </div>
+                                  )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-1">
+                                <Building2 className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">
+                                  {user.brands.length} brand
+                                  {user.brands.length !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                              {user.brands.length > 0 && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {user.brands
+                                    .map((brand) => brand.name)
+                                    .join(", ")}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-1 text-sm text-gray-500">
+                                <Calendar className="h-4 w-4" />
+                                <span>{formatDate(user.createdAt)}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
                                   <DropdownMenuItem
                                     onClick={() =>
                                       handleManageSubscription(user)
@@ -724,19 +503,12 @@ const AdminUsers: React.FC = () => {
                                     <CreditCard className="h-4 w-4 mr-2" />
                                     Edit Subscription
                                   </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => handleDeleteUser(user)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete User
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -780,165 +552,6 @@ const AdminUsers: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Edit User Modal */}
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>
-                Update user information for {selectedUser?.firstName}{" "}
-                {selectedUser?.lastName}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  defaultValue={selectedUser?.firstName}
-                  placeholder="Enter first name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  defaultValue={selectedUser?.lastName}
-                  placeholder="Enter last name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  defaultValue={selectedUser?.email}
-                  placeholder="Enter email"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  const firstName = (
-                    document.getElementById("firstName") as HTMLInputElement
-                  )?.value;
-                  const lastName = (
-                    document.getElementById("lastName") as HTMLInputElement
-                  )?.value;
-                  const email = (
-                    document.getElementById("email") as HTMLInputElement
-                  )?.value;
-                  handleEditSubmit({ firstName, lastName, email });
-                }}
-                disabled={actionLoading}
-              >
-                {actionLoading ? "Updating..." : "Update User"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete User Modal */}
-        <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete User</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete {selectedUser?.firstName}{" "}
-                {selectedUser?.lastName}? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDeleteUser}
-                disabled={actionLoading}
-              >
-                {actionLoading ? "Deleting..." : "Delete User"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Add User Modal */}
-        <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>
-                Create a new user account for the platform.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="newFirstName">First Name</Label>
-                <Input id="newFirstName" placeholder="Enter first name" />
-              </div>
-              <div>
-                <Label htmlFor="newLastName">Last Name</Label>
-                <Input id="newLastName" placeholder="Enter last name" />
-              </div>
-              <div>
-                <Label htmlFor="newEmail">Email</Label>
-                <Input id="newEmail" type="email" placeholder="Enter email" />
-              </div>
-              <div>
-                <Label htmlFor="newPassword">Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="Enter password"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  const firstName = (
-                    document.getElementById("newFirstName") as HTMLInputElement
-                  )?.value;
-                  const lastName = (
-                    document.getElementById("newLastName") as HTMLInputElement
-                  )?.value;
-                  const email = (
-                    document.getElementById("newEmail") as HTMLInputElement
-                  )?.value;
-                  const password = (
-                    document.getElementById("newPassword") as HTMLInputElement
-                  )?.value;
-
-                  if (firstName && lastName && email && password) {
-                    // TODO: Implement add user API call
-                    console.log("Add user:", {
-                      firstName,
-                      lastName,
-                      email,
-                      password,
-                    });
-                    setShowAddModal(false);
-                  }
-                }}
-                disabled={actionLoading}
-              >
-                {actionLoading ? "Creating..." : "Create User"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
         {/* Subscription Management Modal */}
         <Dialog
           open={showSubscriptionModal}
@@ -946,15 +559,27 @@ const AdminUsers: React.FC = () => {
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Manage Subscription</DialogTitle>
+              <DialogTitle>Edit Subscription</DialogTitle>
               <DialogDescription>
-                Update subscription settings for {selectedUser?.firstName}{" "}
+                Update subscription for {selectedUser?.firstName}{" "}
                 {selectedUser?.lastName}
+                {selectedUser && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                    <div className="font-medium">Current Plan:</div>
+                    <div className="text-gray-600">
+                      {getCurrentPlan(selectedUser).name} -{" "}
+                      {getCurrentPlan(selectedUser).status}
+                      {getCurrentPlan(selectedUser).isTrial && (
+                        <span className="text-orange-600"> (Trial)</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="planId">Subscription Plan</Label>
+                <Label htmlFor="planId">Plan</Label>
                 <Select
                   value={subscriptionData.planId}
                   onValueChange={(value) =>
@@ -973,23 +598,32 @@ const AdminUsers: React.FC = () => {
                         <div className="flex flex-col">
                           <span className="font-medium">{plan.name}</span>
                           <span className="text-sm text-gray-500">
-                            ${plan.priceMonthly}/month
+                            {plan.priceMonthly === 0
+                              ? "Free"
+                              : `${plan.priceMonthly} EGP/month`}
                           </span>
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedUser && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Current: {getCurrentPlan(selectedUser).name}
+                  </div>
+                )}
               </div>
 
               <div>
-                <Label htmlFor="subscription_status">Status</Label>
+                <Label htmlFor="status">Status</Label>
                 <Select
-                  value={subscriptionData.subscription_status}
+                  value={subscriptionData.status}
                   onValueChange={(value) =>
                     setSubscriptionData((prev) => ({
                       ...prev,
-                      subscription_status: value,
+                      status: value,
+                      isTrialActive: value === "trialing",
+                      trialDays: value === "trialing" ? prev.trialDays || 7 : 0,
                     }))
                   }
                 >
@@ -998,42 +632,37 @@ const AdminUsers: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="trialing">Trialing</SelectItem>
+                    <SelectItem value="past_due">Past Due</SelectItem>
+                    <SelectItem value="canceled">Canceled</SelectItem>
                   </SelectContent>
                 </Select>
+                {selectedUser && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Current: {getCurrentPlan(selectedUser).status}
+                  </div>
+                )}
               </div>
 
-              <div>
-                <Label htmlFor="billing_start">Billing Start Date</Label>
-                <Input
-                  id="billing_start"
-                  type="date"
-                  value={subscriptionData.billing_start}
-                  onChange={(e) =>
-                    setSubscriptionData((prev) => ({
-                      ...prev,
-                      billing_start: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="billing_end">Billing End Date</Label>
-                <Input
-                  id="billing_end"
-                  type="date"
-                  value={subscriptionData.billing_end}
-                  onChange={(e) =>
-                    setSubscriptionData((prev) => ({
-                      ...prev,
-                      billing_end: e.target.value,
-                    }))
-                  }
-                />
-              </div>
+              {subscriptionData.status === "trialing" && (
+                <div>
+                  <Label htmlFor="trialDays">Trial Days</Label>
+                  <Input
+                    id="trialDays"
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={subscriptionData.trialDays || 7}
+                    onChange={(e) =>
+                      setSubscriptionData((prev) => ({
+                        ...prev,
+                        trialDays: parseInt(e.target.value) || 7,
+                        isTrialActive: true,
+                      }))
+                    }
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button

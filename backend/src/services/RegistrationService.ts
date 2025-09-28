@@ -381,6 +381,8 @@ export class RegistrationService {
             currentPeriodEnd: isPaidPlan ? trialEnd : null,
             trialStart: isPaidPlan ? now : null,
             trialEnd: trialEnd,
+            isTrialActive: isPaidPlan, // Set trial active for paid plans
+            trialDays: trialDays,
             cancelAtPeriodEnd: false,
             paymentMethod: data.paymentMethod || "mock",
           },

@@ -18,9 +18,16 @@ const createSubscriptionSchema = Joi.object({
 const updateSubscriptionSchema = Joi.object({
   planId: Joi.string().optional(),
   status: Joi.string()
-    .valid("active", "cancelled", "past_due", "unpaid")
+    .valid("active", "cancelled", "past_due", "unpaid", "trialing")
     .optional(),
   cancelAtPeriodEnd: Joi.boolean().optional(),
+  currentPeriodStart: Joi.string().optional(),
+  currentPeriodEnd: Joi.string().optional(),
+  paymentMethod: Joi.string().optional(),
+  isTrialActive: Joi.boolean().optional(),
+  trialDays: Joi.number().optional(),
+  trialStart: Joi.string().optional(),
+  trialEnd: Joi.string().optional(),
 });
 
 const cancelSubscriptionSchema = Joi.object({
@@ -161,15 +168,25 @@ export class SubscriptionController {
 
       const { subscriptionId } = req.params;
 
+      // Log the incoming request
+      console.log("📝 Subscription update request:", {
+        subscriptionId,
+        body: req.body,
+        user: req.user?.id
+      });
+
       // Validate request body
       const { error, value } = updateSubscriptionSchema.validate(req.body);
       if (error) {
+        console.error("❌ Validation error:", error.details[0].message);
         res.status(400).json({
           success: false,
           error: error.details[0].message,
         });
         return;
       }
+
+      console.log("✅ Validated data:", value);
 
       const subscription = await SubscriptionService.updateSubscription(
         subscriptionId,

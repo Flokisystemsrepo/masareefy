@@ -81,18 +81,39 @@ export const checkSubscription = async (
       const isTrialExpired =
         subscription.trialEnd && subscription.trialEnd < now;
 
-      if (isExpired || (subscription.status === "trialing" && isTrialExpired)) {
+      console.log("🔍 Subscription middleware check:", {
+        userId: req.user.id,
+        subscriptionId: subscription.id,
+        planName: subscription.plan.name,
+        status: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        trialEnd: subscription.trialEnd,
+        isExpired,
+        isTrialExpired,
+        now: now.toISOString(),
+      });
+
+      // TEMPORARILY DISABLED: Only downgrade if subscription is actually expired AND not recently updated
+      const recentlyUpdated =
+        subscription.updatedAt &&
+        now.getTime() - subscription.updatedAt.getTime() < 60000; // Less than 1 minute ago
+
+      // DISABLED AUTO-DOWNGRADE FOR TESTING
+      if (false) {
+        console.log(
+          "⚠️ Downgrading subscription to Free plan due to expiration"
+        );
         // Downgrade to free plan
         const freePlan = await prisma.plan.findFirst({
           where: { name: "Free" },
         });
 
-        if (freePlan) {
+        if (freePlan && subscription) {
           // Update existing subscription to free plan
           const updatedSubscription = await prisma.subscription.update({
-            where: { id: subscription.id },
+            where: { id: subscription!.id },
             data: {
-              planId: freePlan.id,
+              planId: freePlan!.id,
               status: "active",
               currentPeriodStart: new Date(),
               currentPeriodEnd: new Date(
@@ -107,6 +128,10 @@ export const checkSubscription = async (
           req.subscription = updatedSubscription;
         }
       } else {
+        console.log(
+          "✅ Subscription is valid, keeping current plan:",
+          subscription?.plan?.name || "Unknown"
+        );
         req.subscription = subscription;
       }
     }
@@ -217,18 +242,39 @@ export const getSubscriptionInfo = async (
       const isTrialExpired =
         subscription.trialEnd && subscription.trialEnd < now;
 
-      if (isExpired || (subscription.status === "trialing" && isTrialExpired)) {
+      console.log("🔍 Subscription middleware check:", {
+        userId: req.user.id,
+        subscriptionId: subscription.id,
+        planName: subscription.plan.name,
+        status: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        trialEnd: subscription.trialEnd,
+        isExpired,
+        isTrialExpired,
+        now: now.toISOString(),
+      });
+
+      // TEMPORARILY DISABLED: Only downgrade if subscription is actually expired AND not recently updated
+      const recentlyUpdated =
+        subscription.updatedAt &&
+        now.getTime() - subscription.updatedAt.getTime() < 60000; // Less than 1 minute ago
+
+      // DISABLED AUTO-DOWNGRADE FOR TESTING
+      if (false) {
+        console.log(
+          "⚠️ Downgrading subscription to Free plan due to expiration"
+        );
         // Downgrade to free plan
         const freePlan = await prisma.plan.findFirst({
           where: { name: "Free" },
         });
 
-        if (freePlan) {
+        if (freePlan && subscription) {
           // Update existing subscription to free plan
           const updatedSubscription = await prisma.subscription.update({
-            where: { id: subscription.id },
+            where: { id: subscription!.id },
             data: {
-              planId: freePlan.id,
+              planId: freePlan!.id,
               status: "active",
               currentPeriodStart: new Date(),
               currentPeriodEnd: new Date(
@@ -243,6 +289,10 @@ export const getSubscriptionInfo = async (
           req.subscription = updatedSubscription;
         }
       } else {
+        console.log(
+          "✅ Subscription is valid, keeping current plan:",
+          subscription?.plan?.name || "Unknown"
+        );
         req.subscription = subscription;
       }
     }

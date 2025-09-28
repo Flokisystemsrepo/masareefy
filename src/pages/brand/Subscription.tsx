@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 
 const SubscriptionPage: React.FC = () => {
   const { t, isRTL } = useLanguage();
-  const { subscription, refreshSubscription, forceRefresh } = useSubscription();
+  const { subscription, forceRefresh } = useSubscription();
   const navigate = useNavigate();
 
   // Debug: Log subscription data
@@ -168,49 +168,123 @@ const SubscriptionPage: React.FC = () => {
     return "Change Plan";
   };
 
-  const handleUpgrade = (plan: any) => {
-    // Direct payment link redirection based on plan name
-    let paymentLink = "";
+  const handleUpgrade = async (plan: any) => {
+    try {
+      // Check if user is already on the target plan
+      if (subscription && subscription.plan.id === plan.id) {
+        toast.error(`You're already on the ${plan.name} plan!`);
+        return;
+      }
 
-    if (plan.name.toLowerCase() === "growth") {
-      paymentLink =
-        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353202,test";
-    } else if (plan.name.toLowerCase() === "scale") {
-      paymentLink =
-        "https://checkouts.kashier.io/en/paymentpage?ppLink=PP-3271353201,test";
-    } else if (plan.name.toLowerCase() === "free") {
-      toast.error("You're already on the Free plan!");
-      return;
-    } else {
-      toast.error("Invalid plan selected");
-      return;
-    }
+      // Handle Free plan downgrade (no payment required)
+      if (plan.name.toLowerCase() === "free") {
+        try {
+          // Get current subscription ID first
+          const subscriptionResponse = await fetch(
+            "/api/subscription/my-subscription",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
 
-    console.log(`Redirecting to payment link for ${plan.name}:`, paymentLink);
+          if (!subscriptionResponse.ok) {
+            throw new Error("Failed to get current subscription");
+          }
 
-    // Store the selected plan in localStorage for callback handling
-    localStorage.setItem(
-      "pendingUpgrade",
-      JSON.stringify({
-        planId: plan.id,
-        planName: plan.name,
-        timestamp: Date.now(),
-      })
-    );
+          const subscriptionData = await subscriptionResponse.json();
+          const subscriptionId = subscriptionData.data.id;
 
-    // Try to open payment page
-    const newWindow = window.open(paymentLink, "_blank");
+          // Update subscription to Free plan
+          const response = await fetch(
+            `/api/subscription/subscriptions/${subscriptionId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({
+                planId: plan.id,
+                status: "active",
+              }),
+            }
+          );
 
-    if (
-      !newWindow ||
-      newWindow.closed ||
-      typeof newWindow.closed == "undefined"
-    ) {
-      // Popup was blocked, redirect in the same window
-      console.log("Popup blocked, redirecting in same window");
-      window.location.href = paymentLink;
-    } else {
-      console.log("Payment page opened in new tab");
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(
+              error.message || "Failed to downgrade to Free plan"
+            );
+          }
+
+          toast.success("Successfully downgraded to Free plan!");
+
+          // Force refresh subscription data instantly (bypasses rate limiting)
+          await forceRefresh();
+
+          return;
+        } catch (error: any) {
+          console.error("Free plan downgrade error:", error);
+          toast.error(error.message || "Failed to downgrade to Free plan");
+          return;
+        }
+      }
+
+      // Generate HPP URL using new Kashier structure for paid plans
+      const response = await fetch("/api/payments/hpp-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          orderId: `ORDER-${Date.now()}-${plan.name.toLowerCase()}`,
+          amount: plan.priceMonthly,
+          currency: "EGP",
+          customerReference: user?.id || "unknown",
+          description: `${plan.name} Plan Subscription`,
+          enable3DS: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to generate payment URL");
+      }
+
+      const { url } = await response.json();
+
+      // Store the selected plan in localStorage for callback handling
+      localStorage.setItem(
+        "pendingUpgrade",
+        JSON.stringify({
+          planId: plan.id,
+          planName: plan.name,
+          timestamp: Date.now(),
+        })
+      );
+
+      console.log(`Redirecting to payment URL for ${plan.name}:`, url);
+
+      // Try to open payment page
+      const newWindow = window.open(url, "_blank");
+
+      if (
+        !newWindow ||
+        newWindow.closed ||
+        typeof newWindow.closed == "undefined"
+      ) {
+        // Popup was blocked, redirect in the same window
+        console.log("Popup blocked, redirecting in same window");
+        window.location.href = url;
+      } else {
+        console.log("Payment page opened in new tab");
+      }
+    } catch (error: any) {
+      console.error("Payment initiation error:", error);
+      toast.error(error.message || "Failed to initiate payment");
     }
   };
 

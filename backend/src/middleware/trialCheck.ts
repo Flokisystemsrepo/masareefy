@@ -27,7 +27,26 @@ export const checkTrialStatus = async (
     }
 
     const trialStatus = await TrialService.getUserTrialStatus(req.user.id);
-    req.trialStatus = trialStatus || undefined;
+
+    // If user has an expired trial, automatically downgrade them
+    if (
+      trialStatus &&
+      trialStatus.isTrialActive &&
+      trialStatus.daysRemaining <= 0
+    ) {
+      console.log(
+        `Trial expired for user ${req.user.id}, downgrading to Free plan`
+      );
+      await TrialService.handleTrialExpiration(trialStatus.subscription.id);
+
+      // Refresh trial status after downgrade
+      const updatedTrialStatus = await TrialService.getUserTrialStatus(
+        req.user.id
+      );
+      req.trialStatus = updatedTrialStatus || undefined;
+    } else {
+      req.trialStatus = trialStatus || undefined;
+    }
 
     next();
   } catch (error) {
