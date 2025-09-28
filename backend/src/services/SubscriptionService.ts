@@ -151,10 +151,16 @@ export class SubscriptionService {
         ...(data.cancelAtPeriodEnd !== undefined && {
           cancelAtPeriodEnd: data.cancelAtPeriodEnd,
         }),
-        ...(data.currentPeriodStart && { currentPeriodStart: new Date(data.currentPeriodStart) }),
-        ...(data.currentPeriodEnd && { currentPeriodEnd: new Date(data.currentPeriodEnd) }),
+        ...(data.currentPeriodStart && {
+          currentPeriodStart: new Date(data.currentPeriodStart),
+        }),
+        ...(data.currentPeriodEnd && {
+          currentPeriodEnd: new Date(data.currentPeriodEnd),
+        }),
         ...(data.paymentMethod && { paymentMethod: data.paymentMethod }),
-        ...(data.isTrialActive !== undefined && { isTrialActive: data.isTrialActive }),
+        ...(data.isTrialActive !== undefined && {
+          isTrialActive: data.isTrialActive,
+        }),
         ...(data.trialDays !== undefined && { trialDays: data.trialDays }),
         ...(data.trialStart && { trialStart: new Date(data.trialStart) }),
         ...(data.trialEnd && { trialEnd: new Date(data.trialEnd) }),
@@ -171,7 +177,7 @@ export class SubscriptionService {
           updateData.currentPeriodEnd = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           ); // 30 days
-          updateData.paymentMethod = "kashier";
+          updateData.paymentMethod = "payment_gateway";
           updateData.trialEnd = null; // End any trial
           updateData.isTrialActive = false;
         } else if (newPlan && newPlan.priceMonthly === 0) {
@@ -204,7 +210,7 @@ export class SubscriptionService {
         status: subscription.status,
         isTrialActive: subscription.isTrialActive,
         currentPeriodStart: subscription.currentPeriodStart,
-        currentPeriodEnd: subscription.currentPeriodEnd
+        currentPeriodEnd: subscription.currentPeriodEnd,
       });
 
       return subscription;

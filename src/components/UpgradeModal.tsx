@@ -22,7 +22,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { subscriptionAPI } from "@/services/api";
+import { subscriptionAPI, paymentAPI } from "@/services/api";
+// Payment integration component (to be implemented)
 
 interface Plan {
   id: string;
@@ -58,6 +59,8 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
   const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [paymentData, setPaymentData] = useState<any>(null);
+  const [showPayment, setShowPayment] = useState(false);
   const { toast } = useToast();
 
   // Fetch available plans and current subscription when modal opens
@@ -138,61 +141,31 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
         throw new Error("Plan not found");
       }
 
-      console.log("Selected plan:", plan);
-      console.log("Plan name:", plan.name);
-      console.log("Plan name lowercase:", plan.name.toLowerCase());
+      console.log("Initializing payment for plan:", plan);
 
-      // Use our HPP flow instead of hardcoded URLs
-      const response = await fetch("/api/payments/hpp-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          planId: selectedPlan,
-          planName: plan.name,
-          amount: plan.priceMonthly,
-          currency: "EGP",
-        }),
+      // Initialize payment with backend
+      const paymentResponse = await paymentAPI.initializePayment({
+        planId: selectedPlan,
+        amount: plan.priceMonthly,
+        currency: "EGP",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate payment URL");
+      if (!paymentResponse.success) {
+        throw new Error(
+          paymentResponse.error || "Failed to initialize payment"
+        );
       }
 
-      const data = await response.json();
-      const paymentLink = data.url;
+      console.log("Payment initialized:", paymentResponse.data);
 
-      console.log("Payment link:", paymentLink);
-
-      // Store the selected plan in localStorage for callback handling
-      localStorage.setItem(
-        "pendingUpgrade",
-        JSON.stringify({
-          planId: selectedPlan,
-          planName: plan.name,
-          timestamp: Date.now(),
-        })
-      );
-
-      // Try to open payment page
-      const newWindow = window.open(paymentLink, "_blank");
-
-      if (
-        !newWindow ||
-        newWindow.closed ||
-        typeof newWindow.closed == "undefined"
-      ) {
-        // Popup was blocked, redirect in the same window
-        console.log("Popup blocked, redirecting in same window");
-        window.location.href = paymentLink;
-      } else {
-        console.log("Payment page opened in new tab");
-      }
-
-      // Close the modal
-      onClose();
+      // TODO: Implement payment gateway integration
+      toast({
+        title: "Payment Integration",
+        description:
+          "Payment gateway integration is being set up. Please contact support for manual upgrade.",
+        variant: "default",
+      });
+      return;
     } catch (error: any) {
       console.error("Upgrade error:", error);
       toast({
@@ -203,6 +176,28 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
     } finally {
       setUpgrading(false);
     }
+  };
+
+  const handlePaymentComplete = (result: any) => {
+    console.log("Payment completed:", result);
+    toast({
+      title: "Payment Successful",
+      description: "Your subscription has been upgraded successfully!",
+      variant: "default",
+    });
+    setShowPayment(false);
+    onUpgradeSuccess();
+    onClose();
+  };
+
+  const handlePaymentError = (error: any) => {
+    console.error("Payment error:", error);
+    toast({
+      title: "Payment Failed",
+      description: "Your payment could not be processed. Please try again.",
+      variant: "destructive",
+    });
+    setShowPayment(false);
   };
 
   const getFeatureIcon = (feature: string) => {
@@ -223,14 +218,37 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            Upgrade Your Plan
+            {showPayment ? "Complete Payment" : "Upgrade Your Plan"}
           </DialogTitle>
           <p className="text-gray-600 text-center">
-            Choose the perfect plan for your business needs
+            {showPayment
+              ? "Please complete your payment to upgrade your subscription"
+              : "Choose the perfect plan for your business needs"}
           </p>
         </DialogHeader>
 
-        {loadingPlans ? (
+        {showPayment && paymentData ? (
+          <div className="mt-6">
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <h3 className="font-medium text-blue-900">Payment Details</h3>
+              <p className="text-sm text-blue-700">
+                Amount: EGP {paymentData.amount} | Order ID:{" "}
+                {paymentData.orderId}
+              </p>
+            </div>
+            {/* Payment integration component will be implemented here */}
+            <div className="text-center p-8">
+              <p className="text-gray-600">
+                Payment integration coming soon...
+              </p>
+            </div>
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" onClick={() => setShowPayment(false)}>
+                Back to Plan Selection
+              </Button>
+            </div>
+          </div>
+        ) : loadingPlans ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span className="ml-2 text-gray-600">Loading plans...</span>
@@ -333,40 +351,46 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-8 pt-6 border-t">
-          <Button variant="outline" onClick={onClose}>
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
+        {!showPayment && (
+          <div className="flex justify-between items-center mt-8 pt-6 border-t">
+            <Button variant="outline" onClick={onClose}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
 
-          <Button
-            onClick={handleUpgrade}
-            disabled={!selectedPlan || upgrading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {upgrading ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
+            <Button
+              onClick={handleUpgrade}
+              disabled={!selectedPlan || upgrading}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {upgrading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                  </motion.div>
+                  Upgrading...
+                </>
+              ) : !selectedPlan ? (
+                <>
                   <Crown className="h-4 w-4 mr-2" />
-                </motion.div>
-                Upgrading...
-              </>
-            ) : !selectedPlan ? (
-              <>
-                <Crown className="h-4 w-4 mr-2" />
-                Select a Plan First
-              </>
-            ) : (
-              <>
-                <Crown className="h-4 w-4 mr-2" />
-                Upgrade Now
-              </>
-            )}
-          </Button>
-        </div>
+                  Select a Plan First
+                </>
+              ) : (
+                <>
+                  <Crown className="h-4 w-4 mr-2" />
+                  Upgrade Now
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

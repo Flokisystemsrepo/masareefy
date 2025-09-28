@@ -308,44 +308,14 @@ const Settings: React.FC = () => {
         }
       }
 
-      // Generate HPP URL using new Kashier structure for paid plans
-      const payload = {
-        orderId: `ORDER-${Date.now()}-${plan.name.toLowerCase()}`,
-        amount: plan.priceMonthly,
-        currency: "EGP",
-        customerReference: user?.id || "unknown",
-        description: `${plan.name} Plan Subscription`,
-        enable3DS: true,
-      };
-
-      console.log("🚀 Settings Upgrade Payload:", {
-        plan: {
-          id: plan.id,
-          name: plan.name,
-          priceMonthly: plan.priceMonthly,
-        },
-        payload,
-        user: {
-          id: user?.id,
-          email: user?.email,
-        },
+      // TODO: Implement payment gateway integration
+      toast({
+        title: "Payment Integration",
+        description:
+          "Payment gateway integration is being set up. Please contact support for manual upgrade.",
+        variant: "default",
       });
-
-      const response = await fetch("/api/payments/hpp-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to generate payment URL");
-      }
-
-      const { url } = await response.json();
+      return;
 
       // Store the selected plan in localStorage for callback handling
       localStorage.setItem(

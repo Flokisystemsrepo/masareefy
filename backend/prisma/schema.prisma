@@ -25,6 +25,7 @@ model User {
   inventory          Inventory[]
   invoices           Invoice[]
   payables           Payable[]
+  payments           Payment[]
   projectTargets     ProjectTarget[]
   receivables        Receivable[]
   revenues           Revenue[]
@@ -66,6 +67,7 @@ model Plan {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   subscriptions Subscription[]
+  payments      Payment[]
 
   @@map("plans")
 }
@@ -99,17 +101,22 @@ model Subscription {
 }
 
 model Payment {
-  id             String       @id @default(cuid())
-  subscriptionId String
+  id             String        @id @default(cuid())
+  subscriptionId String?
+  userId         String
+  planId         String?
   amount         Float
-  currency        String       @default("EGP")
+  currency       String        @default("EGP")
   status         String
-  paymentMethod  String       @default("kashier")
-  paymentId      String?      @unique
-  processedAt    DateTime     @default(now())
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  paymentMethod  String        @default("kashier")
+  paymentId      String?       @unique
+  transactionId  String?
+  processedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan           Plan?         @relation(fields: [planId], references: [id])
 
   @@map("payments")
 }

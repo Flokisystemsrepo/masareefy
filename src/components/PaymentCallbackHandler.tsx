@@ -29,14 +29,14 @@ const PaymentCallbackHandler: React.FC = () => {
         const paymentId = urlParams.get("payment_id");
         const currentUrl = window.location.href;
 
-        // Check if we're on a Kashier success page or have success parameters
-        const isKashierSuccess =
+        // Check if we're on a payment success page or have success parameters
+        const isPaymentSuccess =
           currentUrl.includes("payment-approved") ||
           currentUrl.includes("paymentStatus=SUCCESS") ||
           paymentStatus === "SUCCESS";
 
         // If we have payment parameters, process the callback
-        if (isKashierSuccess || paymentStatus === "success" || paymentId) {
+        if (isPaymentSuccess || paymentStatus === "success" || paymentId) {
           const result = await handlePaymentCallback();
 
           if (result.success) {

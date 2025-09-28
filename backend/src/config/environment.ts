@@ -17,9 +17,8 @@ export const config = {
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || "12"),
 
-  // Kashier
-  kashierApiKey: process.env.KASHIER_API_KEY!,
-  kashierMerchantId: process.env.KASHIER_MERCHANT_ID!,
+  // Payment Gateway (configure as needed)
+  // Add your payment gateway configuration here
 
   // Email
   sendgridApiKey: process.env.SENDGRID_API_KEY!,
@@ -56,8 +55,7 @@ const optionalEnvVars = {
   AWS_ACCESS_KEY_ID: "test_aws_key",
   AWS_SECRET_ACCESS_KEY: "test_aws_secret",
   AWS_S3_BUCKET: "test_bucket",
-  KASHIER_API_KEY: "test_key",
-  KASHIER_MERCHANT_ID: "test_merchant",
+  // Payment Gateway variables (add as needed)
 };
 
 for (const envVar of requiredEnvVars) {

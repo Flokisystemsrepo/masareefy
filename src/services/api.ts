@@ -616,6 +616,18 @@ export const subscriptionAPI = {
 
 // ===== PAYMENT API =====
 export const paymentAPI = {
+  // Initialize payment - get hash and configuration for Kashier iframe
+  initializePayment: async (data: {
+    planId: string;
+    amount: number;
+    currency?: string;
+  }) => {
+    return apiCall("/payment/initialize", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
   // Confirm payment (called by frontend after payment)
   confirmPayment: async (data: {
     paymentId: string;

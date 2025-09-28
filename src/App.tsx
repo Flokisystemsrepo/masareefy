@@ -32,7 +32,6 @@ import TasksPage from "./pages/brand/Tasks";
 import ReportsPage from "./pages/brand/Reports";
 import SettingsPage from "./pages/brand/Settings";
 import SubscriptionPage from "./pages/brand/Subscription";
-import PaymentResult from "./pages/PaymentResult";
 import Support from "./pages/Support";
 import UserTickets from "./pages/UserTickets";
 import NotFound from "./pages/NotFound";
@@ -138,11 +137,7 @@ const App = () => (
                         />
                       </Route>
 
-                      {/* Payment result route */}
-                      <Route
-                        path="/payments/result"
-                        element={<PaymentResult />}
-                      />
+                      {/* Payment result route - removed */}
 
                       {/* Admin routes */}
                       <Route path="/admin" element={<AdminLogin />} />
